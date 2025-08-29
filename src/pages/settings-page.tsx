@@ -74,7 +74,7 @@ export default function SettingsPage() {
   }
 
   const handleKeyRotation = () => {
-    console.log("[v0] Initiating key rotation")
+    console.log("Initiating key rotation")
   }
 
   return (

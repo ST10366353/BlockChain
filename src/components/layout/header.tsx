@@ -2,27 +2,35 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
-import { Shield, Bell, Settings, Menu, X, CheckCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Shield, Bell, Settings, Menu, X, CheckCircle, RefreshCw, Trash2 } from "lucide-react"
+import { useNotifications } from "@/src/contexts/notifications-context"
+import { ThemeToggle } from "@/src/contexts/theme-context"
+import { SessionStatusIndicator } from "@/src/components/session-status"
+import type { NotificationData } from "@/src/services"
 
 interface HeaderProps {
   user?: {
     name: string
     primaryDID: string
-    anonymousDID: string
+    anonymousDID?: string
   }
   notifications?: number
 }
 
-export default function Header({ user, notifications = 0 }: HeaderProps) {
+export default function Header({ user }: HeaderProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const [notifItems, setNotifItems] = useState<{ id: string; text: string; time: string; read: boolean }[]>([
-    { id: "n1", text: "University issued Degree Certificate", time: "2h", read: false },
-    { id: "n2", text: "New sign-in from Chrome", time: "1d", read: false },
-    { id: "n3", text: "Connection request from FinanceApp", time: "3d", read: true },
-  ])
+
+  // Use notification context
+  const {
+    state: { notifications, unreadCount, connectionStatus },
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    refresh
+  } = useNotifications()
 
   const isActive = (path: string) => pathname === path
 
@@ -77,6 +85,14 @@ export default function Header({ user, notifications = 0 }: HeaderProps) {
               >
                 Connections
               </Link>
+              <Link
+                href="/notifications"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/notifications") ? "bg-blue-100 text-blue-600" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Notifications
+              </Link>
             </nav>
           </div>
 
@@ -85,55 +101,134 @@ export default function Header({ user, notifications = 0 }: HeaderProps) {
               <button
                 aria-label="Open notifications"
                 onClick={() => setNotifOpen((v) => !v)}
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700"
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700 relative"
               >
                 <Bell className="w-6 h-6" />
+                {/* Connection status indicator */}
+                <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-green-500' :
+                  connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+                  'bg-red-500'
+                }`} />
               </button>
-              {notifItems.some((n) => !n.read) && (
+              {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-                  {notifItems.filter((n) => !n.read).length}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50">
-                  <div className="flex items-center justify-between px-3 py-2 border-b">
-                    <span className="text-sm font-medium">Notifications</span>
-                    <button
-                      onClick={() => setNotifOpen(false)}
-                      className="text-xs text-gray-500 hover:text-gray-700"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {notifItems.length === 0 && (
-                      <div className="p-4 text-sm text-gray-500">You're all caught up.</div>
-                    )}
-                    {notifItems.map((n) => (
-                      <div key={n.id} className={`px-3 py-2 text-sm flex items-start gap-2 ${n.read ? "bg-white" : "bg-blue-50"}`}>
-                        <CheckCircle className={`w-4 h-4 mt-0.5 ${n.read ? "text-gray-400" : "text-blue-600"}`} />
-                        <div className="flex-1">
-                          <div className="text-gray-800">{n.text}</div>
-                          <div className="text-xs text-gray-500">{n.time} ago</div>
-                        </div>
-                        {!n.read && (
-                          <button
-                            onClick={() => setNotifItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))}
-                            className="text-xs text-blue-600 hover:underline"
-                          >
-                            Mark read
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {notifItems.some((n) => !n.read) && (
-                    <div className="px-3 py-2 border-t">
+                <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium">Notifications</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        connectionStatus === 'connected' ? 'bg-green-100 text-green-800' :
+                        connectionStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {connectionStatus === 'connected' ? 'Live' :
+                         connectionStatus === 'connecting' ? 'Connecting...' :
+                         'Offline'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setNotifItems((prev) => prev.map((n) => ({ ...n, read: true })))}
-                        className="text-xs text-blue-600 hover:underline"
+                        onClick={refresh}
+                        className="p-1 text-gray-500 hover:text-gray-700"
+                        title="Refresh notifications"
                       >
-                        Mark all as read
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setNotifOpen(false)}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-500">
+                        <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">You're all caught up!</p>
+                        <p className="text-xs mt-1">No new notifications</p>
+                      </div>
+                    ) : (
+                      <>
+                        {notifications.slice(0, 10).map((notification) => (
+                          <div key={notification.id} className={`px-4 py-3 text-sm border-b last:border-b-0 ${notification.read ? "bg-white" : "bg-blue-50"}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                                notification.priority === 'urgent' ? 'bg-red-500' :
+                                notification.priority === 'high' ? 'bg-orange-500' :
+                                notification.priority === 'medium' ? 'bg-yellow-500' :
+                                'bg-blue-500'
+                              }`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="font-medium text-gray-900">{notification.title}</div>
+                                    <div className="text-gray-700 text-sm mt-1">{notification.message}</div>
+                                    <div className="text-xs text-gray-500 mt-2">
+                                      {new Date(notification.timestamp).toLocaleString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-1 ml-2">
+                                    {!notification.read && (
+                                      <button
+                                        onClick={() => markAsRead(notification.id)}
+                                        className="p-1 text-blue-600 hover:text-blue-800 text-xs"
+                                        title="Mark as read"
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => deleteNotification(notification.id)}
+                                      className="p-1 text-red-600 hover:text-red-800 text-xs"
+                                      title="Delete notification"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                                {notification.actionUrl && notification.actionLabel && (
+                                  <div className="mt-2">
+                                    <Link
+                                      href={notification.actionUrl}
+                                      onClick={() => setNotifOpen(false)}
+                                      className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                                    >
+                                      {notification.actionLabel}
+                                    </Link>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {notifications.length > 10 && (
+                          <div className="px-4 py-2 text-center border-t">
+                            <Link
+                              href="/notifications"
+                              onClick={() => setNotifOpen(false)}
+                              className="text-sm text-blue-600 hover:text-blue-800"
+                            >
+                              View all {notifications.length} notifications
+                            </Link>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <div className="px-4 py-3 border-t bg-gray-50">
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        Mark all as read ({unreadCount})
                       </button>
                     </div>
                   )}
@@ -149,6 +244,10 @@ export default function Header({ user, notifications = 0 }: HeaderProps) {
                 <span className="text-sm font-medium">Welcome back, {user.name}</span>
               </Link>
             )}
+
+            <SessionStatusIndicator />
+
+            <ThemeToggle size="sm" className="hidden md:inline-flex" />
 
             <Link href="/settings" className="p-2 text-gray-600 hover:text-gray-900 hidden md:inline-flex">
               <Settings className="w-5 h-5" />
@@ -212,6 +311,18 @@ export default function Header({ user, notifications = 0 }: HeaderProps) {
               >
                 Connections
               </Link>
+              <Link
+                href="/notifications"
+                onClick={() => setMobileOpen(false)}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive("/notifications") ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Notifications
+              </Link>
+              <div className="px-3 py-2">
+                <ThemeToggle size="sm" showLabel={true} />
+              </div>
               <Link
                 href="/settings"
                 onClick={() => setMobileOpen(false)}

@@ -8,8 +8,8 @@ import type {
   ToastProps,
 } from "@/src/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 3
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -171,6 +171,39 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// Enhanced toast functions for different types
+const toastSuccess = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "default"
+  })
+}
+
+const toastError = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "destructive"
+  })
+}
+
+const toastInfo = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "default"
+  })
+}
+
+const toastWarning = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "destructive"
+  })
+}
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -187,8 +220,12 @@ function useToast() {
   return {
     ...state,
     toast,
+    toastSuccess,
+    toastError,
+    toastInfo,
+    toastWarning,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
 
-export { useToast, toast }
+export { useToast, toast, toastSuccess, toastError, toastInfo, toastWarning }

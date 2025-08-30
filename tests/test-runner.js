@@ -6,8 +6,8 @@ const path = require('path')
 // Test runner configuration
 const config = {
   jest: {
-    config: path.join(__dirname, 'jest.config.js'),
-    testPath: 'tests/unit tests/components tests/pages tests/services',
+    config: path.join(__dirname, '../jest.config.js'),
+    testPath: 'tests/unit|tests/components|tests/pages|tests/services',
     coverage: true,
   },
   playwright: {

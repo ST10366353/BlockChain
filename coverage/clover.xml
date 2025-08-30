@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1756554792394" clover="3.2.0">
-  <project timestamp="1756554792394" name="All files">
-    <metrics statements="3847" coveredstatements="71" conditionals="2152" coveredconditionals="46" methods="1225" coveredmethods="19" elements="7224" coveredelements="136" complexity="0" loc="3847" ncloc="3847" packages="8" files="100" classes="100"/>
+<coverage generated="1756564463295" clover="3.2.0">
+  <project timestamp="1756564463296" name="All files">
+    <metrics statements="3814" coveredstatements="17" conditionals="2129" coveredconditionals="23" methods="1216" coveredmethods="5" elements="7159" coveredelements="45" complexity="0" loc="3814" ncloc="3814" packages="8" files="100" classes="100"/>
     <package name="components">
-      <metrics statements="444" coveredstatements="53" conditionals="361" coveredconditionals="46" methods="123" coveredmethods="18"/>
+      <metrics statements="444" coveredstatements="17" conditionals="361" coveredconditionals="23" methods="123" coveredmethods="5"/>
       <file name="bulk-actions.tsx" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\components\bulk-actions.tsx">
         <metrics statements="28" coveredstatements="0" conditionals="43" coveredconditionals="0" methods="12" coveredmethods="0"/>
         <line num="3" count="0" type="stmt"/>
@@ -36,36 +36,36 @@
         <line num="334" count="0" type="stmt"/>
       </file>
       <file name="error-boundary.tsx" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\components\error-boundary.tsx">
-        <metrics statements="43" coveredstatements="19" conditionals="26" coveredconditionals="17" methods="21" coveredmethods="8"/>
-        <line num="3" count="1" type="stmt"/>
-        <line num="4" count="1" type="stmt"/>
-        <line num="5" count="1" type="stmt"/>
+        <metrics statements="43" coveredstatements="0" conditionals="26" coveredconditionals="0" methods="21" coveredmethods="0"/>
+        <line num="3" count="0" type="stmt"/>
+        <line num="4" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
         <line num="33" count="0" type="stmt"/>
-        <line num="41" count="43" type="stmt"/>
-        <line num="43" count="43" type="stmt"/>
+        <line num="41" count="0" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
         <line num="45" count="0" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="53" count="0" type="stmt"/>
         <line num="131" count="0" type="stmt"/>
         <line num="181" count="0" type="stmt"/>
-        <line num="212" count="27" type="stmt"/>
-        <line num="217" count="52" type="stmt"/>
-        <line num="218" count="51" type="stmt"/>
-        <line num="228" count="49" type="stmt"/>
-        <line num="230" count="49" type="stmt"/>
-        <line num="239" count="3" type="cond" truecount="1" falsecount="1"/>
-        <line num="247" count="3" type="stmt"/>
-        <line num="250" count="3" type="stmt"/>
-        <line num="253" count="3" type="cond" truecount="0" falsecount="1"/>
+        <line num="212" count="0" type="stmt"/>
+        <line num="217" count="0" type="stmt"/>
+        <line num="218" count="0" type="stmt"/>
+        <line num="228" count="0" type="stmt"/>
+        <line num="230" count="0" type="stmt"/>
+        <line num="239" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="247" count="0" type="stmt"/>
+        <line num="250" count="0" type="stmt"/>
+        <line num="253" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="259" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="260" count="0" type="stmt"/>
         <line num="261" count="0" type="stmt"/>
         <line num="272" count="0" type="stmt"/>
         <line num="277" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="278" count="0" type="stmt"/>
-        <line num="283" count="103" type="cond" truecount="3" falsecount="0"/>
-        <line num="284" count="52" type="cond" truecount="2" falsecount="0"/>
-        <line num="298" count="51" type="stmt"/>
+        <line num="283" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="284" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="298" count="0" type="stmt"/>
         <line num="303" count="0" type="stmt"/>
         <line num="304" count="0" type="stmt"/>
         <line num="306" count="0" type="stmt"/>
@@ -78,14 +78,14 @@
         <line num="337" count="0" type="stmt"/>
         <line num="345" count="0" type="stmt"/>
         <line num="352" count="0" type="stmt"/>
-        <line num="360" count="4" type="stmt"/>
-        <line num="367" count="3" type="stmt"/>
+        <line num="360" count="0" type="stmt"/>
+        <line num="367" count="0" type="stmt"/>
       </file>
       <file name="qr-code-generator.tsx" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\components\qr-code-generator.tsx">
-        <metrics statements="124" coveredstatements="17" conditionals="72" coveredconditionals="6" methods="19" coveredmethods="5"/>
-        <line num="3" count="1" type="stmt"/>
-        <line num="4" count="1" type="stmt"/>
-        <line num="5" count="1" type="stmt"/>
+        <metrics statements="124" coveredstatements="0" conditionals="72" coveredconditionals="0" methods="19" coveredmethods="0"/>
+        <line num="3" count="0" type="stmt"/>
+        <line num="4" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
         <line num="27" count="0" type="stmt"/>
         <line num="34" count="0" type="stmt"/>
         <line num="35" count="0" type="stmt"/>
@@ -193,20 +193,20 @@
         <line num="277" count="0" type="stmt"/>
         <line num="278" count="0" type="stmt"/>
         <line num="279" count="0" type="stmt"/>
-        <line num="360" count="8" type="stmt"/>
-        <line num="361" count="8" type="stmt"/>
-        <line num="362" count="8" type="stmt"/>
-        <line num="364" count="8" type="stmt"/>
-        <line num="365" count="3" type="stmt"/>
-        <line num="366" count="3" type="stmt"/>
-        <line num="369" count="8" type="stmt"/>
-        <line num="370" count="1" type="stmt"/>
-        <line num="371" count="1" type="stmt"/>
-        <line num="374" count="8" type="stmt"/>
-        <line num="383" count="5" type="stmt"/>
-        <line num="393" count="2" type="stmt"/>
-        <line num="403" count="1" type="stmt"/>
-        <line num="413" count="1" type="stmt"/>
+        <line num="360" count="0" type="stmt"/>
+        <line num="361" count="0" type="stmt"/>
+        <line num="362" count="0" type="stmt"/>
+        <line num="364" count="0" type="stmt"/>
+        <line num="365" count="0" type="stmt"/>
+        <line num="366" count="0" type="stmt"/>
+        <line num="369" count="0" type="stmt"/>
+        <line num="370" count="0" type="stmt"/>
+        <line num="371" count="0" type="stmt"/>
+        <line num="374" count="0" type="stmt"/>
+        <line num="383" count="0" type="stmt"/>
+        <line num="393" count="0" type="stmt"/>
+        <line num="403" count="0" type="stmt"/>
+        <line num="413" count="0" type="stmt"/>
       </file>
       <file name="qr-code-scanner.tsx" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\components\qr-code-scanner.tsx">
         <metrics statements="112" coveredstatements="0" conditionals="59" coveredconditionals="0" methods="17" coveredmethods="0"/>
@@ -1722,7 +1722,7 @@
       </file>
     </package>
     <package name="hooks">
-      <metrics statements="542" coveredstatements="18" conditionals="284" coveredconditionals="0" methods="137" coveredmethods="1"/>
+      <metrics statements="542" coveredstatements="0" conditionals="284" coveredconditionals="0" methods="137" coveredmethods="0"/>
       <file name="use-bulk-operations.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\hooks\use-bulk-operations.ts">
         <metrics statements="152" coveredstatements="0" conditionals="92" coveredconditionals="0" methods="35" coveredmethods="0"/>
         <line num="3" count="0" type="stmt"/>
@@ -2220,23 +2220,23 @@
         <line num="352" count="0" type="stmt"/>
       </file>
       <file name="use-toast.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\hooks\use-toast.ts">
-        <metrics statements="61" coveredstatements="18" conditionals="16" coveredconditionals="0" methods="22" coveredmethods="1"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="11" count="2" type="stmt"/>
-        <line num="12" count="2" type="stmt"/>
-        <line num="21" count="2" type="stmt"/>
-        <line num="28" count="2" type="stmt"/>
+        <metrics statements="61" coveredstatements="0" conditionals="16" coveredconditionals="0" methods="22" coveredmethods="0"/>
+        <line num="4" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
         <line num="31" count="0" type="stmt"/>
         <line num="32" count="0" type="stmt"/>
-        <line num="59" count="2" type="stmt"/>
-        <line num="61" count="2" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="61" count="0" type="stmt"/>
         <line num="62" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="63" count="0" type="stmt"/>
         <line num="66" count="0" type="stmt"/>
         <line num="67" count="0" type="stmt"/>
         <line num="68" count="0" type="stmt"/>
         <line num="74" count="0" type="stmt"/>
-        <line num="77" count="2" type="stmt"/>
+        <line num="77" count="0" type="stmt"/>
         <line num="78" count="0" type="cond" truecount="0" falsecount="4"/>
         <line num="80" count="0" type="stmt"/>
         <line num="86" count="0" type="stmt"/>
@@ -2252,8 +2252,8 @@
         <line num="120" count="0" type="stmt"/>
         <line num="125" count="0" type="stmt"/>
         <line num="127" count="0" type="stmt"/>
-        <line num="132" count="2" type="stmt"/>
-        <line num="134" count="2" type="stmt"/>
+        <line num="132" count="0" type="stmt"/>
+        <line num="134" count="0" type="stmt"/>
         <line num="137" count="0" type="stmt"/>
         <line num="138" count="0" type="stmt"/>
         <line num="139" count="0" type="stmt"/>
@@ -2264,24 +2264,24 @@
         <line num="155" count="0" type="stmt"/>
         <line num="162" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="167" count="0" type="stmt"/>
-        <line num="175" count="2" type="stmt"/>
+        <line num="175" count="0" type="stmt"/>
         <line num="176" count="0" type="stmt"/>
-        <line num="183" count="2" type="stmt"/>
+        <line num="183" count="0" type="stmt"/>
         <line num="184" count="0" type="stmt"/>
-        <line num="191" count="2" type="stmt"/>
+        <line num="191" count="0" type="stmt"/>
         <line num="192" count="0" type="stmt"/>
-        <line num="199" count="2" type="stmt"/>
+        <line num="199" count="0" type="stmt"/>
         <line num="200" count="0" type="stmt"/>
-        <line num="208" count="43" type="stmt"/>
-        <line num="210" count="43" type="stmt"/>
+        <line num="208" count="0" type="stmt"/>
+        <line num="210" count="0" type="stmt"/>
         <line num="211" count="0" type="stmt"/>
         <line num="212" count="0" type="stmt"/>
         <line num="213" count="0" type="stmt"/>
         <line num="214" count="0" type="cond" truecount="0" falsecount="1"/>
         <line num="215" count="0" type="stmt"/>
-        <line num="220" count="43" type="stmt"/>
+        <line num="220" count="0" type="stmt"/>
         <line num="227" count="0" type="stmt"/>
-        <line num="231" count="43" type="stmt"/>
+        <line num="231" count="0" type="stmt"/>
       </file>
     </package>
     <package name="lib">
@@ -3484,13 +3484,58 @@
       </file>
     </package>
     <package name="services">
-      <metrics statements="654" coveredstatements="0" conditionals="265" coveredconditionals="0" methods="205" coveredmethods="0"/>
+      <metrics statements="621" coveredstatements="0" conditionals="242" coveredconditionals="0" methods="196" coveredmethods="0"/>
+      <file name="api-client.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\api-client.ts">
+        <metrics statements="42" coveredstatements="0" conditionals="20" coveredconditionals="0" methods="16" coveredmethods="0"/>
+        <line num="1" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="19" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="25" count="0" type="stmt"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+        <line num="38" count="0" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="50" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="51" count="0" type="stmt"/>
+        <line num="54" count="0" type="stmt"/>
+        <line num="55" count="0" type="stmt"/>
+        <line num="56" count="0" type="stmt"/>
+        <line num="58" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="65" count="0" type="stmt"/>
+        <line num="72" count="0" type="stmt"/>
+        <line num="78" count="0" type="stmt"/>
+        <line num="83" count="0" type="stmt"/>
+        <line num="93" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="94" count="0" type="stmt"/>
+        <line num="98" count="0" type="stmt"/>
+        <line num="102" count="0" type="stmt"/>
+        <line num="106" count="0" type="stmt"/>
+        <line num="110" count="0" type="stmt"/>
+        <line num="115" count="0" type="stmt"/>
+        <line num="120" count="0" type="stmt"/>
+        <line num="125" count="0" type="stmt"/>
+        <line num="128" count="0" type="stmt"/>
+        <line num="129" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="130" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="132" count="0" type="stmt"/>
+        <line num="136" count="0" type="stmt"/>
+        <line num="137" count="0" type="stmt"/>
+        <line num="139" count="0" type="stmt"/>
+        <line num="140" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="141" count="0" type="stmt"/>
+        <line num="145" count="0" type="stmt"/>
+      </file>
       <file name="api-config.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\api-config.ts">
         <metrics statements="4" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="2" count="0" type="stmt"/>
         <line num="17" count="0" type="stmt"/>
         <line num="23" count="0" type="stmt"/>
-        <line num="86" count="0" type="stmt"/>
+        <line num="172" count="0" type="stmt"/>
       </file>
       <file name="audit-api.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\audit-api.ts">
         <metrics statements="86" coveredstatements="0" conditionals="40" coveredconditionals="0" methods="36" coveredmethods="0"/>
@@ -3580,86 +3625,6 @@
         <line num="360" count="0" type="stmt"/>
         <line num="363" count="0" type="stmt"/>
         <line num="368" count="0" type="stmt"/>
-      </file>
-      <file name="credentials-api.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\credentials-api.ts">
-        <metrics statements="77" coveredstatements="0" conditionals="43" coveredconditionals="0" methods="25" coveredmethods="0"/>
-        <line num="1" count="0" type="stmt"/>
-        <line num="2" count="0" type="stmt"/>
-        <line num="122" count="0" type="stmt"/>
-        <line num="129" count="0" type="stmt"/>
-        <line num="137" count="0" type="stmt"/>
-        <line num="146" count="0" type="stmt"/>
-        <line num="154" count="0" type="stmt"/>
-        <line num="159" count="0" type="stmt"/>
-        <line num="163" count="0" type="stmt"/>
-        <line num="168" count="0" type="stmt"/>
-        <line num="172" count="0" type="stmt"/>
-        <line num="177" count="0" type="stmt"/>
-        <line num="181" count="0" type="stmt"/>
-        <line num="186" count="0" type="stmt"/>
-        <line num="189" count="0" type="stmt"/>
-        <line num="194" count="0" type="stmt"/>
-        <line num="197" count="0" type="stmt"/>
-        <line num="202" count="0" type="stmt"/>
-        <line num="205" count="0" type="stmt"/>
-        <line num="210" count="0" type="stmt"/>
-        <line num="211" count="0" type="stmt"/>
-        <line num="215" count="0" type="stmt"/>
-        <line num="220" count="0" type="stmt"/>
-        <line num="221" count="0" type="stmt"/>
-        <line num="222" count="0" type="stmt"/>
-        <line num="223" count="0" type="stmt"/>
-        <line num="225" count="0" type="stmt"/>
-        <line num="233" count="0" type="stmt"/>
-        <line num="242" count="0" type="stmt"/>
-        <line num="243" count="0" type="stmt"/>
-        <line num="244" count="0" type="stmt"/>
-        <line num="248" count="0" type="stmt"/>
-        <line num="250" count="0" type="stmt"/>
-        <line num="258" count="0" type="stmt"/>
-        <line num="263" count="0" type="stmt"/>
-        <line num="264" count="0" type="stmt"/>
-        <line num="265" count="0" type="stmt"/>
-        <line num="266" count="0" type="stmt"/>
-        <line num="268" count="0" type="stmt"/>
-        <line num="280" count="0" type="stmt"/>
-        <line num="281" count="0" type="stmt"/>
-        <line num="282" count="0" type="stmt"/>
-        <line num="283" count="0" type="stmt"/>
-        <line num="294" count="0" type="stmt"/>
-        <line num="296" count="0" type="stmt"/>
-        <line num="299" count="0" type="stmt"/>
-        <line num="309" count="0" type="stmt"/>
-        <line num="314" count="0" type="cond" truecount="0" falsecount="1"/>
-        <line num="316" count="0" type="stmt"/>
-        <line num="317" count="0" type="stmt"/>
-        <line num="318" count="0" type="stmt"/>
-        <line num="328" count="0" type="stmt"/>
-        <line num="332" count="0" type="stmt"/>
-        <line num="344" count="0" type="stmt"/>
-        <line num="351" count="0" type="stmt"/>
-        <line num="352" count="0" type="stmt"/>
-        <line num="354" count="0" type="cond" truecount="0" falsecount="3"/>
-        <line num="355" count="0" type="stmt"/>
-        <line num="360" count="0" type="stmt"/>
-        <line num="362" count="0" type="stmt"/>
-        <line num="363" count="0" type="stmt"/>
-        <line num="371" count="0" type="stmt"/>
-        <line num="372" count="0" type="stmt"/>
-        <line num="381" count="0" type="stmt"/>
-        <line num="398" count="0" type="stmt"/>
-        <line num="410" count="0" type="cond" truecount="0" falsecount="1"/>
-        <line num="411" count="0" type="stmt"/>
-        <line num="414" count="0" type="stmt"/>
-        <line num="415" count="0" type="stmt"/>
-        <line num="416" count="0" type="stmt"/>
-        <line num="421" count="0" type="stmt"/>
-        <line num="422" count="0" type="stmt"/>
-        <line num="424" count="0" type="cond" truecount="0" falsecount="1"/>
-        <line num="425" count="0" type="stmt"/>
-        <line num="430" count="0" type="stmt"/>
-        <line num="432" count="0" type="stmt"/>
-        <line num="438" count="0" type="stmt"/>
       </file>
       <file name="data-export-import.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\data-export-import.ts">
         <metrics statements="86" coveredstatements="0" conditionals="61" coveredconditionals="0" methods="30" coveredmethods="0"/>
@@ -3796,19 +3761,21 @@
         <line num="229" count="0" type="stmt"/>
       </file>
       <file name="index.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\index.ts">
-        <metrics statements="12" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <metrics statements="14" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="2" count="0" type="stmt"/>
         <line num="3" count="0" type="stmt"/>
         <line num="7" count="0" type="stmt"/>
-        <line num="20" count="0" type="stmt"/>
-        <line num="36" count="0" type="stmt"/>
-        <line num="46" count="0" type="stmt"/>
-        <line num="59" count="0" type="stmt"/>
-        <line num="75" count="0" type="stmt"/>
-        <line num="85" count="0" type="stmt"/>
-        <line num="95" count="0" type="stmt"/>
-        <line num="109" count="0" type="stmt"/>
-        <line num="120" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="40" count="0" type="stmt"/>
+        <line num="50" count="0" type="stmt"/>
+        <line num="64" count="0" type="stmt"/>
+        <line num="80" count="0" type="stmt"/>
+        <line num="90" count="0" type="stmt"/>
+        <line num="98" count="0" type="stmt"/>
+        <line num="112" count="0" type="stmt"/>
+        <line num="123" count="0" type="stmt"/>
+        <line num="133" count="0" type="stmt"/>
       </file>
       <file name="notifications-api.ts" path="C:\Users\lab_services_student\Documents\GitHub\BlockChain\src\services\notifications-api.ts">
         <metrics statements="144" coveredstatements="0" conditionals="43" coveredconditionals="0" methods="33" coveredmethods="0"/>

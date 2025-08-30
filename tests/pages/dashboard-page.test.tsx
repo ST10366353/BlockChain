@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 // Mock services
-jest.mock('@/src/services', () => ({
+jest.mock('@/services', () => ({
   dashboardAPI: {
     getDashboardData: jest.fn(),
     getRecentActivity: jest.fn(),
@@ -29,14 +29,14 @@ jest.mock('@/src/services', () => ({
 }))
 
 // Mock hooks
-jest.mock('@/src/hooks/use-toast', () => ({
+jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toastSuccess: jest.fn(),
     toastError: jest.fn(),
   }),
 }))
 
-jest.mock('@/src/hooks/use-error-handler', () => ({
+jest.mock('@/hooks/use-error-handler', () => ({
   useAPIErrorHandler: () => ({
     handleAsyncError: jest.fn(),
     withRetry: jest.fn(),
@@ -44,7 +44,7 @@ jest.mock('@/src/hooks/use-error-handler', () => ({
 }))
 
 // Mock components
-jest.mock('@/src/components/layout/page-layout', () => ({
+jest.mock('@/components/layout/page-layout', () => ({
   DashboardLayout: ({ children, user, notifications, title }) => (
     <div data-testid="dashboard-layout">
       <div data-testid="layout-user">{user?.name}</div>
@@ -143,7 +143,7 @@ describe('Dashboard Page', () => {
 
   it('should handle loading states', () => {
     // Mock loading state
-    const { dashboardAPI } = require('@/src/services')
+    const { dashboardAPI } = require('@/services')
     dashboardAPI.getDashboardData.mockImplementation(
       () => new Promise(resolve => setTimeout(() => resolve({}), 100))
     )
@@ -242,7 +242,7 @@ describe('Dashboard Page', () => {
 
   it('should handle network errors gracefully', async () => {
     // Mock network error
-    const { dashboardAPI } = require('@/src/services')
+    const { dashboardAPI } = require('@/services')
     dashboardAPI.getDashboardData.mockRejectedValue(new Error('Network error'))
 
     render(<Dashboard />)

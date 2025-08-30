@@ -1,7 +1,10 @@
 // Main API services exports
 export { apiClient, APIClient } from './api-client';
 export { API_CONFIG, API_ENDPOINTS, HTTP_STATUS } from './api-config';
-export type { APIResponse, APIError } from './api-config';
+export type { APIResponse, APIError, PaginationParams, SearchParams, RateLimitStatus, SystemMetrics, FeatureFlags, APIConfig } from './api-config';
+
+// Helper functions
+export { handleAPIResponse, createQueryParams } from './api-client';
 
 // DID API
 export { didAPI, DIDAPI } from './did-api';
@@ -24,12 +27,13 @@ export type {
   Proof,
   CredentialIssuanceRequest,
   SimpleCredentialIssuanceRequest,
-  CredentialVerificationRequest,
   VerificationResult,
   CredentialRevocationRequest,
   RevocationStatus,
   CredentialQueryParams,
   CredentialSummary,
+  CredentialTemplate,
+  CredentialRequest,
 } from './credentials-api';
 
 // Trust Registry API
@@ -46,6 +50,7 @@ export type {
 export { profileAPI, ProfileAPI } from './profile-api';
 export type {
   UserProfile,
+  UserPreferences,
   PrivacyPreferences,
   SecurityPreferences,
   DisplayPreferences,
@@ -89,8 +94,6 @@ export type {
   PresentationTemplate,
 } from './presentations-api';
 
-
-
 // Data Export/Import API
 export { dataExportImportAPI, DataExportImportAPI } from './data-export-import';
 export type {
@@ -116,5 +119,24 @@ export type {
   WebSocketMessage,
 } from './notifications-api';
 
-// Helper functions
-export { handleAPIResponse, createQueryParams } from './api-client';
+// Search API
+export { searchAPI, SearchAPI } from './search-api';
+export type {
+  SearchResult,
+  CredentialSearchResult,
+  ConnectionSearchResult,
+  PresentationSearchResult,
+  AuditSearchResult,
+} from './search-api';
+
+// System API
+export { systemAPI, SystemAPI } from './system-api';
+export type {
+  ConfigUpdateRequest,
+  FeatureUpdateRequest,
+  RateLimitResetRequest,
+  RequestMetrics,
+  ErrorMetrics,
+  PerformanceMetrics,
+  UsageMetrics,
+} from './system-api';

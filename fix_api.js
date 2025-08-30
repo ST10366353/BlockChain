@@ -1,4 +1,6 @@
-import { API_CONFIG, API_ENDPOINTS, getDefaultHeaders, type APIResponse, type APIError } from './api-config';
+const fs = require('fs');
+
+const fixedContent = import { API_CONFIG, API_ENDPOINTS, getDefaultHeaders, type APIResponse, type APIError } from './api-config';
 
 // Re-export types for use in other modules
 export type { APIResponse, APIError };
@@ -17,7 +19,7 @@ export class APIClient {
   private buildURL(path: string): string {
     // Remove leading slash if present
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    return `${this.baseURL}/${cleanPath}`;
+    return \\/\\;
   }
 
   // Create timeout signal for compatibility
@@ -57,7 +59,7 @@ export class APIClient {
 
       if (!response.ok) {
         const error: APIError = {
-          error: responseData?.error || `HTTP ${response.status}`,
+          error: responseData?.error || \HTTP \\,
           message: responseData?.message || response.statusText,
           code: responseData?.code,
         };
@@ -144,3 +146,7 @@ export function createQueryParams(params: Record<string, string | number | boole
 
   return queryParams;
 }
+;
+
+fs.writeFileSync('src/services/api-client.ts', fixedContent);
+console.log('Fixed API client syntax errors');

@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 // Mock the services
-jest.mock('@/src/services', () => ({
+jest.mock('@/services', () => ({
   oidcAPI: {
     authorize: jest.fn(),
     storeSession: jest.fn(),
@@ -25,7 +25,7 @@ jest.mock('@/src/services', () => ({
 }))
 
 // Mock the useToast hook
-jest.mock('@/src/hooks/use-toast', () => ({
+jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toastSuccess: jest.fn(),
     toastError: jest.fn(),
@@ -76,7 +76,7 @@ describe('LoginPage', () => {
   })
 
   it('handles valid passphrase unlock', async () => {
-    const { oidcAPI, didAPI } = require('@/src/services')
+    const { oidcAPI, didAPI } = require('@/services')
 
     // Mock successful passphrase validation
     oidcAPI.completeLoginFlow.mockResolvedValue({
@@ -105,7 +105,7 @@ describe('LoginPage', () => {
   })
 
   it('validates DID format', async () => {
-    const { didAPI } = require('@/src/services')
+    const { didAPI } = require('@/services')
     didAPI.validateDIDFormat.mockReturnValue(false)
 
     render(<LoginPage />)
@@ -122,7 +122,7 @@ describe('LoginPage', () => {
   })
 
   it('handles DID authentication flow', async () => {
-    const { oidcAPI, didAPI } = require('@/src/services')
+    const { oidcAPI, didAPI } = require('@/services')
 
     didAPI.validateDIDFormat.mockReturnValue(true)
     didAPI.isDIDResolvable.mockResolvedValue(true)
@@ -182,7 +182,7 @@ describe('LoginPage', () => {
   })
 
   it('handles OIDC callback', async () => {
-    const { oidcAPI } = require('@/src/services')
+    const { oidcAPI } = require('@/services')
 
     mockSearchParams.get.mockImplementation((key: string) => {
       if (key === 'code') return 'mock-auth-code'
@@ -221,7 +221,7 @@ describe('LoginPage', () => {
   })
 
   it('disables buttons during loading states', async () => {
-    const { didAPI } = require('@/src/services')
+    const { didAPI } = require('@/services')
 
     didAPI.validateDIDFormat.mockReturnValue(true)
     didAPI.isDIDResolvable.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(true), 100)))

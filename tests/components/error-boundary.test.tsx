@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { ErrorBoundary, PageErrorBoundaryWrapper } from '@/src/components/error-boundary'
+import { ErrorBoundary, PageErrorBoundaryWrapper } from '@/components/error-boundary'
 
 // Mock console methods to capture error logs
 const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {})

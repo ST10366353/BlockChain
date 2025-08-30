@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 // Mock services
-jest.mock('@/src/services', () => ({
+jest.mock('@/services', () => ({
   presentationsAPI: {
     createPresentation: jest.fn(),
     verifyPresentation: jest.fn(),
@@ -26,14 +26,14 @@ jest.mock('@/src/services', () => ({
 }))
 
 // Mock hooks
-jest.mock('@/src/hooks/use-toast', () => ({
+jest.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
     toastSuccess: jest.fn(),
     toastError: jest.fn(),
   }),
 }))
 
-jest.mock('@/src/hooks/use-error-handler', () => ({
+jest.mock('@/hooks/use-error-handler', () => ({
   useAPIErrorHandler: () => ({
     handleAsyncError: jest.fn(),
     withRetry: jest.fn(),
@@ -104,7 +104,7 @@ describe('PresentationsPage', () => {
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
 
     // Setup default mocks
-    const { presentationsAPI, credentialsAPI } = require('@/src/services')
+    const { presentationsAPI, credentialsAPI } = require('@/services')
     credentialsAPI.queryCredentials.mockResolvedValue(mockCredentials)
     presentationsAPI.getPresentationTemplates.mockReturnValue(mockTemplates)
   })
@@ -128,7 +128,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should load credentials and templates on mount', async () => {
-    const { credentialsAPI, presentationsAPI } = require('@/src/services')
+    const { credentialsAPI, presentationsAPI } = require('@/services')
 
     render(<PresentationsPage />)
 
@@ -263,7 +263,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should create presentation successfully', async () => {
-    const { presentationsAPI } = require('@/src/services')
+    const { presentationsAPI } = require('@/services')
 
     const mockPresentation = {
       '@context': ['https://www.w3.org/2018/credentials/v1'],
@@ -312,7 +312,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should handle creation errors', async () => {
-    const { presentationsAPI } = require('@/src/services')
+    const { presentationsAPI } = require('@/services')
 
     presentationsAPI.createPresentation.mockRejectedValue(new Error('Creation failed'))
 
@@ -425,7 +425,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should display empty state when no credentials available', async () => {
-    const { credentialsAPI } = require('@/src/services')
+    const { credentialsAPI } = require('@/services')
     credentialsAPI.queryCredentials.mockResolvedValue([])
 
     render(<PresentationsPage />)
@@ -437,7 +437,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should disable create button when no credentials available', async () => {
-    const { credentialsAPI } = require('@/src/services')
+    const { credentialsAPI } = require('@/services')
     credentialsAPI.queryCredentials.mockResolvedValue([])
 
     render(<PresentationsPage />)
@@ -449,7 +449,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should handle refresh functionality', async () => {
-    const { credentialsAPI } = require('@/src/services')
+    const { credentialsAPI } = require('@/services')
 
     render(<PresentationsPage />)
 
@@ -485,7 +485,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should handle loading states', async () => {
-    const { credentialsAPI } = require('@/src/services')
+    const { credentialsAPI } = require('@/services')
 
     // Mock slow response
     credentialsAPI.queryCredentials.mockImplementation(
@@ -499,7 +499,7 @@ describe('PresentationsPage', () => {
   })
 
   it('should handle error states', async () => {
-    const { credentialsAPI } = require('@/src/services')
+    const { credentialsAPI } = require('@/services')
     credentialsAPI.queryCredentials.mockRejectedValue(new Error('API Error'))
 
     render(<PresentationsPage />)

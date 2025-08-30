@@ -1,10 +1,10 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { BulkActionsToolbar, BulkProgressIndicator, BulkResultsModal } from '@/src/components/bulk-actions'
-import { useBulkOperations, useBulkSelection } from '@/src/hooks/use-bulk-operations'
+import { BulkActionsToolbar, BulkProgressIndicator, BulkResultsModal } from '@/components/bulk-actions'
+import { useBulkOperations, useBulkSelection } from '@/hooks/use-bulk-operations'
 
 // Mock hooks
-jest.mock('@/src/hooks/use-bulk-operations')
+jest.mock('@/hooks/use-bulk-operations')
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({

@@ -254,7 +254,7 @@ export class SystemAPI {
 
   // Update feature flag
   async updateFeature(flag: keyof FeatureFlags, update: FeatureUpdateRequest): Promise<{ success: boolean; feature: string; enabled: boolean; updated_at: string }> {
-    const response = await apiClient.put(\\$\{API_ENDPOINTS.features\}/\$\{flag\}\, update);
+    const response = await apiClient.put(`${API_ENDPOINTS.features}/${flag}`, update);
     return handleAPIResponse(response);
   }
 
@@ -273,28 +273,28 @@ export class SystemAPI {
   // Get request metrics
   async getRequestMetrics(params?: { period?: string; start_date?: string; end_date?: string }): Promise<RequestMetrics> {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
-    const response = await apiClient.get();
+    const response = await apiClient.get(`${API_ENDPOINTS.metrics.requests}${queryString}`);
     return handleAPIResponse(response);
   }
 
   // Get error metrics
   async getErrorMetrics(params?: { period?: string; status_code?: number }): Promise<ErrorMetrics> {
     const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    const response = await apiClient.get(\\\\);
+    const response = await apiClient.get(`${API_ENDPOINTS.metrics.errors}${queryString}`);
     return handleAPIResponse(response);
   }
 
   // Get performance metrics
   async getPerformanceMetrics(params?: { period?: string }): Promise<PerformanceMetrics> {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
-    const response = await apiClient.get(\\\\);
+    const response = await apiClient.get(`${API_ENDPOINTS.metrics.performance}${queryString}`);
     return handleAPIResponse(response);
   }
 
   // Get usage metrics
   async getUsageMetrics(params?: { period?: string; user_did?: string }): Promise<UsageMetrics> {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
-    const response = await apiClient.get(\\\\);
+    const response = await apiClient.get(`${API_ENDPOINTS.metrics.usage}${queryString}`);
     return handleAPIResponse(response);
   }
 

@@ -124,7 +124,7 @@ export default function Dashboard() {
       // In a real implementation, you would have an endpoint to get user's identities
       // For now, we'll simulate by checking if some common DIDs are resolvable
       const commonDIDs = [
-        { did: "did:web:alice.com", isPrimary: true, method: "web" },
+        { did: "did:web:Lerato.com", isPrimary: true, method: "web" },
         { did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK", isPrimary: false, method: "key" }
       ]
 
@@ -162,7 +162,7 @@ export default function Dashboard() {
     try {
       // Get user's credentials (using a common subject DID)
       const credentials = await credentialsAPI.queryCredentials({
-        subject: "did:web:alice.com",
+        subject: "did:web:Lerato.com",
         limit: 100
       })
 

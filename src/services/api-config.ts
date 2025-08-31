@@ -1,16 +1,21 @@
 // API Configuration
 export const API_CONFIG = {
-  // Use environment variable for API base URL, fallback to production
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://did-blockchain-380915310329.europe-west1.run.app',
+  // Use local development for now to avoid external API issues
+  baseURL: process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:3001' 
+    : (process.env.NEXT_PUBLIC_API_URL || 'https://did-blockchain-380915310329.europe-west1.run.app'),
 
   // Development fallback
-  devURL: 'http://localhost:3000',
+  devURL: 'http://localhost:3001',
 
   // Request timeout in milliseconds
   timeout: 30000,
 
   // API version
   version: 'v1',
+
+  // Mock mode for development
+  useMockData: process.env.NODE_ENV === 'development',
 };
 
 // Common headers for all requests
@@ -132,10 +137,13 @@ export const API_ENDPOINTS = {
   },
 
   // Real-time Notifications
-  notifications: '/notifications',
-  notificationPreferences: '/notifications/preferences',
-  notificationStats: '/notifications/stats',
-  notificationTemplates: '/notifications/templates',
+  notifications: {
+    list: '/notifications',
+    preferences: '/notifications/preferences',
+    stats: '/notifications/stats',
+    templates: '/notifications/templates',
+    markAllRead: '/notifications/mark-all-read'
+  },
   websocketNotifications: '/ws/notifications',
 
   // Advanced Search & Filtering
@@ -165,7 +173,7 @@ export const API_ENDPOINTS = {
     errors: '/metrics/errors',
     performance: '/metrics/performance',
     usage: '/metrics/usage',
-  },
+  }
 };
 
 // HTTP status codes

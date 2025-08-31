@@ -21,7 +21,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { VerifiableCredential } from '../types';
-import { formatDate, formatDID } from '../lib/utils';
+import { formatDate, formatDID } from '../../lib/utils';
 
 interface CredentialDetailsModalProps {
   credential: VerifiableCredential;

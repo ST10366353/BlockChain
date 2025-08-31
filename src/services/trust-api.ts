@@ -1,5 +1,7 @@
 import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
 import { API_ENDPOINTS } from './api-config';
+import { API_CONFIG } from './api-config';
+import { mockData, simulateNetworkDelay } from './mock-data';
 
 // Trusted issuer interfaces
 export interface TrustedIssuer {
@@ -66,65 +68,53 @@ export interface TrustQueryParams {
   offset?: number;
 }
 
-// Trust registry API Client
+// Trust Registry API Client
 export class TrustAPI {
-  // List all trusted issuers
-  async getTrustedIssuers(params: TrustQueryParams = {}): Promise<TrustedIssuer[]> {
-    try {
-      const queryParams = createQueryParams({
-        ...params,
-        tags: Array.isArray(params.tags) ? params.tags.join(',') : params.tags,
-      });
-
-      const response = await apiClient.get<TrustedIssuer[]>(
-        API_ENDPOINTS.trust.issuers,
-        queryParams
-      );
-      return handleAPIResponse(response);
-    } catch (error) {
-      console.warn('Trust registry API not available, returning mock data:', error);
-      // Return mock trusted issuers for graceful degradation
-      return [
-        {
-          did: 'did:web:trusted-issuer-1.com',
-          status: 'trusted',
-          tags: ['verified', 'government'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          metadata: {
-            name: 'Government Identity Service',
-            description: 'Official government identity verification service',
-            website: 'https://trusted-issuer-1.com',
-            jurisdiction: 'US',
-            contact: 'support@trusted-issuer-1.com'
-          },
-          evidenceUri: 'https://trusted-issuer-1.com/evidence',
-          verifiedAt: new Date().toISOString(),
-          verifiedBy: 'system'
+  // Get trusted issuers
+  async getTrustedIssuers(params?: TrustQueryParams): Promise<TrustedIssuer[]> {
+    // Use mock data in development to avoid external API calls
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockIssuers = await mockData.getTrustedIssuers();
+      // Convert mock format to TrustedIssuer format
+      return mockIssuers.map(issuer => ({
+        did: issuer.did,
+        status: issuer.status as 'trusted' | 'suspended' | 'revoked',
+        tags: ['verified'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        metadata: {
+          name: issuer.name,
+          description: `Trusted issuer for ${issuer.credentialTypes.join(', ')}`,
+          website: `https://${issuer.did.replace('did:web:', '')}`,
+          jurisdiction: 'US',
+          contact: `contact@${issuer.did.replace('did:web:', '')}`
         },
-        {
-          did: 'did:web:university.edu',
-          status: 'trusted',
-          tags: ['verified', 'education'],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          metadata: {
-            name: 'University Credential Service',
-            description: 'Academic credential issuance service',
-            website: 'https://university.edu',
-            jurisdiction: 'US',
-            contact: 'credentials@university.edu'
-          },
-          evidenceUri: 'https://university.edu/evidence',
-          verifiedAt: new Date().toISOString(),
-          verifiedBy: 'system'
-        }
-      ];
+        evidenceUri: `https://${issuer.did.replace('did:web:', '')}/evidence`,
+        verifiedAt: new Date().toISOString(),
+        verifiedBy: 'system'
+      }));
     }
+
+    const queryString = params ? createQueryParams(params as any) : {};
+    const response = await apiClient.get<TrustedIssuer[]>(
+      API_ENDPOINTS.trust.issuers,
+      queryString
+    );
+    return handleAPIResponse(response);
   }
 
-  // Add a new trusted issuer
+  // Add a trusted issuer
   async addTrustedIssuer(request: IssuerRegistrationRequest): Promise<{ success: boolean; did: string }> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        did: request.did
+      };
+    }
+
     const response = await apiClient.post<{ success: boolean; did: string }>(
       API_ENDPOINTS.trust.issuers,
       request
@@ -132,34 +122,17 @@ export class TrustAPI {
     return handleAPIResponse(response);
   }
 
-  // Update a trusted issuer
+  // Update trusted issuer information
   async updateTrustedIssuer(did: string, request: IssuerUpdateRequest): Promise<{ success: boolean; did: string }> {
-    const response = await apiClient.put<{ success: boolean; did: string }>(
-      `${API_ENDPOINTS.trust.issuers}/${encodeURIComponent(did)}`,
-      request
-    );
-    return handleAPIResponse(response);
-  }
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        did: did
+      };
+    }
 
-  // Get details of a specific trusted issuer
-  async getTrustedIssuer(did: string): Promise<TrustedIssuer> {
-    const response = await apiClient.get<TrustedIssuer>(
-      `${API_ENDPOINTS.trust.issuers}/${encodeURIComponent(did)}`
-    );
-    return handleAPIResponse(response);
-  }
-
-  // Remove a trusted issuer (alias for singular endpoint)
-  async addTrustedIssuerAlias(request: IssuerRegistrationRequest): Promise<{ success: boolean; did: string }> {
-    const response = await apiClient.post<{ success: boolean; did: string }>(
-      API_ENDPOINTS.trust.issuer,
-      request
-    );
-    return handleAPIResponse(response);
-  }
-
-  // Update trusted issuer (alias for singular endpoint)
-  async updateTrustedIssuerAlias(did: string, request: IssuerUpdateRequest): Promise<{ success: boolean; did: string }> {
     const response = await apiClient.put<{ success: boolean; did: string }>(
       `${API_ENDPOINTS.trust.issuer}/${encodeURIComponent(did)}`,
       request
@@ -167,10 +140,89 @@ export class TrustAPI {
     return handleAPIResponse(response);
   }
 
-  // Get credential schemas from schema registry
-  async getCredentialSchemas(): Promise<{ schemas: CredentialSchema[]; total: number }> {
+  // Get issuer details
+  async getIssuerDetails(did: string): Promise<TrustedIssuer> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const trustedIssuers = await this.getTrustedIssuers();
+      return trustedIssuers.find(issuer => issuer.did === did) || trustedIssuers[0];
+    }
+
+    const response = await apiClient.get<TrustedIssuer>(
+      `${API_ENDPOINTS.trust.issuer}/${encodeURIComponent(did)}`
+    );
+    return handleAPIResponse(response);
+  }
+
+  // Remove trusted issuer
+  async removeTrustedIssuer(did: string): Promise<{ success: boolean; did: string }> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        did: did
+      };
+    }
+
+    const response = await apiClient.post<{ success: boolean; did: string }>(
+      `${API_ENDPOINTS.trust.issuer}/${encodeURIComponent(did)}/remove`,
+      {}
+    );
+    return handleAPIResponse(response);
+  }
+
+  // Update issuer trust status
+  async updateIssuerTrustStatus(did: string, status: string): Promise<{ success: boolean; did: string }> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        did: did
+      };
+    }
+
+    const response = await apiClient.put<{ success: boolean; did: string }>(
+      `${API_ENDPOINTS.trust.issuer}/${encodeURIComponent(did)}/status`,
+      { status }
+    );
+    return handleAPIResponse(response);
+  }
+
+  // Get credential schemas
+  async getCredentialSchemas(params?: { type?: string; issuer?: string }): Promise<{ schemas: CredentialSchema[]; total: number }> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        schemas: [
+          {
+            id: 'schema-1',
+            type: 'EducationCredential',
+            name: 'Education Credential Schema',
+            description: 'Schema for educational achievements',
+            version: '1.0',
+            schema: {
+              type: 'object',
+              properties: {
+                degree: { type: 'string' },
+                institution: { type: 'string' },
+                graduationDate: { type: 'string', format: 'date' }
+              },
+              required: ['degree', 'institution']
+            },
+            createdAt: new Date().toISOString()
+          }
+        ],
+        total: 1
+      };
+    }
+
+    const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
     const response = await apiClient.get<{ schemas: CredentialSchema[]; total: number }>(
-      API_ENDPOINTS.trust.schemas
+      `${API_ENDPOINTS.trust.schemas}${queryString}`
     );
     return handleAPIResponse(response);
   }
@@ -178,7 +230,7 @@ export class TrustAPI {
   // Check if an issuer is trusted
   async isIssuerTrusted(did: string): Promise<boolean> {
     try {
-      const issuer = await this.getTrustedIssuer(did);
+      const issuer = await this.getIssuerDetails(did);
       return issuer.status === 'trusted';
     } catch (error) {
       return false;
@@ -206,7 +258,7 @@ export class TrustAPI {
   ): Promise<{ success: boolean; updated: string[]; failed: string[] }> {
     const results = await Promise.allSettled(
       issuerDIDs.map(did =>
-        this.updateTrustedIssuer(did, { status })
+        this.updateIssuerTrustStatus(did, status)
       )
     );
 

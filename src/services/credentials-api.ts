@@ -1,5 +1,6 @@
 import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
-import { API_ENDPOINTS } from './api-config';
+import { API_ENDPOINTS, API_CONFIG } from './api-config';
+import { mockData, simulateNetworkDelay } from './mock-data';
 
 // Credential interfaces
 export interface CredentialSubject {
@@ -135,94 +136,282 @@ export interface CredentialRequest {
 
 // Credentials API Client
 export class CredentialsAPI {
-  // Issue a new verifiable credential
-  async issueCredential(request: CredentialIssuanceRequest): Promise<APIResponse<{ jwt: string; credentialId: string; credential: VerifiableCredential }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  // Issue a new credential
+  async issueCredential(request: CredentialIssuanceRequest): Promise<VerifiableCredential> {
+    // Use mock data in development to avoid external API calls
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return mockCredentials[0] as any; // Cast to VerifiableCredential for now
+    }
+
+    const response = await apiClient.post<VerifiableCredential>(
+      API_ENDPOINTS.credentials.issue,
+      request
+    );
+    return handleAPIResponse(response);
   }
 
-  // Issue credential with simplified format
-  async issueCredentialSimple(request: SimpleCredentialIssuanceRequest): Promise<APIResponse<{ jwt: string; credentialId: string; credential: VerifiableCredential }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  // Simple credential issuance for basic use cases
+  async issueSimpleCredential(request: SimpleCredentialIssuanceRequest): Promise<VerifiableCredential> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return {
+        ...mockCredentials[0],
+        issuer: request.issuer,
+        credentialSubject: {
+          ...mockCredentials[0].credentialSubject,
+          ...request.credentialSubject
+        }
+      } as any;
+    }
+
+    // Convert simple request to full request
+    const fullRequest: CredentialIssuanceRequest = {
+      issuer: request.issuer,
+      subject: request.subject,
+      credentialSubject: request.credentialSubject,
+      type: request.type || ['VerifiableCredential'],
+      format: 'jwt_vc',
+      issuanceDate: new Date().toISOString()
+    };
+
+    return this.issueCredential(fullRequest);
   }
 
-  // Verify a verifiable credential
-  async verifyCredential(credential: string | VerifiableCredential): Promise<APIResponse<VerificationResult>> {
-    const request = { credential };
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  // Verify a credential
+  async verifyCredential(credential: VerifiableCredential): Promise<VerificationResult> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        verified: true,
+        issuer: credential.issuer,
+        subject: credential.subject || 'unknown',
+        issuanceDate: credential.issuanceDate,
+        errors: []
+      };
+    }
+
+    const response = await apiClient.post<VerificationResult>(
+      API_ENDPOINTS.credentials.verify,
+      { credential }
+    );
+    return handleAPIResponse(response);
   }
 
   // Revoke a credential
-  async revokeCredential(credentialId: string, request: CredentialRevocationRequest): Promise<APIResponse<{ success: boolean; credentialId: string }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  async revokeCredential(credentialId: string, request: CredentialRevocationRequest): Promise<{ success: boolean; revocationId: string }> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        revocationId: `revocation-${Date.now()}`
+      };
+    }
+
+    const response = await apiClient.post<{ success: boolean; revocationId: string }>(
+      `${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`,
+      request
+    );
+    return handleAPIResponse(response);
   }
 
-  // Check revocation status
-  async getRevocationStatus(credentialId: string): Promise<APIResponse<RevocationStatus>> {
-    return apiClient.get(`${API_ENDPOINTS.credentials.revocationStatus}/${credentialId}/revocation-status`);
+  // All other methods with mock data support
+  async batchRevokeCredentials(requests: Array<{ credentialId: string; request: CredentialRevocationRequest }>): Promise<Array<{ credentialId: string; success: boolean; revocationId?: string; error?: string }>> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return requests.map(req => ({
+        credentialId: req.credentialId,
+        success: true,
+        revocationId: `revocation-${Date.now()}-${req.credentialId}`
+      }));
+    }
+    // Real implementation would make batch API call
+    return Promise.all(requests.map(async ({ credentialId, request }) => {
+      try {
+        const result = await this.revokeCredential(credentialId, request);
+        return { credentialId, success: result.success, revocationId: result.revocationId };
+      } catch (error) {
+        return { credentialId, success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    }));
   }
 
-  // Get credentials by subject
-  async getCredentialsBySubject(subjectDid: string, params?: { limit?: number; offset?: number }): Promise<APIResponse<CredentialSummary[]>> {
+  async getRevocationStatus(credentialId: string): Promise<RevocationStatus> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        revoked: false,
+        revocationDate: undefined,
+        revocationReason: undefined
+      };
+    }
+    const response = await apiClient.get<RevocationStatus>(`${API_ENDPOINTS.credentials.revocationStatus}/${credentialId}/revocation-status`);
+    return handleAPIResponse(response);
+  }
+
+  async getCredentialsBySubject(subjectDid: string, params?: CredentialQueryParams): Promise<CredentialSummary[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return mockCredentials.map(cred => ({
+        id: cred.id,
+        type: cred.type,
+        issuer: cred.issuer,
+        subject: cred.subject,
+        issuanceDate: cred.issuanceDate,
+        status: cred.status || 'valid'
+      }));
+    }
     const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return apiClient.get(`${API_ENDPOINTS.credentials.bySubject}/${encodeURIComponent(subjectDid)}${queryString}`);
+    const response = await apiClient.get<CredentialSummary[]>(`${API_ENDPOINTS.credentials.bySubject}/${encodeURIComponent(subjectDid)}${queryString}`);
+    return handleAPIResponse(response);
   }
 
-  // Get credentials by issuer
-  async getCredentialsByIssuer(issuerDid: string, params?: { limit?: number; offset?: number }): Promise<APIResponse<CredentialSummary[]>> {
+  async getCredentialsByIssuer(issuerDid: string, params?: CredentialQueryParams): Promise<CredentialSummary[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return mockCredentials
+        .filter(cred => cred.issuer === issuerDid)
+        .map(cred => ({
+          id: cred.id,
+          type: cred.type,
+          issuer: cred.issuer,
+          subject: cred.subject,
+          issuanceDate: cred.issuanceDate,
+          status: cred.status || 'valid'
+        }));
+    }
     const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return apiClient.get(`${API_ENDPOINTS.credentials.byIssuer}/${encodeURIComponent(issuerDid)}${queryString}`);
+    const response = await apiClient.get<CredentialSummary[]>(`${API_ENDPOINTS.credentials.byIssuer}/${encodeURIComponent(issuerDid)}${queryString}`);
+    return handleAPIResponse(response);
   }
 
-  // Query credentials
-  async queryCredentials(params: CredentialQueryParams): Promise<APIResponse<CredentialSummary[]>> {
-    const queryString = createQueryParams(params);
-    return apiClient.get(`${API_ENDPOINTS.credentials.query}?${queryString}`);
+  async queryCredentials(params: CredentialQueryParams): Promise<CredentialSummary[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return mockCredentials.map(cred => ({
+        id: cred.id,
+        type: cred.type,
+        issuer: cred.issuer,
+        subject: cred.subject,
+        issuanceDate: cred.issuanceDate,
+        status: cred.status || 'valid'
+      }));
+    }
+    const queryString = '?' + new URLSearchParams(params as any).toString();
+    const response = await apiClient.get<CredentialSummary[]>(`${API_ENDPOINTS.credentials.query}${queryString}`);
+    return handleAPIResponse(response);
   }
 
-  // Get credential by ID
-  async getCredential(credentialId: string): Promise<APIResponse<{ id: string; jwt: string; issuerDid: string; subjectDid: string; status: string; issuedAt: string; expiresAt?: string; type: string[] }>> {
-    return apiClient.get(`${API_ENDPOINTS.credentials.query}/${credentialId}`);
+  // Continue with other methods, all following the same pattern...
+  async getCredentialById(credentialId: string): Promise<VerifiableCredential> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return mockCredentials.find(cred => cred.id === credentialId) || mockCredentials[0] as any;
+    }
+    const response = await apiClient.get<VerifiableCredential>(`${API_ENDPOINTS.credentials.query}/${credentialId}`);
+    return handleAPIResponse(response);
   }
 
-  // Update credential metadata
-  async updateCredential(credentialId: string, updates: { status?: string; metadata?: any }): Promise<APIResponse<{ success: boolean; credentialId: string; updatedAt: string }>> {
-    return apiClient.put(`${API_ENDPOINTS.credentials.query}/${credentialId}`, updates);
+  async updateCredential(credentialId: string, updates: Partial<VerifiableCredential>): Promise<VerifiableCredential> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockCredentials = await mockData.getCredentials();
+      return { ...mockCredentials[0], ...updates } as any;
+    }
+    const response = await apiClient.put<VerifiableCredential>(`${API_ENDPOINTS.credentials.query}/${credentialId}`, updates);
+    return handleAPIResponse(response);
   }
 
-  // Delete credential
-  async deleteCredential(credentialId: string): Promise<APIResponse<{ success: boolean; credentialId: string }>> {
-    return apiClient.delete(`${API_ENDPOINTS.credentials.query}/${credentialId}`);
+  async deleteCredential(credentialId: string): Promise<{ success: boolean }> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return { success: true };
+    }
+    const response = await apiClient.delete<{ success: boolean }>(`${API_ENDPOINTS.credentials.query}/${credentialId}`);
+    return handleAPIResponse(response);
   }
 
-  // Get verification status for specific credential
-  async getVerificationStatus(credentialId: string): Promise<APIResponse<{ credentialId: string; verified: boolean; lastVerified: string; verificationCount: number; verifiers: string[] }>> {
-    return apiClient.get(`${API_ENDPOINTS.credentials.query}/${credentialId}/verify`);
+  async verifyCredentialById(credentialId: string): Promise<VerificationResult> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        verified: true,
+        issuer: 'did:web:mock-issuer.com',
+        subject: 'did:web:mock-subject.com',
+        issuanceDate: new Date().toISOString(),
+        errors: []
+      };
+    }
+    const response = await apiClient.get<VerificationResult>(`${API_ENDPOINTS.credentials.query}/${credentialId}/verify`);
+    return handleAPIResponse(response);
   }
 
-  // Get available credential templates
-  async getCredentialTemplates(params?: { category?: string; type?: string }): Promise<APIResponse<{ templates: CredentialTemplate[] }>> {
+  async getCredentialTemplates(params?: { type?: string; issuer?: string }): Promise<CredentialTemplate[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return [
+        {
+          id: 'template-1',
+          name: 'Education Credential',
+          type: 'EducationCredential',
+          description: 'Template for educational achievements',
+          schema: { type: 'object', properties: {} },
+          issuer: 'did:web:university.edu'
+        }
+      ];
+    }
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
-    return apiClient.get(`${API_ENDPOINTS.credentials.templates}${queryString}`);
+    const response = await apiClient.get<CredentialTemplate[]>(`${API_ENDPOINTS.credentials.templates}${queryString}`);
+    return handleAPIResponse(response);
   }
 
-  // Create credential template
-  async createCredentialTemplate(template: Omit<CredentialTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<APIResponse<{ templateId: string; name: string; createdAt: string }>> {
-    return apiClient.post(API_ENDPOINTS.credentials.templates, template);
+  async createCredentialTemplate(template: Omit<CredentialTemplate, 'id'>): Promise<CredentialTemplate> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        id: `template-${Date.now()}`,
+        ...template
+      };
+    }
+    const response = await apiClient.post<CredentialTemplate>(API_ENDPOINTS.credentials.templates, template);
+    return handleAPIResponse(response);
   }
 
-  // Request a credential from an issuer
-  async requestCredential(request: { issuerDid: string; credentialType: string[]; claims: any; proof?: Proof }): Promise<APIResponse<{ requestId: string; status: string; issuerDid: string; estimatedProcessingTime?: string }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  // Continue with remaining methods following same pattern
+  async requestCredential(request: CredentialRequest): Promise<{ success: boolean; requestId: string }> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        success: true,
+        requestId: `request-${Date.now()}`
+      };
+    }
+    const response = await apiClient.post<{ success: boolean; requestId: string }>(API_ENDPOINTS.credentials.request, request);
+    return handleAPIResponse(response);
   }
 
-  // Batch verify multiple credentials
-  async batchVerifyCredentials(request: { credentials: string[]; options?: { skipIssuerCheck?: boolean; timeout?: number } }): Promise<APIResponse<{ results: Array<{ index: number; verified: boolean; valid: boolean; credentialId?: string; error?: string }>; summary: { total: number; verified: number; failed: number } }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
-  }
-
-  // Batch revoke multiple credentials
-  async batchRevokeCredentials(request: { credentials: Array<{ id: string; reason?: string }>; issuerDid: string }): Promise<APIResponse<{ success: boolean; revoked: string[]; failed: string[]; timestamp: string }>> {
-    return apiClient.post(`${API_ENDPOINTS.credentials.revoke}/${credentialId}/revoke`, request);
+  async batchVerifyCredentials(credentials: VerifiableCredential[]): Promise<VerificationResult[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return credentials.map(cred => ({
+        verified: true,
+        issuer: cred.issuer,
+        subject: cred.subject || 'unknown',
+        issuanceDate: cred.issuanceDate,
+        errors: []
+      }));
+    }
+    const response = await apiClient.post<VerificationResult[]>(API_ENDPOINTS.credentials.batchVerify, { credentials });
+    return handleAPIResponse(response);
   }
 }
 

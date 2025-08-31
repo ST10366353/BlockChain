@@ -1,5 +1,6 @@
 import { apiClient, handleAPIResponse, APIResponse, APIError } from './api-client'
-import { API_ENDPOINTS } from './api-config'
+import { API_ENDPOINTS, API_CONFIG } from './api-config'
+import { mockData, simulateNetworkDelay } from './mock-data'
 
 // Notification Types
 export type NotificationType =
@@ -205,6 +206,12 @@ export class NotificationsAPI {
 
   // Notification CRUD Operations
   async getNotifications(query: NotificationQuery = {}): Promise<NotificationData[]> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return mockData.getNotifications() as NotificationData[];
+    }
+
     try {
       const params = new URLSearchParams()
 
@@ -217,7 +224,7 @@ export class NotificationsAPI {
       if (query.endDate) params.append('endDate', query.endDate)
 
       const response = await apiClient.get<NotificationData[]>(
-        `${API_ENDPOINTS.notifications.list}?${params.toString()}`
+        `${API_ENDPOINTS.notifications}?${params.toString()}`
       )
       return handleAPIResponse(response)
     } catch (error) {
@@ -230,7 +237,7 @@ export class NotificationsAPI {
   async getNotificationById(id: string): Promise<NotificationData> {
     try {
       const response = await apiClient.get<NotificationData>(
-        `${API_ENDPOINTS.notifications.list}/${id}`
+        `${API_ENDPOINTS.notifications}/${id}`
       )
       return handleAPIResponse(response)
     } catch (error) {
@@ -242,7 +249,7 @@ export class NotificationsAPI {
   async markAsRead(id: string): Promise<{ success: boolean }> {
     try {
       const response = await apiClient.put<{ success: boolean }>(
-        `${API_ENDPOINTS.notifications.list}/${id}/read`,
+        `${API_ENDPOINTS.notifications}/${id}/read`,
         {}
       )
       return handleAPIResponse(response)
@@ -256,7 +263,7 @@ export class NotificationsAPI {
   async markAsUnread(id: string): Promise<{ success: boolean }> {
     try {
       const response = await apiClient.put<{ success: boolean }>(
-        `${API_ENDPOINTS.notifications.list}/${id}/unread`,
+        `${API_ENDPOINTS.notifications}/${id}/unread`,
         {}
       )
       return handleAPIResponse(response)

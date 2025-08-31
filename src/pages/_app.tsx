@@ -3,6 +3,9 @@ import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
 import "../globals.css"
 
+// Import API interceptor to handle undefined endpoints
+import '../services/api-interceptor'
+
 // Legacy providers (keeping for backward compatibility)
 import { NotificationProvider } from "../contexts/notifications-context"
 import { ThemeProvider } from "../contexts/theme-context"

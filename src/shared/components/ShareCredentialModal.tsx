@@ -20,8 +20,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { VerifiableCredential } from '../types';
-import { formatDID } from '../lib/utils';
-import { toast } from './ui/use-toast';
+import { formatDID } from '../../lib/utils';
+import { toast } from '../../components/ui/use-toast';
 
 interface ShareCredentialModalProps {
   credential: VerifiableCredential;

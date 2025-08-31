@@ -1,5 +1,6 @@
 import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
-import { API_ENDPOINTS } from './api-config';
+import { API_ENDPOINTS, API_CONFIG } from './api-config';
+import { mockData, simulateNetworkDelay } from './mock-data';
 
 // DID Document interface
 export interface DIDDocument {
@@ -110,6 +111,10 @@ export class DIDAPI {
         didResolutionMetadata: {
           contentType: 'application/did+json',
           retrieved: new Date().toISOString()
+        },
+        didDocumentMetadata: {
+          created: new Date().toISOString(),
+          updated: new Date().toISOString()
         }
       };
     }
@@ -117,6 +122,12 @@ export class DIDAPI {
 
   // Register a new DID
   async registerDID(request: DIDRegistrationRequest): Promise<{ success: boolean; did: string; status: string }> {
+    // Use mock data in development to avoid external API calls
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return mockData.registerDID(request);
+    }
+
     const response = await apiClient.post<{ success: boolean; did: string; status: string }>(
       API_ENDPOINTS.did.register,
       request

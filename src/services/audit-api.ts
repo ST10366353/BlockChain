@@ -1,5 +1,7 @@
 import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
 import { API_ENDPOINTS } from './api-config';
+import { API_CONFIG } from './api-config';
+import { mockData, simulateNetworkDelay } from './mock-data';
 
 // Audit log entry
 export interface AuditLogEntry {
@@ -80,8 +82,23 @@ export interface AuditExportParams {
 
 // Audit API Client
 export class AuditAPI {
-  // Query audit logs
+  // Get audit logs
   async getAuditLogs(params: AuditLogQueryParams = {}): Promise<AuditLogEntry[]> {
+    // Use mock data in development to avoid external API calls
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      const mockLogs = await mockData.getAuditLogs();
+      // Convert mock format to AuditLogEntry format
+      return mockLogs.map(log => ({
+        actor: log.actor,
+        action: log.action,
+        target: log.target || 'unknown',
+        success: log.outcome === 'success',
+        timestamp: log.timestamp,
+        metadata: log.details
+      }));
+    }
+
     const queryParams = createQueryParams({
       ...params,
       success: params.success?.toString(),
@@ -95,13 +112,33 @@ export class AuditAPI {
   }
 
   // Get audit statistics
-  async getAuditStats(params: {
-    startDate?: string;
-    endDate?: string;
-    groupBy?: 'action' | 'actor' | 'success';
-  } = {}): Promise<AuditStats> {
-    const queryParams = createQueryParams(params as Record<string, string | number | boolean | undefined>);
+  async getAuditStats(params?: { startDate?: string; endDate?: string }): Promise<AuditStats> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        stats: [
+          { key: 'credential.issue', count: 45 },
+          { key: 'credential.verify', count: 38 },
+          { key: 'did.resolve', count: 25 },
+          { key: 'user.login', count: 17 }
+        ],
+        total: 125,
+        totalLogs: 125,
+        logsByAction: {
+          'credential.issue': 45,
+          'credential.verify': 38,
+          'did.resolve': 25,
+          'user.login': 17
+        },
+        logsByTimeframe: [
+          { date: new Date().toISOString().split('T')[0], count: 25 },
+          { date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], count: 30 }
+        ]
+      };
+    }
 
+    const queryParams = params ? createQueryParams(params) : {};
     const response = await apiClient.get<AuditStats>(
       API_ENDPOINTS.audit.stats,
       queryParams
@@ -111,6 +148,29 @@ export class AuditAPI {
 
   // Get system metrics
   async getSystemMetrics(): Promise<SystemMetrics> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        uptime: 99.9,
+        memory: {
+          used: 512,
+          total: 1024,
+          percentage: 50
+        },
+        database: {
+          connected: true,
+          collections: 5
+        },
+        requests: {
+          total: 1500,
+          success: 1485,
+          error: 15,
+          averageResponseTime: 125
+        }
+      };
+    }
+
     const response = await apiClient.get<SystemMetrics>(
       API_ENDPOINTS.audit.metrics
     );
@@ -118,20 +178,23 @@ export class AuditAPI {
   }
 
   // Export audit logs
-  async exportAuditLogs(params: AuditExportParams = {}): Promise<any> {
-    const queryParams = createQueryParams(params as Record<string, string | number | boolean | undefined>);
+  async exportAuditLogs(params: AuditExportParams): Promise<string> {
+    // Use mock data in development
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return 'mock-export-url-' + Date.now();
+    }
 
-    const response = await apiClient.get(
+    const queryParams = createQueryParams({
+      ...params,
+      format: params.format || 'json',
+    });
+
+    const response = await apiClient.get<string>(
       API_ENDPOINTS.audit.export,
       queryParams
     );
-
-    if (params.format === 'json') {
-      return handleAPIResponse(response);
-    }
-
-    // For CSV format, return raw response
-    return response.data;
+    return handleAPIResponse(response);
   }
 
   // Get logs for specific actor
@@ -170,7 +233,7 @@ export class AuditAPI {
     recentActivity: AuditLogEntry[];
   }> {
     const [stats, recentLogs] = await Promise.all([
-      this.getAuditStats({ groupBy: 'action' }),
+      this.getAuditStats(),
       this.getAuditLogs({ limit: 10 }),
     ]);
 

@@ -1,7 +1,9 @@
-import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
+import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { useRouter } from 'next/router';
-import { UserType, UserProfile } from '../types';
+import { UserType } from '../types';
 import { profileAPI, auditAPI } from '../../services';
+import type { UserProfile as SharedUserProfile } from '../types';
+import type { UserProfile as ServiceUserProfile } from '../../services';
 
 interface UserTypeContext {
   userType: UserType;
@@ -9,7 +11,7 @@ interface UserTypeContext {
   isEnterprise: boolean;
   isConsumer: boolean;
   isPowerUser: boolean;
-  profile: UserProfile | null;
+  profile: SharedUserProfile | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -18,7 +20,7 @@ const UserTypeContext = createContext<UserTypeContext | null>(null);
 
 export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userType, setUserTypeState] = useState<UserType>('consumer');
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<SharedUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +29,59 @@ export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (typeof window !== 'undefined') {
       localStorage.setItem('userType', type);
     }
+  };
+
+  // Convert service UserProfile to shared UserProfile type
+  const convertToSharedProfile = (serviceProfile: ServiceUserProfile): SharedUserProfile => {
+    return {
+      id: serviceProfile.id,
+      did: serviceProfile.did,
+      name: serviceProfile.name,
+      email: serviceProfile.email,
+      avatar: serviceProfile.avatar,
+      type: 'consumer' as UserType, // Default to consumer, will be updated based on detection
+      preferences: {
+        theme: serviceProfile.preferences.theme,
+        language: serviceProfile.preferences.language || 'en',
+        notifications: {
+          email: serviceProfile.preferences.notifications?.email ?? true,
+          push: serviceProfile.preferences.notifications?.push ?? true,
+          sms: serviceProfile.preferences.notifications?.sms ?? false,
+          marketing: false, // Default value
+          security: true, // Default value
+          credentialUpdates: true, // Default value
+          handshakeRequests: true // Default value
+        },
+        privacy: {
+          profileVisibility: serviceProfile.preferences.privacy?.profileVisibility === 'connections' ? 'connections' : 
+                           serviceProfile.preferences.privacy?.profileVisibility === 'private' ? 'private' : 'public',
+          credentialSharing: serviceProfile.preferences.privacy?.credentialSharing === 'selective' ? 'selective' :
+                           serviceProfile.preferences.privacy?.credentialSharing === 'always-ask' ? 'minimal' : 'full',
+          dataRetention: serviceProfile.preferences.privacy?.dataRetention ?? 365,
+          analyticsOptOut: serviceProfile.preferences.privacy?.analyticsOptOut ?? false,
+          anonymousIdentity: serviceProfile.preferences.privacy?.anonymousIdentity ?? false
+        },
+        security: {
+          autoLock: serviceProfile.preferences.security?.autoLockTimeout ?? 15,
+          biometricEnabled: serviceProfile.preferences.security?.biometricEnabled ?? false,
+          twoFactorEnabled: serviceProfile.preferences.security?.twoFactorEnabled ?? false,
+          sessionTimeout: (serviceProfile.preferences.security?.sessionTimeout ?? 1) * 60, // Convert hours to minutes
+          loginAlerts: true // Default value
+        },
+        display: {
+          dateFormat: serviceProfile.preferences.display?.dateFormat ?? 'MM/DD/YYYY',
+          timeFormat: serviceProfile.preferences.display?.timeFormat === '24h' ? '24h' : '12h',
+          currency: 'USD', // Default value
+          itemsPerPage: serviceProfile.preferences.display?.itemsPerPage ?? 10
+        }
+      },
+      createdAt: serviceProfile.createdAt,
+      updatedAt: serviceProfile.updatedAt,
+      lastLogin: serviceProfile.lastLoginAt,
+      isActive: serviceProfile.isActive,
+      role: serviceProfile.role,
+      organization: undefined // Service profile doesn't have organization
+    };
   };
 
   const detectUserType = async (isMounted: () => boolean): Promise<UserType> => {
@@ -55,12 +110,12 @@ export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }
         const userProfile = await profileAPI.getProfile();
 
         if (userProfile && isMounted()) {
-          // Only update profile if component is still mounted
-          // This prevents state updates on unmounted components
-          setProfile(userProfile);
+          // Convert and update profile if component is still mounted
+          const sharedProfile = convertToSharedProfile(userProfile);
+          setProfile(sharedProfile);
 
-          // Check organization affiliation
-          if (userProfile.organization) {
+          // Check role-based user type determination
+          if (userProfile.role === 'admin' || userProfile.role === 'moderator') {
             return 'enterprise';
           }
 
@@ -94,15 +149,16 @@ export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }
     // This would integrate with your analytics service
     // For now, return mock data based on user profile
     try {
-      // Note: This assumes auditAPI has a method to get user activity
-      // If not available, we'll return default values
+      // Use audit logs to determine usage patterns
       let auditLogs: any[] = [];
       try {
-        if (auditAPI.getUserActivity && typeof auditAPI.getUserActivity === 'function') {
-          auditLogs = await auditAPI.getUserActivity(userId, 100);
-        }
+        // Get general audit logs since getUserActivity doesn't exist
+        auditLogs = await auditAPI.getAuditLogs({ 
+          actor: userId, 
+          limit: 100 
+        });
       } catch (error) {
-        console.warn('Failed to get user activity logs:', error);
+        console.warn('Failed to get audit logs:', error);
         auditLogs = [];
       }
 
@@ -239,7 +295,7 @@ export const useUserTypeFeatures = () => {
   const features = {
     canUseBulkOperations: userType === 'enterprise',
     canAccessAdvancedAnalytics: userType === 'enterprise' || userType === 'power-user',
-    canUseSelectiveDisclosure: userType !== 'consumer' || userType === 'power-user',
+    canUseSelectiveDisclosure: userType === 'enterprise' || userType === 'power-user',
     canAccessAuditLogs: userType === 'enterprise',
     canUseComplianceReporting: userType === 'enterprise',
     canAccessEnterprisePortal: userType === 'enterprise',

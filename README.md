@@ -1,20 +1,39 @@
-# BlockChain
+# Dual-Purpose DID Blockchain Wallet
 
-A comprehensive blockchain-based identity and credential management platform built with modern web technologies.
+A comprehensive decentralized identity platform serving both **enterprise-grade organizations** and **average consumers** through a secure handshake mechanism.
 
 ## 🌟 Overview
 
-This project is a full-featured blockchain application designed for Women's Day Blockchain Development, providing secure identity management, credential verification, and decentralized connection capabilities.
+This innovative platform transforms traditional identity management by providing:
 
-## ✨ Features
+- **🔐 Enterprise Portal**: Advanced identity management for organizations
+- **📱 Consumer App**: Simple, privacy-focused mobile experience
+- **🤝 Handshake Protocol**: Secure cross-ecosystem information exchange
+- **⚡ Real-time Verification**: Instant credential validation
+- **🔒 Zero-Knowledge Proofs**: Privacy-preserving data sharing
 
-- **🔐 Identity Management**: Secure digital identity creation and management
-- **📜 Credential System**: Issue, verify, and manage blockchain-based credentials
-- **🤝 Connection Network**: Build and manage professional connections on the blockchain
-- **📊 Dashboard**: Comprehensive analytics and overview of your blockchain activities
-- **🎨 Modern UI**: Beautiful, responsive interface built with React and Tailwind CSS
-- **⚡ Real-time Updates**: Live notifications and updates across the platform
-- **🔒 Security First**: Built with security best practices and blockchain standards
+## ✨ Key Features
+
+### Enterprise Features
+- **Multi-DID Architecture**: Organizational and user-specific identities
+- **Bulk Operations**: Efficient management of large user populations
+- **Compliance Reporting**: Automated regulatory documentation
+- **Audit Logging**: Complete activity tracking and monitoring
+- **Trust Registry**: Verified issuer and partner management
+
+### Consumer Features
+- **Mobile-First Design**: Intuitive smartphone interface
+- **QR Code Integration**: Easy credential scanning and sharing
+- **Selective Disclosure**: User-controlled data sharing
+- **Privacy Controls**: Consent-based information exchange
+- **Offline Capability**: Access credentials without internet
+
+### Handshake Mechanism
+- **Secure Communication**: Encrypted cross-ecosystem data exchange
+- **Zero-Knowledge Proofs**: Prove information without revealing data
+- **Consent Management**: User approval for all data sharing
+- **Audit Trail**: Complete transaction history
+- **Real-time Processing**: Instant verification and responses
 
 ## 🛠 Tech Stack
 

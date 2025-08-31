@@ -108,8 +108,9 @@ const secureStorage = {
       try {
         const fallback = localStorage.getItem(key)
         return fallback ? JSON.parse(fallback) : null
-      } catch {
-        return null
+      } catch (error) {
+        console.warn('Failed to retrieve fallback session data:', error);
+        return null;
       }
     }
   },
@@ -133,8 +134,9 @@ const tokenUtils = {
     try {
       const payload = token.split('.')[1]
       return JSON.parse(atob(payload))
-    } catch {
-      return null
+    } catch (error) {
+      console.warn('Failed to decode token:', error);
+      return null;
     }
   },
 

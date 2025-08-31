@@ -2,7 +2,7 @@
 
 import React, { Component, ReactNode, ErrorInfo } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
-import { useToast } from '@/src/hooks/use-toast'
+import { useToast } from '../shared/hooks'
 
 interface ErrorBoundaryState {
   hasError: boolean

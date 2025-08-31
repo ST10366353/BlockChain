@@ -102,7 +102,9 @@ export class DIDAPI {
             id: `${did}#key-1`,
             type: 'Ed25519VerificationKey2020',
             controller: did,
-            publicKeyMultibase: 'z6Mk' + Math.random().toString(36).slice(2, 8)
+            publicKeyMultibase: 'z6Mk' + (typeof window !== 'undefined' && window.crypto?.getRandomValues
+              ? Array.from(window.crypto.getRandomValues(new Uint8Array(6)), byte => byte.toString(16).padStart(2, '0')).join('')
+              : Math.random().toString(36).slice(2, 8))
           }]
         },
         didResolutionMetadata: {

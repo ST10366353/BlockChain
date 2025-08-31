@@ -140,3 +140,14 @@ export type {
   PerformanceMetrics,
   UsageMetrics,
 } from './system-api';
+
+// Handshake Service (from handshake module)
+export { handshakeService } from '../handshake/services/handshake-service';
+export type {
+  HandshakeRequest,
+  HandshakeResponse,
+  HandshakeStatus,
+  SelectiveDisclosure,
+  ZeroKnowledgeProof,
+  ConsentRecord,
+} from '../handshake/services/handshake-service';

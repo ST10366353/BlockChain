@@ -25,7 +25,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold flex items-center">
               <span className="mr-2">👤</span>
-              Your Identity
+              Alice Johnson
             </h2>
             <Bell className="w-6 h-6 text-gray-600" />
           </div>

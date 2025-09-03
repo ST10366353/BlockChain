@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { APIErrorBoundary, FormErrorBoundary } from '@/src/components/error-boundary'
+import { APIErrorBoundary, FormErrorBoundary } from '@/components/error-boundary'
 import Header from './header'
 
 interface PageLayoutProps {

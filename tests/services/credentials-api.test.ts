@@ -1,4 +1,4 @@
-import { credentialsAPI } from '@/src/services'
+import { credentialsAPI } from '@/services'
 
 // Mock fetch globally
 const mockFetch = jest.fn()
@@ -50,7 +50,7 @@ describe('Credentials API Service', () => {
       })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/credentials?subject=did:web:alice.com'),
+        expect.stringContaining('credentials?subject=did%3Aweb%3Aalice.com'),
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -58,7 +58,7 @@ describe('Credentials API Service', () => {
           }),
         })
       )
-      expect(result).toEqual(mockCredentialsResponse.data)
+      expect(result).toEqual(mockCredentialsResponse)
     })
 
     it('should handle complex query parameters', async () => {
@@ -79,10 +79,10 @@ describe('Credentials API Service', () => {
       })
 
       const expectedUrl = expect.stringContaining(
-        '/credentials?subject=did:web:alice.com&issuer=did:web:university.edu&type=UniversityDegree&status=verified&limit=10&offset=5&sortBy=issuedAt&sortOrder=desc'
+        'credentials?subject=did%3Aweb%3Aalice.com&issuer=did%3Aweb%3Auniversity.edu&type=UniversityDegree&status=verified&limit=10&offset=5&sortBy=issuedAt&sortOrder=desc'
       )
       expect(mockFetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object))
-      expect(result).toEqual(mockCredentialsResponse.data)
+      expect(result).toEqual(mockCredentialsResponse)
     })
 
     it('should handle date range filtering', async () => {
@@ -100,10 +100,10 @@ describe('Credentials API Service', () => {
       })
 
       const expectedUrl = expect.stringContaining(
-        '/credentials?subject=did:web:alice.com&issuedAfter=2024-01-01T00:00:00Z&issuedBefore=2024-12-31T23:59:59Z&expiresAfter=2024-06-01T00:00:00Z&expiresBefore=2027-01-01T00:00:00Z'
+        'credentials?subject=did%3Aweb%3Aalice.com&issuedAfter=2024-01-01T00%3A00%3A00Z&issuedBefore=2024-12-31T23%3A59%3A59Z&expiresAfter=2024-06-01T00%3A00%3A00Z&expiresBefore=2027-01-01T00%3A00%3A00Z'
       )
       expect(mockFetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object))
-      expect(result).toEqual(mockCredentialsResponse.data)
+      expect(result).toEqual(mockCredentialsResponse)
     })
 
     it('should handle network errors', async () => {
@@ -156,7 +156,7 @@ describe('Credentials API Service', () => {
     it('should fetch a single credential', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockCredential }),
+        json: async () => mockCredential,
       })
 
       const result = await credentialsAPI.getCredential('cred-123')
@@ -213,7 +213,7 @@ describe('Credentials API Service', () => {
     it('should verify a credential successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockVerificationResult }),
+        json: async () => mockVerificationResult,
       })
 
       const result = await credentialsAPI.verifyCredential({
@@ -221,7 +221,7 @@ describe('Credentials API Service', () => {
       })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/credentials/verify'),
+        expect.stringContaining('credentials/verify'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ credential: 'cred-123' }),
@@ -243,13 +243,13 @@ describe('Credentials API Service', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockVerificationResult }),
+        json: async () => mockVerificationResult,
       })
 
       const result = await credentialsAPI.verifyCredential(verificationOptions)
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/credentials/verify'),
+        expect.stringContaining('credentials/verify'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(verificationOptions),
@@ -279,7 +279,7 @@ describe('Credentials API Service', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: failedVerificationResult }),
+        json: async () => failedVerificationResult,
       })
 
       const result = await credentialsAPI.verifyCredential({
@@ -324,7 +324,7 @@ describe('Credentials API Service', () => {
     it('should issue a credential successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockIssuedCredential }),
+        json: async () => mockIssuedCredential,
       })
 
       const result = await credentialsAPI.issueCredential(mockCredentialRequest)
@@ -376,7 +376,7 @@ describe('Credentials API Service', () => {
           body: JSON.stringify(mockRevocationRequest),
         })
       )
-      expect(result).toBeUndefined()
+      expect(result).toEqual({ success: true })
     })
 
     it('should handle revocation errors', async () => {
@@ -411,7 +411,7 @@ describe('Credentials API Service', () => {
     it('should get active credential revocation status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockRevocationStatus }),
+        json: async () => mockRevocationStatus,
       })
 
       const result = await credentialsAPI.getRevocationStatus('cred-123')
@@ -428,7 +428,7 @@ describe('Credentials API Service', () => {
     it('should get revoked credential status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockRevokedStatus }),
+        json: async () => mockRevokedStatus,
       })
 
       const result = await credentialsAPI.getRevocationStatus('cred-456')
@@ -476,7 +476,7 @@ describe('Credentials API Service', () => {
     it('should create a presentation successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockPresentation }),
+        json: async () => mockPresentation,
       })
 
       const result = await credentialsAPI.createPresentation(
@@ -487,10 +487,10 @@ describe('Credentials API Service', () => {
       )
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/presentations'),
+        expect.stringContaining('presentations/verify'),
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('"holder":"did:web:alice.com"'),
+          body: expect.stringContaining('"holderDid":"did:web:alice.com"'),
         })
       )
       expect(result).toEqual(mockPresentation)
@@ -512,7 +512,7 @@ describe('Credentials API Service', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: selectivePresentation }),
+        json: async () => selectivePresentation,
       })
 
       const result = await credentialsAPI.createPresentation(
@@ -557,10 +557,13 @@ describe('Credentials API Service', () => {
       const result = await credentialsAPI.getCredentialsByIssuer('did:web:university.edu')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/credentials?issuer=did:web:university.edu'),
+        expect.stringContaining('credentials/issuer/did%3Aweb%3Auniversity.edu'),
         expect.any(Object)
       )
-      expect(result).toEqual(mockCredentials)
+      expect(result).toEqual({
+        data: mockCredentials,
+        meta: { hasMore: false, limit: 50, offset: 0, total: mockCredentials.length }
+      })
     })
   })
 
@@ -601,11 +604,14 @@ describe('Credentials API Service', () => {
       const result = await credentialsAPI.getCredentialsBySubject('did:web:alice.com')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/credentials?subject=did:web:alice.com'),
+        expect.stringContaining('credentials/subject/did%3Aweb%3Aalice.com'),
         expect.any(Object)
       )
-      expect(result).toEqual(mockCredentials)
-      expect(result).toHaveLength(2)
+      expect(result).toEqual({
+        data: mockCredentials,
+        meta: { hasMore: false, limit: 50, offset: 0, total: mockCredentials.length }
+      })
+      expect(result.data).toHaveLength(2)
     })
   })
 
@@ -634,7 +640,7 @@ describe('Credentials API Service', () => {
     it('should fetch credential templates', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockTemplates }),
+        json: async () => mockTemplates,
       })
 
       const result = await credentialsAPI.getCredentialTemplates()
@@ -652,7 +658,7 @@ describe('Credentials API Service', () => {
     it('should handle empty templates list', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: [] }),
+        json: async () => [],
       })
 
       const result = await credentialsAPI.getCredentialTemplates()

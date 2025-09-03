@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSession, useSessionMonitor } from '@/src/contexts/session-context'
-import { useToast } from '@/src/hooks/use-toast'
+
+import { useSession, useSessionMonitor } from '@/contexts/session-context'
+import { useToast } from '@/hooks/use-toast'
 import {
   Shield,
   Clock,
@@ -12,8 +12,7 @@ import {
   RefreshCw,
   LogOut,
   User,
-  Wifi,
-  WifiOff
+  Wifi
 } from 'lucide-react'
 
 interface SessionStatusProps {
@@ -248,7 +247,7 @@ export function SessionStatusIndicator() {
 export function SessionWarningBanner() {
   const { session } = useSession()
   const { timeUntilExpiry } = useSessionMonitor()
-  const { logout, extendSession } = useSession()
+  const { extendSession } = useSession()
 
   const [dismissed, setDismissed] = useState(false)
 

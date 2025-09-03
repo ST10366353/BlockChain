@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Shield,
   Key,
   CheckCircle,
   Clock,
-  AlertTriangle,
   RefreshCw,
   Plus,
   Eye,
@@ -16,7 +15,8 @@ import {
   ScanLine,
   FileText,
   Users,
-  BarChart3
+  BarChart3,
+  Share2
 } from 'lucide-react';
 
 import { useUserType, useApp } from '../../shared/hooks';
@@ -36,9 +36,10 @@ interface DashboardStats {
 }
 
 export default function ConsumerDashboard() {
-  const { userType, profile } = useUserType();
+  const { profile } = useUserType();
   const { setLoading } = useApp();
   const { toastSuccess, toastError } = useToast();
+  const router = useRouter();
 
   const [stats, setStats] = useState<DashboardStats>({
     totalCredentials: 0,
@@ -54,9 +55,9 @@ export default function ConsumerDashboard() {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [loadDashboardData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading({ isLoading: true, message: 'Loading your dashboard...' });
 
     try {
@@ -109,7 +110,7 @@ export default function ConsumerDashboard() {
     } finally {
       setLoading({ isLoading: false });
     }
-  };
+  }, [setLoading, toastError]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -265,6 +266,56 @@ export default function ConsumerDashboard() {
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card
+              className="cursor-pointer hover:shadow-md transition-shadow border-dashed border-2 hover:border-blue-300"
+              onClick={() => router.push('/credentials')}
+            >
+              <CardContent className="p-4 text-center">
+                <Plus className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-900">Request Credential</h3>
+                <p className="text-sm text-gray-600">Get a new digital credential</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer hover:shadow-md transition-shadow border-dashed border-2 hover:border-green-300"
+              onClick={() => router.push('/presentations')}
+            >
+              <CardContent className="p-4 text-center">
+                <Share2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-900">Share Credentials</h3>
+                <p className="text-sm text-gray-600">Create and share presentations</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer hover:shadow-md transition-shadow border-dashed border-2 hover:border-purple-300"
+              onClick={() => router.push('/connections')}
+            >
+              <CardContent className="p-4 text-center">
+                <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-900">Manage Connections</h3>
+                <p className="text-sm text-gray-600">Connect with trusted issuers</p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer hover:shadow-md transition-shadow border-dashed border-2 hover:border-orange-300"
+              onClick={() => router.push('/settings')}
+            >
+              <CardContent className="p-4 text-center">
+                <Settings className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-900">Settings</h3>
+                <p className="text-sm text-gray-600">Configure your preferences</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Main Content Grid */}

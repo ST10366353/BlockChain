@@ -1,28 +1,198 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import PresentationsPage from '@/pages/presentations-page'
+import PresentationsPage from '../../src/pages/presentations-page'
 
 // Mock next/navigation
+const mockRouter = {
+  push: jest.fn(),
+}
+
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
+  useRouter: jest.fn(() => mockRouter),
+  usePathname: jest.fn(() => '/presentations'),
+}))
+
+jest.mock('next/link', () => ({
+  default: ({ children, href, ...props }: any) => React.createElement('a', { href, ...props }, children),
+}))
+
+// Session hooks are mocked in the context mocks below
+
+// Mock notifications hook - use existing context mock below
+// jest.mock('@/hooks/use-notifications', () => ({
+//   useNotifications: () => ({
+//     notifications: [
+//       { id: '1', type: 'info', message: 'Test notification', read: false }
+//     ],
+//     unreadCount: 1,
+//     markAsRead: jest.fn(),
+//     clearAll: jest.fn()
+//   })
+// }))
+
+// Mock toast hook
+jest.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toastSuccess: jest.fn(),
+    toastError: jest.fn(),
+    toastWarning: jest.fn(),
+    toastInfo: jest.fn()
+  })
+}))
+
+// Mock Lucide React icons
+jest.mock('lucide-react', () => ({
+  Shield: jest.fn(() => React.createElement('svg', {}, 'Shield')),
+  Clock: jest.fn(() => React.createElement('svg', {}, 'Clock')),
+  AlertTriangle: jest.fn(() => React.createElement('svg', {}, 'AlertTriangle')),
+  CheckCircle: jest.fn(() => React.createElement('svg', {}, 'CheckCircle')),
+  RefreshCw: jest.fn(() => React.createElement('svg', {}, 'RefreshCw')),
+  LogOut: jest.fn(() => React.createElement('svg', {}, 'LogOut')),
+  User: jest.fn(() => React.createElement('svg', {}, 'User')),
+  Wifi: jest.fn(() => React.createElement('svg', {}, 'Wifi')),
+  WifiOff: jest.fn(() => React.createElement('svg', {}, 'WifiOff')),
+  Fingerprint: jest.fn(() => React.createElement('svg', {}, 'Fingerprint')),
+  Lock: jest.fn(() => React.createElement('svg', {}, 'Lock')),
+  LockOpen: jest.fn(() => React.createElement('svg', {}, 'LockOpen')),
+  Loader2: jest.fn(() => React.createElement('svg', {}, 'Loader2')),
+  Bell: jest.fn(() => React.createElement('svg', {}, 'Bell')),
+  Settings: jest.fn(() => React.createElement('svg', {}, 'Settings')),
+  Menu: jest.fn(() => React.createElement('svg', {}, 'Menu')),
+  X: jest.fn(() => React.createElement('svg', {}, 'X')),
+  Trash2: jest.fn(() => React.createElement('svg', {}, 'Trash2')),
+  Plus: jest.fn(() => React.createElement('svg', {}, 'Plus')),
+  Eye: jest.fn(() => React.createElement('svg', {}, 'Eye')),
+  EyeOff: jest.fn(() => React.createElement('svg', {}, 'EyeOff')),
+  Download: jest.fn(() => React.createElement('svg', {}, 'Download')),
+  Upload: jest.fn(() => React.createElement('svg', {}, 'Upload')),
+  Share: jest.fn(() => React.createElement('svg', {}, 'Share')),
+  Edit: jest.fn(() => React.createElement('svg', {}, 'Edit')),
+  Copy: jest.fn(() => React.createElement('svg', {}, 'Copy')),
+  Search: jest.fn(() => React.createElement('svg', {}, 'Search')),
+  Filter: jest.fn(() => React.createElement('svg', {}, 'Filter')),
+  MoreVertical: jest.fn(() => React.createElement('svg', {}, 'MoreVertical')),
+  ChevronDown: jest.fn(() => React.createElement('svg', {}, 'ChevronDown')),
+  ChevronUp: jest.fn(() => React.createElement('svg', {}, 'ChevronUp'))
+}))
+
+// Mock session status components
+jest.mock('@/components/session-status', () => ({
+  SessionStatusIndicator: () => React.createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
+  SessionStatus: () => React.createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
+}))
+
+// Mock Header component
+jest.mock('@/components/layout/header.tsx', () => ({
+  default: jest.fn(() => React.createElement('header', { 'data-testid': 'header' }, 'Header Component'))
+}))
+
+// Mock error handler hook
+jest.mock('@/hooks/use-error-handler', () => ({
+  useAPIErrorHandler: () => ({
+    handleAsyncError: jest.fn(async (fn) => {
+      try {
+        const result = await fn();
+        return result;
+      } catch (error) {
+        console.error('Async error:', error);
+        throw error;
+      }
+    }),
+    withRetry: jest.fn(async (fn, retries, delay, operationName) => {
+      try {
+        const result = await fn();
+        return result; // Return the result directly, not wrapped in Promise.resolve
+      } catch (error) {
+        console.error(`Retry error for ${operationName}:`, error);
+        // Return default values based on operation name
+        if (operationName === 'Load Credentials') return { total: 0, valid: 0 };
+        return null;
+      }
+    }),
   }),
 }))
 
 // Mock services
 jest.mock('@/services', () => ({
   presentationsAPI: {
-    createPresentation: jest.fn(),
-    verifyPresentation: jest.fn(),
-    getPresentationTemplates: jest.fn(),
+    createPresentation: jest.fn(() => Promise.resolve({
+      id: 'pres-1',
+      type: ['VerifiablePresentation'],
+      holderDid: 'did:web:user.com',
+      verifiableCredential: [
+        {
+          id: 'cred-1',
+          type: ['UniversityDegree'],
+          issuerDid: 'did:web:university.edu',
+          subjectDid: 'did:web:user.com',
+          issuedAt: '2024-01-15T00:00:00Z'
+        }
+      ],
+      proof: {
+        type: 'Ed25519Signature2020',
+        created: new Date().toISOString(),
+        verificationMethod: 'did:web:user.com#key-1',
+        proofPurpose: 'authentication',
+        proofValue: 'mock-proof-value'
+      }
+    })),
+    verifyPresentation: jest.fn(() => Promise.resolve({
+      verified: true,
+      results: [{
+        proof: { '@type': 'Ed25519Signature2020' },
+        verified: true,
+        purposeResult: { valid: true },
+        controllerResult: { valid: true }
+      }]
+    })),
+    getPresentationTemplates: jest.fn(() => Promise.resolve([
+      {
+        id: 'template-1',
+        name: 'Job Application',
+        description: 'Template for job applications',
+        requiredCredentials: ['UniversityDegree', 'ProfessionalCertificate']
+      }
+    ])),
   },
   credentialsAPI: {
-    queryCredentials: jest.fn(),
+    queryCredentials: jest.fn(() => Promise.resolve([
+      {
+        id: 'cred-1',
+        type: ['UniversityDegree'],
+        issuerDid: 'did:web:university.edu',
+        subjectDid: 'did:web:user.com',
+        status: 'verified',
+        issuedAt: '2024-01-15T00:00:00Z',
+        credentialSubject: {
+          degree: 'Bachelor of Science',
+          institution: 'University of Example',
+          graduationDate: '2024-05-15'
+        }
+      },
+      {
+        id: 'cred-2',
+        type: ['ProfessionalCertificate'],
+        issuerDid: 'did:web:company.com',
+        subjectDid: 'did:web:user.com',
+        status: 'verified',
+        issuedAt: '2024-02-01T00:00:00Z',
+        credentialSubject: {
+          certificate: 'React Development',
+          issuer: 'Tech Company Inc.',
+          issueDate: '2024-02-01'
+        }
+      }
+    ])),
   },
   auditAPI: {
-    getLogsForAction: jest.fn(),
+    getLogsForAction: jest.fn(() => Promise.resolve([])),
   },
+}))
+
+// Mock Header component
+jest.mock('@/components/layout/header.tsx', () => ({
+  default: jest.fn(() => React.createElement('header', { 'data-testid': 'header' }, 'Header Component'))
 }))
 
 // Mock hooks
@@ -32,6 +202,115 @@ jest.mock('@/hooks/use-toast', () => ({
     toastError: jest.fn(),
   }),
 }))
+
+// Mock contexts
+jest.mock('@/contexts/session-context', () => ({
+  useSession: () => ({
+    session: {
+      isAuthenticated: true,
+      user: { id: 'test-user', name: 'Test User' },
+      expiresAt: new Date(Date.now() + 3600000).toISOString()
+    },
+    login: jest.fn(),
+    logout: jest.fn(),
+    extendSession: jest.fn()
+  }),
+  useSessionMonitor: () => ({
+    timeUntilExpiry: 3600000, // 1 hour
+    timeUntilRefresh: 1800000, // 30 minutes
+    isSessionExpired: false,
+    refreshTokens: jest.fn()
+  })
+}))
+
+jest.mock('@/hooks/use-error-handler', () => ({
+  useAPIErrorHandler: () => ({
+    handleAsyncError: jest.fn(async (fn) => {
+      try {
+        const result = await fn();
+        return result;
+      } catch (error) {
+        console.error('Async error:', error);
+        return null;
+      }
+    }),
+    withRetry: jest.fn(async (fn, retries, delay, operationName) => {
+      try {
+        const result = await fn();
+        return result;
+      } catch (error) {
+        console.error(`Retry error for ${operationName}:`, error);
+        return null;
+      }
+    }),
+  }),
+}))
+
+// Mock notifications context
+jest.mock('@/contexts/notifications-context', () => ({
+  useNotifications: () => ({
+    state: {
+      notifications: [],
+      unreadCount: 0,
+      connectionStatus: 'connected'
+    },
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+    deleteNotification: jest.fn(),
+    refresh: jest.fn()
+  }),
+}))
+
+// Mock theme context
+jest.mock('@/contexts/theme-context', () => ({
+  ThemeToggle: () => React.createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
+}))
+
+// Mock session status component
+jest.mock('@/components/session-status', () => ({
+  SessionStatusIndicator: () => React.createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
+  SessionStatus: () => React.createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
+}))
+
+jest.mock('@/contexts/theme-context', () => ({
+  ThemeToggle: () => React.createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
+}))
+
+// Mock Lucide React icons
+jest.mock('lucide-react', () => ({
+  Plus: jest.fn(() => React.createElement('svg', {}, 'Plus')),
+  Eye: jest.fn(() => React.createElement('svg', {}, 'Eye')),
+  Share2: jest.fn(() => React.createElement('svg', {}, 'Share2')),
+  Clock: jest.fn(() => React.createElement('svg', {}, 'Clock')),
+  CheckCircle: jest.fn(() => React.createElement('svg', {}, 'CheckCircle')),
+  AlertTriangle: jest.fn(() => React.createElement('svg', {}, 'AlertTriangle')),
+  Calendar: jest.fn(() => React.createElement('svg', {}, 'Calendar')),
+  User: jest.fn(() => React.createElement('svg', {}, 'User')),
+  RefreshCw: jest.fn(() => React.createElement('svg', {}, 'RefreshCw')),
+  Loader2: jest.fn(() => React.createElement('svg', {}, 'Loader2')),
+  Trash2: jest.fn(() => React.createElement('svg', {}, 'Trash2')),
+  FileText: jest.fn(() => React.createElement('svg', {}, 'FileText')),
+  Award: jest.fn(() => React.createElement('svg', {}, 'Award')),
+  Bell: jest.fn(() => React.createElement('svg', {}, 'Bell')),
+  Settings: jest.fn(() => React.createElement('svg', {}, 'Settings')),
+  Menu: jest.fn(() => React.createElement('svg', {}, 'Menu')),
+  X: jest.fn(() => React.createElement('svg', {}, 'X')),
+  Shield: jest.fn(() => React.createElement('svg', {}, 'Shield')),
+  Wifi: jest.fn(() => React.createElement('svg', {}, 'Wifi')),
+  WifiOff: jest.fn(() => React.createElement('svg', {}, 'WifiOff')),
+  Fingerprint: jest.fn(() => React.createElement('svg', {}, 'Fingerprint')),
+  Lock: jest.fn(() => React.createElement('svg', {}, 'Lock')),
+  LockOpen: jest.fn(() => React.createElement('svg', {}, 'LockOpen')),
+  Filter: jest.fn(() => React.createElement('svg', {}, 'Filter')),
+  Search: jest.fn(() => React.createElement('svg', {}, 'Search')),
+  ChevronDown: jest.fn(() => React.createElement('svg', {}, 'ChevronDown')),
+  ChevronUp: jest.fn(() => React.createElement('svg', {}, 'ChevronUp')),
+  MoreVertical: jest.fn(() => React.createElement('svg', {}, 'MoreVertical')),
+  Download: jest.fn(() => React.createElement('svg', {}, 'Download')),
+  Upload: jest.fn(() => React.createElement('svg', {}, 'Upload'))
+}))
+
+
 
 jest.mock('@/hooks/use-error-handler', () => ({
   useAPIErrorHandler: () => ({

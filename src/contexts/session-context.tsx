@@ -81,7 +81,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined)
 
 // Secure storage utilities
 const secureStorage = {
-  set: (key: string, value: any): void => {
+  set: (key: string, value: unknown): void => {
     if (typeof window === 'undefined') return
 
     try {
@@ -94,7 +94,7 @@ const secureStorage = {
     }
   },
 
-  get: (key: string): any => {
+  get: (key: string): unknown => {
     if (typeof window === 'undefined') return null
 
     try {
@@ -130,7 +130,7 @@ const secureStorage = {
 
 // Token validation utilities
 const tokenUtils = {
-  decodeToken: (token: string): any => {
+  decodeToken: (token: string): unknown => {
     try {
       const payload = token.split('.')[1]
       return JSON.parse(atob(payload))
@@ -203,7 +203,29 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
 
     initializeSession()
-  }, [])
+  }, [handleLogout])
+
+  // Logout function
+  const handleLogout = useCallback(async () => {
+    try {
+      // Clear all session data
+      secureStorage.clear()
+
+      setSession({
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isLoading: false,
+        lastActivity: 0,
+        sessionExpiry: 0
+      })
+
+      // Navigate to login
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }, [router])
 
   // Activity tracking
   useEffect(() => {
@@ -284,7 +306,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       clearInterval(activityCheck)
       clearInterval(refreshCheck)
     }
-  }, [session.isAuthenticated, session.tokens, session.lastActivity, session.sessionExpiry])
+  }, [session.isAuthenticated, session.tokens, session.lastActivity, session.sessionExpiry, handleLogout, refreshTokens])
 
   // Login function
   const login = useCallback(async (user: User, tokens: TokenPair) => {
@@ -315,28 +337,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
     } catch (error) {
       console.error('Login failed:', error)
       throw error
-    }
-  }, [router])
-
-  // Logout function
-  const handleLogout = useCallback(async () => {
-    try {
-      // Clear all session data
-      secureStorage.clear()
-
-      setSession({
-        user: null,
-        tokens: null,
-        isAuthenticated: false,
-        isLoading: false,
-        lastActivity: 0,
-        sessionExpiry: 0
-      })
-
-      // Navigate to login
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
     }
   }, [router])
 

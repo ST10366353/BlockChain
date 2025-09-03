@@ -1,13 +1,13 @@
 import { renderHook, act } from '@testing-library/react'
 import { useState, useEffect } from 'react'
-import { useToast } from '@/hooks/use-toast'
-import { useAPIErrorHandler } from '@/hooks/use-error-handler'
-import { useBulkOperations, useBulkSelection } from '@/hooks/use-bulk-operations'
+import { useToast } from '../../src/shared/hooks/use-toast'
+import { useAPIErrorHandler } from '../../src/hooks/use-error-handler'
+import { useBulkOperations, useBulkSelection } from '../../src/hooks/use-bulk-operations'
 
 // Mock dependencies
-jest.mock('@/hooks/use-toast')
-jest.mock('@/hooks/use-error-handler')
-jest.mock('@/hooks/use-bulk-operations')
+jest.mock('../../src/shared/hooks/use-toast')
+jest.mock('../../src/hooks/use-error-handler')
+jest.mock('../../src/hooks/use-bulk-operations')
 
 const mockToast = {
   toastSuccess: jest.fn(),
@@ -16,7 +16,7 @@ const mockToast = {
 
 const mockAPIErrorHandler = {
   handleAsyncError: jest.fn(),
-  withRetry: jest.fn(),
+  withRetry: jest.fn((fn) => fn()),
 }
 
 describe('Custom Hooks', () => {

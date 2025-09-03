@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/src/components/layout/page-layout"
+import { DashboardLayout } from "@/components/layout/page-layout"
 import {
   Search,
   Filter,
@@ -18,9 +18,9 @@ import {
   FileText,
   Loader2
 } from "lucide-react"
-import { auditAPI, dataExportImportAPI } from "@/src/services"
-import { useToast } from "@/src/hooks/use-toast"
-import type { AuditLogEntry, AuditStats } from "@/src/services"
+import { auditAPI, dataExportImportAPI } from "@/services"
+import { useToast } from "@/hooks/use-toast"
+import type { AuditLogEntry, AuditStats } from "@/services"
 
 interface AuditFilters {
   actor?: string

@@ -197,7 +197,7 @@ describe('SearchFilterBar Component', () => {
     render(<SearchFilterBar {...props} />)
 
     expect(screen.getByPlaceholderText('Search items...')).toBeInTheDocument()
-    expect(screen.getByText('No items to display')).toBeInTheDocument()
+    expect(screen.getByText('Showing 0 of 0 items')).toBeInTheDocument()
   })
 
   it('should handle single item data array', () => {
@@ -209,13 +209,13 @@ describe('SearchFilterBar Component', () => {
     render(<SearchFilterBar {...props} />)
 
     expect(screen.getByPlaceholderText('Search items...')).toBeInTheDocument()
-    expect(screen.getByText('1 item')).toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 1 items')).toBeInTheDocument()
   })
 
   it('should handle multiple items data array', () => {
     render(<SearchFilterBar {...defaultProps} />)
 
     expect(screen.getByPlaceholderText('Search items...')).toBeInTheDocument()
-    expect(screen.getByText('3 items')).toBeInTheDocument()
+    expect(screen.getByText('Showing 3 of 3 items')).toBeInTheDocument()
   })
 })

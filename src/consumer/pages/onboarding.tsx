@@ -21,43 +21,132 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../shared/component
 import { Button } from '../../shared/components/ui/button';
 import { didAPI, profileAPI } from '../../services';
 import { UserType } from '../../shared/types';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 
-const steps = [
-  {
-    id: 'welcome',
-    title: 'Welcome to Your DID Wallet',
-    description: 'Secure your digital identity with blockchain technology',
-    icon: Shield
-  },
-  {
-    id: 'privacy',
-    title: 'Your Privacy, Your Control',
-    description: 'You decide what information to share and with whom',
-    icon: Eye
-  },
-  {
-    id: 'identity',
-    title: 'Create Your Digital Identity',
-    description: 'Set up your decentralized identifier (DID)',
-    icon: Key
-  },
-  {
-    id: 'security',
-    title: 'Security First',
-    description: 'Configure your security preferences',
-    icon: Lock
-  },
-  {
-    id: 'complete',
-    title: 'You\'re All Set!',
-    description: 'Start using your DID wallet to manage credentials securely',
-    icon: CheckCircle
-  }
-];
+
+// A/B Test variants for onboarding flow
+const onboardingVariants = {
+  original: [
+    {
+      id: 'welcome',
+      title: 'Welcome to Your DID Wallet',
+      description: 'Secure your digital identity with blockchain technology',
+      icon: Shield,
+      subtitle: 'Get started with your decentralized identity'
+    },
+    {
+      id: 'privacy',
+      title: 'Your Privacy, Your Control',
+      description: 'You decide what information to share and with whom',
+      icon: Eye,
+      subtitle: 'Understand your data rights and privacy'
+    },
+    {
+      id: 'identity',
+      title: 'Create Your Digital Identity',
+      description: 'Set up your decentralized identifier (DID)',
+      icon: Key,
+      subtitle: 'Generate your unique digital identifier'
+    },
+    {
+      id: 'security',
+      title: 'Security First',
+      description: 'Configure your security preferences',
+      icon: Lock,
+      subtitle: 'Set up your authentication methods'
+    },
+    {
+      id: 'complete',
+      title: 'You\'re All Set!',
+      description: 'Start using your DID wallet to manage credentials securely',
+      icon: CheckCircle,
+      subtitle: 'Your digital identity is ready to use'
+    }
+  ],
+  simplified: [
+    {
+      id: 'welcome',
+      title: 'Welcome to Your DID Wallet',
+      description: 'Take control of your digital identity with our secure, blockchain-powered platform',
+      icon: Shield,
+      subtitle: 'Quick setup in just 2 minutes'
+    },
+    {
+      id: 'quick-setup',
+      title: 'Quick Setup',
+      description: 'We\'ll set up everything automatically with smart defaults',
+      icon: Zap,
+      subtitle: 'Automatic configuration for you'
+    },
+    {
+      id: 'complete',
+      title: 'Ready to Go!',
+      description: 'Your DID wallet is configured and ready to use',
+      icon: CheckCircle,
+      subtitle: 'Start exploring your digital identity'
+    }
+  ],
+  guided: [
+    {
+      id: 'welcome',
+      title: 'Your Digital Identity Journey Begins',
+      description: 'Discover how blockchain technology can secure your digital life',
+      icon: Shield,
+      subtitle: 'Learn as you set up'
+    },
+    {
+      id: 'learn-privacy',
+      title: 'Privacy by Design',
+      description: 'See how our platform protects your data and gives you control',
+      icon: Eye,
+      subtitle: 'Interactive privacy education'
+    },
+    {
+      id: 'create-identity',
+      title: 'Craft Your Digital Self',
+      description: 'Create your unique digital identifier with guided assistance',
+      icon: Key,
+      subtitle: 'Step-by-step identity creation'
+    },
+    {
+      id: 'security-workshop',
+      title: 'Security Workshop',
+      description: 'Learn best practices while configuring your security settings',
+      icon: Lock,
+      subtitle: 'Educational security setup'
+    },
+    {
+      id: 'explore-features',
+      title: 'Explore Your New Capabilities',
+      description: 'Discover what you can do with your new digital identity',
+      icon: CheckCircle,
+      subtitle: 'Feature showcase and next steps'
+    }
+  ]
+};
+
+const steps = onboardingVariants.original; // Default fallback
 
 export default function ConsumerOnboarding() {
   const router = useRouter();
   const { setLoading } = useApp();
+  const { getABTestVariant, trackEvent } = useAnalytics();
+
+  // Get A/B test variant for onboarding flow
+  const variant = getABTestVariant('onboarding_flow');
+  const currentSteps = variant?.id === 'simplified' ? onboardingVariants.simplified :
+                       variant?.id === 'guided' ? onboardingVariants.guided :
+                       onboardingVariants.original;
+
+  // Track onboarding start
+  React.useEffect(() => {
+    trackEvent({
+      eventType: 'conversion',
+      page: 'onboarding',
+      action: 'onboarding_started',
+      data: { variant: variant?.id || 'original' }
+    });
+  }, [variant, trackEvent]);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [userDID, setUserDID] = useState<string>('');
@@ -131,6 +220,15 @@ export default function ConsumerOnboarding() {
       });
 
       setLoading({ isLoading: false });
+
+      // Track onboarding completion
+      trackEvent({
+        eventType: 'conversion',
+        page: 'onboarding',
+        action: 'onboarding_completed',
+        data: { variant: variant?.id || 'original' }
+      });
+
       router.push('/consumer/dashboard');
     } catch (error) {
       console.error('Failed to complete setup:', error);
@@ -140,19 +238,39 @@ export default function ConsumerOnboarding() {
   };
 
   const nextStep = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < currentSteps.length - 1) {
       setCurrentStep(currentStep + 1);
+      trackEvent({
+        eventType: 'conversion',
+        page: 'onboarding',
+        action: 'step_completed',
+        data: {
+          stepId: currentSteps[currentStep].id,
+          stepNumber: currentStep + 1,
+          variant: variant?.id || 'original'
+        }
+      });
     }
   };
 
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      trackEvent({
+        eventType: 'conversion',
+        page: 'onboarding',
+        action: 'step_back',
+        data: {
+          fromStep: currentSteps[currentStep].id,
+          toStep: currentSteps[currentStep - 1].id,
+          variant: variant?.id || 'original'
+        }
+      });
     }
   };
 
   const renderStepContent = () => {
-    const step = steps[currentStep];
+    const step = currentSteps[currentStep];
 
     switch (step.id) {
       case 'welcome':
@@ -223,7 +341,7 @@ export default function ConsumerOnboarding() {
                 </CardHeader>
                 <CardContent className="text-center">
                   <p className="text-sm text-gray-600 mb-4">
-                    Only share what's absolutely necessary
+                    Only share what&apos;s absolutely necessary
                   </p>
                   <div className="text-xs text-gray-500">
                     ✅ Basic verification<br />
@@ -419,7 +537,7 @@ export default function ConsumerOnboarding() {
 
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                           <p className="text-sm text-yellow-800">
-                            ⚠️ Store this phrase securely. It's the only way to recover your wallet if you lose access.
+                            ⚠️ Store this phrase securely. It&apos;s the only way to recover your wallet if you lose access.
                           </p>
                         </div>
                       </div>
@@ -439,7 +557,7 @@ export default function ConsumerOnboarding() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                You're All Set!
+                You&apos;re All Set!
               </h2>
               <p className="text-gray-600 mb-6">
                 Your DID wallet is ready to use. Start managing your digital credentials securely.
@@ -502,11 +620,22 @@ export default function ConsumerOnboarding() {
 
       {/* Progress Bar */}
       <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm font-medium text-gray-700">
+            Step {currentStep + 1} of {currentSteps.length}
+          </div>
+          <div className="text-sm text-gray-500">
+            {Math.round(((currentStep + 1) / currentSteps.length) * 100)}% complete
+          </div>
+        </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            style={{ width: `${((currentStep + 1) / currentSteps.length) * 100}%` }}
           />
+        </div>
+        <div className="text-xs text-gray-500 mt-2 text-center">
+          {currentSteps[currentStep].subtitle}
         </div>
       </div>
 
@@ -520,18 +649,36 @@ export default function ConsumerOnboarding() {
 
         {/* Navigation */}
         <div className="flex justify-between items-center mt-8">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className="flex items-center"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className="flex items-center"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+            {currentStep < currentSteps.length - 2 && (
+              <button
+                onClick={() => {
+                  trackEvent({
+                    eventType: 'conversion',
+                    page: 'onboarding',
+                    action: 'onboarding_skipped',
+                    data: { variant: variant?.id || 'original' }
+                  });
+                  router.push('/consumer/dashboard');
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Skip onboarding
+              </button>
+            )}
+          </div>
 
           <div className="flex space-x-2">
-            {steps.map((_, index) => (
+            {currentSteps.map((_, index) => (
               <div
                 key={index}
                 className={`w-3 h-3 rounded-full ${
@@ -542,14 +689,17 @@ export default function ConsumerOnboarding() {
           </div>
 
           <Button
-            onClick={currentStep === steps.length - 1 ? handleCompleteSetup : nextStep}
+            onClick={currentStep === currentSteps.length - 1 ? handleCompleteSetup : nextStep}
             disabled={
-              (currentStep === 2 && !userName.trim()) ||
-              (currentStep === 3 && recoveryPhrase.length === 0)
+              // Dynamic validation based on variant
+              variant?.id === 'simplified' ?
+                false : // Skip validation for simplified flow
+                (currentStep === 2 && !userName.trim()) ||
+                (currentStep === 3 && recoveryPhrase.length === 0)
             }
             className="flex items-center"
           >
-            {currentStep === steps.length - 1 ? (
+            {currentStep === currentSteps.length - 1 ? (
               'Complete Setup'
             ) : (
               <>

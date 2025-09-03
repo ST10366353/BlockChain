@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.55% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/90</span>
+                <span class='fraction'>5/90</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.68% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/88</span>
+                <span class='fraction'>5/88</span>
             </div>
         
             
@@ -329,8 +329,8 @@
 <a name='L264'></a><a href='#L264'>264</a>
 <a name='L265'></a><a href='#L265'>265</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -345,8 +345,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -505,8 +505,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -554,7 +554,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -593,8 +593,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use client"
 &nbsp;
-import { useCallback } from <span class="cstat-no" title="statement not covered" >'react'</span>
-import { useToast } from <span class="cstat-no" title="statement not covered" >'./use-toast'</span>
+import { useCallback } from 'react'
+import { useToast } from './use-toast'
 &nbsp;
 export interface ErrorHandlerOptions {
   showToast?: boolean
@@ -609,7 +609,7 @@ export interface APIError extends Error {
   details?: any
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useErrorHandler(</span></span>) {
+export function <span class="fstat-no" title="function not covered" >useErrorHandler() {</span>
   const { toastError, toastSuccess, toastWarning, toastInfo } = <span class="cstat-no" title="statement not covered" >useToast()</span>
 &nbsp;
   const handleError = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(</span></span>
@@ -769,7 +769,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 }
 &nbsp;
 // Hook for API error handling with retry logic
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useAPIErrorHandler(</span></span>) {
+export function <span class="fstat-no" title="function not covered" >useAPIErrorHandler() {</span>
   const errorHandler = <span class="cstat-no" title="statement not covered" >useErrorHandler()</span>
 &nbsp;
   const withRetry = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >async &lt;T&gt;(</span></span>
@@ -818,7 +818,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 }
 &nbsp;
 // Hook for form validation errors
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useFormErrorHandler(</span></span>) {
+export function <span class="fstat-no" title="function not covered" >useFormErrorHandler() {</span>
   const { handleFormError, toastSuccess } = <span class="cstat-no" title="statement not covered" >useErrorHandler()</span>
 &nbsp;
   const handleValidationError = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(</span></span>
@@ -862,7 +862,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-30T14:34:21.477Z
+                at 2025-09-03T16:43:54.295Z
             </div>
         <script src="../prettify.js"></script>
         <script>

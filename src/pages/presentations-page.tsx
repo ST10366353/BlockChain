@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Header from "@/src/components/layout/header"
+import Header from "@/components/layout/header"
 import { Plus, Eye, Share2, Clock, CheckCircle, AlertTriangle, Calendar, User, RefreshCw, Loader2, Trash2, FileText, Award } from "lucide-react"
-import { presentationsAPI, credentialsAPI } from "@/src/services"
-import { useToast } from "@/src/hooks/use-toast"
-import type { VerifiablePresentation, PresentationTemplate, CredentialSummary } from "@/src/services"
+import { presentationsAPI, credentialsAPI } from "@/services"
+import { useToast } from "@/hooks/use-toast"
+import type { VerifiablePresentation, PresentationTemplate, CredentialSummary } from "@/services"
 
 interface Presentation extends VerifiablePresentation {
   id: string
@@ -410,19 +410,56 @@ export default function PresentationsPage() {
 
         <div className="grid gap-4">
           {state.presentations.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Presentations Yet</h3>
-              <p className="text-gray-600 mb-4">
-                Create your first verifiable presentation to share your credentials selectively.
+            <div className="bg-white rounded-lg shadow-sm p-16 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Share2 className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">No Presentations Yet</h3>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                {state.availableCredentials.length === 0
+                  ? "You need credentials before you can create presentations. Request some credentials first to get started."
+                  : "Create your first verifiable presentation to share your credentials selectively with others."
+                }
               </p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                disabled={state.availableCredentials.length === 0}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Create Your First Presentation
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {state.availableCredentials.length === 0 ? (
+                  <>
+                    <button
+                      onClick={() => router.push('/credentials')}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Request Credentials
+                    </button>
+                    <button
+                      onClick={() => router.push('/connections')}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center"
+                    >
+                      <Users className="w-5 h-5 mr-2" />
+                      Find Issuers
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create Your First Presentation
+                  </button>
+                )}
+              </div>
+              {state.availableCredentials.length > 0 && (
+                <div className="mt-8 text-sm text-gray-500">
+                  <p className="mb-2">💡 <strong>How presentations work:</strong></p>
+                  <ul className="text-left max-w-sm mx-auto space-y-1">
+                    <li>• Select which credentials to share</li>
+                    <li>• Choose what information to reveal</li>
+                    <li>• Generate secure, verifiable presentations</li>
+                    <li>• Share via QR codes or secure links</li>
+                  </ul>
+                </div>
+              )}
             </div>
           ) : (
             state.presentations.map((presentation) => (

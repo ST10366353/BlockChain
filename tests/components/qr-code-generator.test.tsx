@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { QRCodeGenerator, useQRCodeGenerator, createCredentialQR, createConnectionQR } from '@/components/qr-code-generator'
+import { QRCodeGenerator, useQRCodeGenerator, createCredentialQR, createConnectionQR } from '../../src/components/qr-code-generator'
 
 // Mock QRCode library
 jest.mock('qrcode', () => ({

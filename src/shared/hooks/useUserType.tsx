@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import { UserType } from '../types';
-import { profileAPI, auditAPI } from '../../services';
+import { profileAPI, auditAPI } from '@/services';
 import type { UserProfile as SharedUserProfile } from '../types';
-import type { UserProfile as ServiceUserProfile } from '../../services';
+import type { UserProfile as ServiceUserProfile } from '@/services';
 
 interface UserTypeContext {
   userType: UserType;

@@ -1,9 +1,9 @@
 "use client"
 
-import Header from "@/src/components/layout/header"
+import Header from "@/components/layout/header"
 import { useState, useEffect } from "react"
-import { profileAPI } from "@/src/services"
-import { useToast } from "@/src/hooks/use-toast"
+import { profileAPI } from "@/services"
+import { useToast } from "@/hooks/use-toast"
 import {
   User,
   Mail,
@@ -21,7 +21,7 @@ import {
   Settings,
   Download
 } from "lucide-react"
-import type { UserProfile, ProfileUpdateRequest, ProfileStats } from "@/src/services"
+import type { UserProfile, ProfileUpdateRequest, ProfileStats } from "@/services"
 
 export default function ProfilePage() {
   const { toastSuccess, toastError } = useToast()

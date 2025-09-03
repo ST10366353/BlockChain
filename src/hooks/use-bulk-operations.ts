@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useToast } from './use-toast'
 import { useAPIErrorHandler } from './use-error-handler'
-import { CredentialSummary, TrustedIssuer } from '@/src/services'
+import { CredentialSummary, TrustedIssuer } from '@/services'
 
-export interface BulkOperationResult<T = any> {
+export interface BulkOperationResult<T = unknown> {
   success: boolean
   item: T
   error?: string
-  data?: any
+  data?: unknown
 }
 
 export interface BulkOperationProgress {
@@ -31,8 +31,8 @@ export interface BulkOperationOptions {
 }
 
 export function useBulkOperations() {
-  const { toastSuccess, toastError, toastInfo } = useToast()
-  const { handleAsyncError, withRetry } = useAPIErrorHandler()
+  const { toastSuccess, toastError } = useToast()
+  const { handleAsyncError } = useAPIErrorHandler()
 
   const [progress, setProgress] = useState<BulkOperationProgress>({
     total: 0,
@@ -43,8 +43,17 @@ export function useBulkOperations() {
     results: []
   })
 
+  const progressRef = useRef(progress)
+
+  // Keep ref in sync with state
+  progressRef.current = progress
+
   const updateProgress = useCallback((updates: Partial<BulkOperationProgress>) => {
-    setProgress(prev => ({ ...prev, ...updates }))
+    setProgress(prev => {
+      const newProgress = { ...prev, ...updates }
+      progressRef.current = newProgress
+      return newProgress
+    })
   }, [])
 
   const resetProgress = useCallback(() => {
@@ -159,7 +168,7 @@ export function useBulkOperations() {
 
     onProgress?.(progress)
     return results
-  }, [handleAsyncError, updateProgress, toastSuccess, toastError])
+  }, [handleAsyncError, updateProgress, toastSuccess, toastError, progress])
 
   // Bulk credential revocation
   const bulkRevokeCredentials = useCallback(async (
@@ -167,7 +176,6 @@ export function useBulkOperations() {
     options: BulkOperationOptions = {}
   ): Promise<BulkOperationResult<CredentialSummary>[]> => {
     const {
-      maxConcurrent = 2,
       continueOnError = true,
       showProgress = true,
       onProgress,
@@ -253,7 +261,7 @@ export function useBulkOperations() {
 
     onProgress?.(progress)
     return results
-  }, [handleAsyncError, updateProgress, toastSuccess, toastError])
+  }, [handleAsyncError, updateProgress, toastSuccess, toastError, progress])
 
   // Bulk connection trust/untrust
   const bulkUpdateConnections = useCallback(async (
@@ -262,7 +270,6 @@ export function useBulkOperations() {
     options: BulkOperationOptions = {}
   ): Promise<BulkOperationResult<TrustedIssuer>[]> => {
     const {
-      maxConcurrent = 3,
       continueOnError = true,
       showProgress = true,
       onProgress,
@@ -347,7 +354,7 @@ export function useBulkOperations() {
 
     onProgress?.(progress)
     return results
-  }, [handleAsyncError, updateProgress, toastSuccess, toastError])
+  }, [handleAsyncError, updateProgress, toastSuccess, toastError, progress])
 
   // Bulk export credentials
   const bulkExportCredentials = useCallback(async (
@@ -429,7 +436,7 @@ export function useBulkOperations() {
 // Hook for managing bulk selection
 export function useBulkSelection<T extends { id: string }>(items: T[] = []) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
-  const [selectAllMode, setSelectAllMode] = useState(false)
+
 
   const isSelected = useCallback((id: string) => selectedItems.has(id), [selectedItems])
 

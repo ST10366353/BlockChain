@@ -207,31 +207,20 @@ export function ThemeToggle({
   size?: 'sm' | 'md' | 'lg'
   showLabel?: boolean
 }) {
+  // Always call hooks unconditionally at component level
   let themeData: ThemeContextType | null = null
   let isDark = false
 
-  try {
-    themeData = useTheme()
-    isDark = useThemeAware().isDark
-  } catch (error) {
-    // Fallback for SSR or when ThemeProvider is not available
-    isDark = false
-  }
+  // Call hooks unconditionally - they'll throw if context is not available
+  themeData = useTheme()
+  isDark = useThemeAware().isDark
 
   if (!themeData) {
     // Return a disabled button during SSR or when theme context is not available
     return (
       <button
         disabled
-        className={`
-          ${size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10'}
-          rounded-lg border border-gray-300
-          bg-gray-100
-          flex items-center justify-center
-          opacity-50
-          cursor-not-allowed
-          ${className}
-        `}
+        className={`${size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10'} rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center opacity-50 cursor-not-allowed ${className}`}
         title="Theme toggle unavailable"
         aria-label="Theme toggle unavailable"
       >
@@ -251,7 +240,7 @@ export function ThemeToggle({
     )
   }
 
-  const { theme, resolvedTheme, toggleTheme } = themeData
+  const { toggleTheme } = themeData
 
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -317,18 +306,8 @@ export function ThemeSelector({
   className?: string
   showSystemOption?: boolean
 }) {
-  let themeData: ThemeContextType | null = null
-
-  try {
-    themeData = useTheme()
-  } catch (error) {
-    // Fallback for SSR or when ThemeProvider is not available
-    return (
-      <div className={`flex items-center space-x-2 ${className}`}>
-        <span className="text-sm text-gray-500">Theme selector unavailable</span>
-      </div>
-    )
-  }
+  // Call hook unconditionally
+  const themeData = useTheme()
 
   if (!themeData) {
     return (

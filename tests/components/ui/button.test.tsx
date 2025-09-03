@@ -1,9 +1,9 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { Button } from '@/components/ui/button'
+import { Button } from '../../../src/components/ui/button'
 
 // Mock the cn utility
-jest.mock('@/lib/utils', () => ({
+jest.mock('../../../src/lib/utils', () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(' ')
 }))
 
@@ -41,7 +41,7 @@ describe('Button Component', () => {
     expect(screen.getByRole('button')).toHaveClass('bg-destructive')
 
     rerender(<Button variant="outline">Outline</Button>)
-    expect(screen.getByRole('button')).toHaveClass('border', 'border-input')
+    expect(screen.getByRole('button')).toHaveClass('border', 'bg-background')
 
     rerender(<Button variant="secondary">Secondary</Button>)
     expect(screen.getByRole('button')).toHaveClass('bg-secondary')
@@ -55,16 +55,16 @@ describe('Button Component', () => {
 
   it('renders different sizes correctly', () => {
     const { rerender } = render(<Button size="default">Default</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-10', 'px-4', 'py-2')
+    expect(screen.getByRole('button')).toHaveClass('h-9', 'px-4', 'py-2')
 
     rerender(<Button size="sm">Small</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-9', 'rounded-md', 'px-3')
+    expect(screen.getByRole('button')).toHaveClass('h-8', 'rounded-md', 'px-3')
 
     rerender(<Button size="lg">Large</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-11', 'rounded-md', 'px-8')
+    expect(screen.getByRole('button')).toHaveClass('h-10', 'rounded-md', 'px-6')
 
     rerender(<Button size="icon">Icon</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-10', 'w-10')
+    expect(screen.getByRole('button')).toHaveClass('size-9')
   })
 
   it('handles disabled state', () => {

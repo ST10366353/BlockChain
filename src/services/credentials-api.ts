@@ -51,6 +51,16 @@ export interface SimpleCredentialIssuanceRequest {
   expiresIn?: string;
 }
 
+export interface CredentialVerificationRequest {
+  credential: string | VerifiableCredential;
+  challenge?: string;
+  domain?: string;
+  verifyRevocation?: boolean;
+  verifyIssuer?: boolean;
+  verifyExpiration?: boolean;
+  trustedIssuers?: string[];
+}
+
 export interface VerificationResult {
   verified: boolean;
   valid: boolean;
@@ -182,22 +192,60 @@ export class CredentialsAPI {
   }
 
   // Verify a credential
-  async verifyCredential(credential: VerifiableCredential): Promise<VerificationResult> {
+  async verifyCredential(credential: VerifiableCredential | string): Promise<VerificationResult>;
+  async verifyCredential(request: CredentialVerificationRequest): Promise<VerificationResult>;
+  async verifyCredential(credentialOrRequest: VerifiableCredential | string | CredentialVerificationRequest): Promise<VerificationResult> {
     // Use mock data in development
     if (API_CONFIG.useMockData) {
       await simulateNetworkDelay();
-      return {
-        verified: true,
-        issuer: credential.issuer,
-        subject: credential.subject || 'unknown',
-        issuanceDate: credential.issuanceDate,
-        errors: []
-      };
+
+      if (typeof credentialOrRequest === 'string') {
+        // If it's a string, treat it as a credential ID
+        return {
+          verified: true,
+          valid: true,
+          checks: [{
+            type: 'signature',
+            verified: true,
+            message: 'Signature verification passed'
+          }],
+          timestamp: new Date().toISOString(),
+          errors: []
+        };
+      } else if (typeof credentialOrRequest === 'object' && 'credential' in credentialOrRequest) {
+        // If it's a CredentialVerificationRequest
+        return {
+          verified: true,
+          valid: true,
+          checks: [{
+            type: 'signature',
+            verified: true,
+            message: 'Signature verification passed'
+          }, {
+            type: 'revocation',
+            verified: !credentialOrRequest.verifyRevocation,
+            message: 'Revocation check passed'
+          }],
+          timestamp: new Date().toISOString(),
+          errors: []
+        };
+      } else {
+        // If it's a full credential object
+        return {
+          verified: true,
+          issuer: credentialOrRequest.issuer,
+          subject: credentialOrRequest.subject || 'unknown',
+          issuanceDate: credentialOrRequest.issuanceDate,
+          errors: []
+        };
+      }
     }
 
     const response = await apiClient.post<VerificationResult>(
       API_ENDPOINTS.credentials.verify,
-      { credential }
+      typeof credentialOrRequest === 'object' && 'credential' in credentialOrRequest
+        ? credentialOrRequest
+        : { credential: credentialOrRequest }
     );
     return handleAPIResponse(response);
   }
@@ -311,6 +359,10 @@ export class CredentialsAPI {
   }
 
   // Continue with other methods, all following the same pattern...
+  async getCredential(credentialId: string): Promise<VerifiableCredential> {
+    return this.getCredentialById(credentialId);
+  }
+
   async getCredentialById(credentialId: string): Promise<VerifiableCredential> {
     if (API_CONFIG.useMockData) {
       await simulateNetworkDelay();
@@ -411,6 +463,33 @@ export class CredentialsAPI {
       }));
     }
     const response = await apiClient.post<VerificationResult[]>(API_ENDPOINTS.credentials.batchVerify, { credentials });
+    return handleAPIResponse(response);
+  }
+
+  async createPresentation(credentials: VerifiableCredential[], holderDid: string, challenge?: string, domain?: string): Promise<any> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return {
+        '@context': ['https://www.w3.org/2018/credentials/v1'],
+        type: ['VerifiablePresentation'],
+        verifiableCredential: credentials,
+        holder: holderDid,
+        proof: {
+          type: 'Ed25519Signature2020',
+          created: new Date().toISOString(),
+          verificationMethod: `${holderDid}#key-1`,
+          proofPurpose: 'authentication',
+          challenge: challenge || 'default-challenge',
+          domain: domain || 'example.com'
+        }
+      };
+    }
+    const response = await apiClient.post<any>(API_ENDPOINTS.credentials.presentations, {
+      credentials,
+      holderDid,
+      challenge,
+      domain
+    });
     return handleAPIResponse(response);
   }
 }

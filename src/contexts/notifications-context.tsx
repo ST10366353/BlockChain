@@ -1,9 +1,9 @@
 "use client"
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { notificationsAPI } from '@/src/services'
-import type { NotificationData, NotificationPreferences, NotificationType } from '@/src/services/notifications-api'
-import { useToast } from '@/src/hooks/use-toast'
+import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react'
+import { notificationsAPI } from '@/services'
+import type { NotificationData, NotificationPreferences } from '@/services/notifications-api'
+import { useToast } from '@/hooks/use-toast'
 
 // Notification state interface
 interface NotificationState {
@@ -203,7 +203,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     return () => clearInterval(interval)
   }, [])
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true })
 
     try {
@@ -217,13 +217,13 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       })
       toastError("Error", "Failed to load notifications")
     }
-  }
+  }, [toastError])
 
   const markAsRead = async (id: string) => {
     try {
       await notificationsAPI.markAsRead(id)
       dispatch({ type: 'MARK_READ', payload: id })
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to mark notification as read")
     }
   }
@@ -232,7 +232,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     try {
       await notificationsAPI.markAsUnread(id)
       dispatch({ type: 'MARK_UNREAD', payload: id })
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to mark notification as unread")
     }
   }
@@ -242,7 +242,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       await notificationsAPI.markAllAsRead()
       dispatch({ type: 'MARK_ALL_READ' })
       toastSuccess("Success", "All notifications marked as read")
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to mark all notifications as read")
     }
   }
@@ -251,7 +251,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     try {
       await notificationsAPI.deleteNotification(id)
       dispatch({ type: 'REMOVE_NOTIFICATION', payload: id })
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to delete notification")
     }
   }
@@ -261,26 +261,26 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       await notificationsAPI.deleteAllNotifications()
       dispatch({ type: 'SET_NOTIFICATIONS', payload: [] })
       toastSuccess("Success", "All notifications deleted")
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to delete all notifications")
     }
   }
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     try {
       const preferences = await notificationsAPI.getPreferences()
       dispatch({ type: 'SET_PREFERENCES', payload: preferences })
     } catch (error) {
       toastError("Error", "Failed to load notification preferences")
     }
-  }
+  }, [toastError])
 
   const updatePreferences = async (preferences: NotificationPreferences) => {
     try {
       const updatedPreferences = await notificationsAPI.updatePreferences(preferences)
       dispatch({ type: 'SET_PREFERENCES', payload: updatedPreferences })
       toastSuccess("Success", "Notification preferences updated")
-    } catch (error) {
+    } catch (_error) {
       toastError("Error", "Failed to update notification preferences")
     }
   }
@@ -292,7 +292,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
 
       // Start polling as fallback
       notificationsAPI.startPolling(30000)
-    } catch (error) {
+    } catch (_error) {
       console.error('WebSocket connection failed:', error)
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'error' })
 
@@ -319,7 +319,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       fetchNotifications()
       fetchPreferences()
     }
-  }, [userId])
+  }, [userId, fetchNotifications, fetchPreferences])
 
   const value: NotificationContextType = {
     state,

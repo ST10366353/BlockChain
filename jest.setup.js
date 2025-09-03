@@ -4,6 +4,14 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Configure React for testing
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+// Ensure React is available globally
+global.React = React;
+global.createRoot = createRoot;
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

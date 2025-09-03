@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import Header from "@/src/components/layout/header"
-import { useNotifications } from "@/src/contexts/notifications-context"
-import { useNotificationActions } from "@/src/contexts/notifications-context"
+import Header from "@/components/layout/header"
+import { useNotifications } from "@/contexts/notifications-context"
+import { useNotificationActions } from "@/contexts/notifications-context"
 import {
   Bell,
   CheckCircle,
@@ -17,7 +17,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import Link from "next/link"
-import type { NotificationData, NotificationType, NotificationPriority } from "@/src/services"
+import type { NotificationData, NotificationType, NotificationPriority } from "@/services"
 
 export default function NotificationsPage() {
   const {

@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from '@/src/contexts/session-context'
+import { useSession } from '@/contexts/session-context'
 import { useAPIErrorHandler } from './use-error-handler'
 
 export interface HttpClientOptions extends RequestInit {

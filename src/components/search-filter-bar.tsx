@@ -7,17 +7,14 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Calendar,
-  SlidersHorizontal,
-  RefreshCw,
   Loader2
 } from 'lucide-react'
-import { useSearch } from '@/src/hooks/use-search'
-import type { FilterOption, SearchFilters } from '@/src/hooks/use-search'
+import { useSearch } from '../hooks/use-search'
+import type { FilterOption } from '../hooks/use-search'
 
 interface SearchFilterBarProps<T> {
   data: T[]
-  onSearchChange: (result: any) => void
+  onSearchChange: (result: T[]) => void
   searchOptions?: {
     fields?: string[]
     minLength?: number
@@ -38,7 +35,7 @@ interface SearchFilterBarProps<T> {
   className?: string
 }
 
-export default function SearchFilterBar<T extends Record<string, any>>({
+export default function SearchFilterBar<T extends Record<string, unknown>>({
   data,
   onSearchChange,
   searchOptions = {},
@@ -63,7 +60,7 @@ export default function SearchFilterBar<T extends Record<string, any>>({
     clearFilter,
     clearAllFilters,
     updateSort,
-    getFilterOptions
+
   } = useSearch(data, {
     fields: searchOptions.fields,
     minLength: searchOptions.minLength || 2,
@@ -318,7 +315,7 @@ export default function SearchFilterBar<T extends Record<string, any>>({
               <div className="flex flex-wrap gap-2">
                 {searchTerm && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                    Search: "{searchTerm}"
+                    Search: &quot;{searchTerm}&quot;
                     <button
                       onClick={() => updateSearchTerm('')}
                       className="ml-2 text-blue-600 hover:text-blue-800"
@@ -356,7 +353,7 @@ export default function SearchFilterBar<T extends Record<string, any>>({
 }
 
 // Utility function to format filter values for display
-function formatFilterValue(value: any): string {
+function formatFilterValue(value: unknown): string {
   if (Array.isArray(value)) {
     return value.join(', ')
   }

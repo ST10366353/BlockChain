@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useUserType, UserTypeProvider } from '../useUserType';
 
 // Mock the profileAPI
-jest.mock('../../../services', () => ({
+jest.mock('@/services', () => ({
   profileAPI: {
     getProfile: jest.fn(),
   },
@@ -11,8 +11,8 @@ jest.mock('../../../services', () => ({
   },
 }));
 
-const mockProfileAPI = require('../../../services').profileAPI;
-const mockAuditAPI = require('../../../services').auditAPI;
+const mockProfileAPI = require('@/services').profileAPI;
+const mockAuditAPI = require('@/services').auditAPI;
 
 describe('useUserType', () => {
   beforeEach(() => {

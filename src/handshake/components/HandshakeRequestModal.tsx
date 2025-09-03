@@ -1,15 +1,8 @@
-import React, { useState, ReactElement, ReactNode } from 'react';
-import {
-  HandshakeRequest,
-  HandshakeResponse,
-  SelectiveDisclosure,
-  ZeroKnowledgeProof
-} from '../../shared/types';
+import React, { useState, ReactElement } from 'react';
+import { HandshakeRequest } from '../../shared/types';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   Button,
   Badge,
   Dialog,
@@ -19,8 +12,8 @@ import {
   DialogFooter,
   Checkbox
 } from '../../shared/components/ui';
-import { AlertTriangle, CheckCircle, Clock, Shield, Eye, EyeOff } from 'lucide-react';
-import { handshakeService } from '../services/handshake-service';
+import { AlertTriangle, CheckCircle, Clock, Shield, Eye } from 'lucide-react';
+
 
 // Type definitions for component props
 interface HandshakeRequestModalProps {

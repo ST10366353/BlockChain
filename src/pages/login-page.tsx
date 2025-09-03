@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Unlock, Fingerprint, Loader2, AlertCircle } from "lucide-react"
-import { oidcAPI, didAPI } from "@/src/services"
-import type { OIDCTokenResponse, OIDCAuthorizationRequest } from "@/src/services"
+import { oidcAPI, didAPI } from "@/services"
+import type { OIDCTokenResponse, OIDCAuthorizationRequest } from "@/services"
 
 interface AuthState {
   isLoading: boolean
@@ -239,24 +239,29 @@ export default function LoginPage() {
         <div className="space-y-6">
           {/* Recovery Passphrase Section */}
           <div>
-            <label className="block text-sm font-medium mb-2">Recovery Passphrase</label>
+            <label htmlFor="recovery-passphrase" className="block text-sm font-medium mb-2">Recovery Passphrase</label>
             <textarea
+              id="recovery-passphrase"
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your 12-word recovery passphrase"
+              placeholder="Enter your 12-word recovery passphrase (space-separated)"
               disabled={authState.isLoading}
             />
             {passphraseError && <p className="text-sm text-red-600 mt-2">{passphraseError}</p>}
+            <div className="mt-2 text-xs text-gray-500 flex items-center">
+              <span>💡</span>
+              <span className="ml-1">Make sure words are separated by spaces</span>
+            </div>
           </div>
 
           <button
             onClick={handlePassphraseUnlock}
-            disabled={authState.isLoading}
+            disabled={authState.isLoading || !passphrase.trim()}
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Unlock className="w-5 h-5 mr-2" />
-            Unlock Wallet
+            {authState.isLoading ? 'Unlocking...' : 'Unlock Wallet'}
           </button>
 
           {/* Divider */}
@@ -271,8 +276,9 @@ export default function LoginPage() {
 
           {/* DID Authentication Section */}
           <div>
-            <label className="block text-sm font-medium mb-2">Decentralized Identifier (DID)</label>
+            <label htmlFor="user-did" className="block text-sm font-medium mb-2">Decentralized Identifier (DID)</label>
             <input
+              id="user-did"
               type="text"
               value={userDID}
               onChange={(e) => setUserDID(e.target.value)}
@@ -281,9 +287,19 @@ export default function LoginPage() {
               disabled={authState.isLoading}
             />
             {didError && <p className="text-sm text-red-600 mt-2">{didError}</p>}
-            <p className="text-xs text-gray-500 mt-1">
-              Enter your DID to authenticate via OIDC
-            </p>
+            <div className="mt-2 text-xs text-gray-500">
+              <div className="flex items-start space-x-1">
+                <span>💡</span>
+                <div>
+                  <p className="mb-1">Examples:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>did:web:alice.com</li>
+                    <li>did:key:z6Mk...</li>
+                    <li>did:ethr:0x...</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
@@ -291,7 +307,8 @@ export default function LoginPage() {
             disabled={authState.isLoading || !userDID.trim()}
             className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Authenticate with DID
+            <Fingerprint className="w-5 h-5 mr-2" />
+            {authState.isLoading ? 'Authenticating...' : 'Authenticate with DID'}
           </button>
 
           {/* Biometric Authentication */}
@@ -301,8 +318,12 @@ export default function LoginPage() {
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Fingerprint className="w-5 h-5 mr-2" />
-            Use Biometric
+            {authState.isLoading ? 'Authenticating...' : 'Use Biometric Authentication'}
           </button>
+          <div className="text-xs text-gray-500 text-center">
+            <span>🔒</span>
+            <span className="ml-1">Fast and secure authentication using your device's biometrics</span>
+          </div>
         </div>
 
         {/* Help text */}

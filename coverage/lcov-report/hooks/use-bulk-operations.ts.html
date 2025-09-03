@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">2.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/170</span>
+                <span class='fraction'>5/172</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">3.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>5/152</span>
             </div>
         
             
@@ -552,9 +552,9 @@
 <a name='L487'></a><a href='#L487'>487</a>
 <a name='L488'></a><a href='#L488'>488</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -582,9 +582,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -979,7 +979,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1039,10 +1039,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use client"
 &nbsp;
-import { useState, useCallback, useMemo } from <span class="cstat-no" title="statement not covered" >'react'</span>
-import { useToast } from <span class="cstat-no" title="statement not covered" >'./use-toast'</span>
-import { useAPIErrorHandler } from <span class="cstat-no" title="statement not covered" >'./use-error-handler'</span>
-import { CredentialSummary, TrustedIssuer } from '@/src/services'
+import { useState, useCallback, useMemo } from 'react'
+import { useToast } from './use-toast'
+import { useAPIErrorHandler } from './use-error-handler'
+import { CredentialSummary, TrustedIssuer } from '@/services'
 &nbsp;
 export interface BulkOperationResult&lt;T = any&gt; {
   success: boolean
@@ -1069,7 +1069,7 @@ export interface BulkOperationOptions {
   onItemComplete?: (result: BulkOperationResult) =&gt; void
 }
 &nbsp;
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useBulkOperations(</span></span>) {
+export function <span class="fstat-no" title="function not covered" >useBulkOperations() {</span>
   const { toastSuccess, toastError, toastInfo } = <span class="cstat-no" title="statement not covered" >useToast()</span>
   const { handleAsyncError, withRetry } = <span class="cstat-no" title="statement not covered" >useAPIErrorHandler()</span>
 &nbsp;
@@ -1238,7 +1238,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 &nbsp;
       const result = <span class="cstat-no" title="statement not covered" >await handleAsyncError(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
         // Simulate API call - in real app, this would call credentialsAPI.revokeCredential
-        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 500)) /</span>/ Simulate delay
+<span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 500)) /</span></span>/ Simulate delay
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        return {</span>
           success: true,
@@ -1326,7 +1326,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 &nbsp;
       const result = <span class="cstat-no" title="statement not covered" >await handleAsyncError(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
         // Simulate API call - in real app, this would call trustAPI.updateTrustedIssuer
-        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 300)) /</span>/ Simulate delay
+<span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >resolve =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTimeout(resolve, 300)) /</span></span>/ Simulate delay
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        return {</span>
           success: true,
@@ -1466,7 +1466,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
 }
 &nbsp;
 // Hook for managing bulk selection
-export function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >useBulkSelection&lt;</span></span>T extends { id: string }&gt;(items: T[] = <span class="branch-0 cbranch-no" title="branch not covered" >[])</span> {
+export function <span class="fstat-no" title="function not covered" >useBulkSelection&lt;T extends { id: string }&gt;(i</span>tems: T[] = <span class="branch-0 cbranch-no" title="branch not covered" >[])</span> {
   const [selectedItems, setSelectedItems] = <span class="cstat-no" title="statement not covered" >useState&lt;Set&lt;string&gt;&gt;(new Set())</span>
   const [selectAllMode, setSelectAllMode] = <span class="cstat-no" title="statement not covered" >useState(false)</span>
 &nbsp;
@@ -1531,7 +1531,7 @@ export function <span class="cstat-no" title="statement not covered" ><span clas
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-30T14:34:21.477Z
+                at 2025-09-03T16:43:54.295Z
             </div>
         <script src="../prettify.js"></script>
         <script>

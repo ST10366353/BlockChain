@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '../../src/lib/utils'
 
 // Test the cn utility function
 describe('cn utility function', () => {

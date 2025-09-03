@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { Globe, Key, CheckCircle, Lock, Award, Users, Bell, RefreshCw, AlertTriangle, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
-import { didAPI, auditAPI, credentialsAPI, trustAPI } from "@/src/services"
-import { useToast } from "@/src/hooks/use-toast"
-import { useAPIErrorHandler } from "@/src/hooks/use-error-handler"
-import { DashboardLayout } from "@/src/components/layout/page-layout"
-import type { DIDDocument, DIDResolutionResult, AuditLogEntry, CredentialSummary, TrustedIssuer } from "@/src/services"
+import { didAPI, auditAPI, credentialsAPI, trustAPI } from "@/services"
+import { useToast } from "@/hooks/use-toast"
+import { useAPIErrorHandler } from "@/hooks/use-error-handler"
+import { DashboardLayout } from "@/components/layout/page-layout"
+import type { DIDDocument, DIDResolutionResult, AuditLogEntry, CredentialSummary, TrustedIssuer } from "@/services"
 
 interface DashboardData {
   user: {

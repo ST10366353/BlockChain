@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -349,8 +349,16 @@
 <a name='L284'></a><a href='#L284'>284</a>
 <a name='L285'></a><a href='#L285'>285</a>
 <a name='L286'></a><a href='#L286'>286</a>
-<a name='L287'></a><a href='#L287'>287</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -365,18 +373,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -520,7 +528,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -636,28 +652,33 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// API Configuration
-export const <span class="cstat-no" title="statement not covered" >API_CONFIG </span>= <span class="cstat-no" title="statement not covered" >{</span>
-  // Use environment variable for API base URL, fallback to production
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://did-blockchain-380915310329.europe-west1.run.app',
+export const API_CONFIG = {
+  // Use local development for now to avoid external API issues
+  baseURL: process.env.NODE_ENV === 'development' 
+    ? <span class="branch-0 cbranch-no" title="branch not covered" >'http://localhost:3001' </span>
+    : (process.env.NEXT_PUBLIC_API_URL || 'https://did-blockchain-380915310329.europe-west1.run.app'),
 &nbsp;
   // Development fallback
-  devURL: 'http://localhost:3000',
+  devURL: 'http://localhost:3001',
 &nbsp;
   // Request timeout in milliseconds
   timeout: 30000,
 &nbsp;
   // API version
   version: 'v1',
+&nbsp;
+  // Mock mode for development
+  useMockData: process.env.NODE_ENV === 'development',
 };
 &nbsp;
 // Common headers for all requests
-export const <span class="cstat-no" title="statement not covered" >getDefaultHeaders </span>= <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span></span>
+export const getDefaultHeaders = () =&gt; ({
   'Content-Type': 'application/json',
   'Accept': 'application/json',
 });
 &nbsp;
 // API endpoint paths - Updated to match comprehensive API documentation
-export const <span class="cstat-no" title="statement not covered" >API_ENDPOINTS </span>= <span class="cstat-no" title="statement not covered" >{</span>
+export const API_ENDPOINTS = {
   // Health &amp; System
   health: '/health',
   api: '/api/v1',
@@ -769,10 +790,13 @@ export const <span class="cstat-no" title="statement not covered" >API_ENDPOINTS
   },
 &nbsp;
   // Real-time Notifications
-  notifications: '/notifications',
-  notificationPreferences: '/notifications/preferences',
-  notificationStats: '/notifications/stats',
-  notificationTemplates: '/notifications/templates',
+  notifications: {
+    list: '/notifications',
+    preferences: '/notifications/preferences',
+    stats: '/notifications/stats',
+    templates: '/notifications/templates',
+    markAllRead: '/notifications/mark-all-read'
+  },
   websocketNotifications: '/ws/notifications',
 &nbsp;
   // Advanced Search &amp; Filtering
@@ -802,11 +826,11 @@ export const <span class="cstat-no" title="statement not covered" >API_ENDPOINTS
     errors: '/metrics/errors',
     performance: '/metrics/performance',
     usage: '/metrics/usage',
-  },
+  }
 };
 &nbsp;
 // HTTP status codes
-export const <span class="cstat-no" title="statement not covered" >HTTP_STATUS </span>= <span class="cstat-no" title="statement not covered" >{</span>
+export const <span class="cstat-no" title="statement not covered" >HTTP_STATUS = {</span>
   OK: 200,
   CREATED: 201,
   NO_CONTENT: 204,
@@ -928,7 +952,7 @@ export interface APIConfig {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-30T14:34:21.477Z
+                at 2025-09-03T16:43:54.295Z
             </div>
         <script src="../prettify.js"></script>
         <script>

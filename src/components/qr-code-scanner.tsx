@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Camera, X, RotateCcw, Flashlight, FlashlightOff, Loader2, AlertTriangle } from 'lucide-react'
-import { useToast } from '@/src/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'
 
 // QR Code scanning result types
 export type QRScanResult = {

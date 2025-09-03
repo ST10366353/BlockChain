@@ -15,15 +15,7 @@ describe('Credentials API Integration', () => {
     it('should fetch credentials with default parameters', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: mockCredentialList,
-          meta: {
-            total: 3,
-            limit: 50,
-            offset: 0,
-            hasMore: false,
-          },
-        }),
+        json: async () => mockCredentialList,
       })
 
       const result = await credentialsAPI.queryCredentials({
@@ -45,15 +37,7 @@ describe('Credentials API Integration', () => {
     it('should handle query parameters correctly', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: [mockCredentialList[0]],
-          meta: {
-            total: 1,
-            limit: 10,
-            offset: 0,
-            hasMore: false,
-          },
-        }),
+        json: async () => [mockCredentialList[0]],
       })
 
       const result = await credentialsAPI.queryCredentials({
@@ -85,7 +69,7 @@ describe('Credentials API Integration', () => {
     it('should fetch a single credential by ID', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockCredentialSummary }),
+        json: async () => mockCredentialSummary,
       })
 
       const result = await credentialsAPI.getCredential('cred-123')
@@ -114,7 +98,7 @@ describe('Credentials API Integration', () => {
     it('should verify a credential successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockVerificationResult }),
+        json: async () => mockVerificationResult,
       })
 
       const result = await credentialsAPI.verifyCredential({
@@ -142,7 +126,7 @@ describe('Credentials API Integration', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockVerificationResult }),
+        json: async () => mockVerificationResult,
       })
 
       const result = await credentialsAPI.verifyCredential(verificationOptions)
@@ -176,7 +160,7 @@ describe('Credentials API Integration', () => {
     it('should issue a credential successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockCredentialSummary }),
+        json: async () => mockCredentialSummary,
       })
 
       const result = await credentialsAPI.issueCredential(mockCredentialRequest)
@@ -228,7 +212,7 @@ describe('Credentials API Integration', () => {
     it('should get revocation status successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockRevocationStatus }),
+        json: async () => mockRevocationStatus,
       })
 
       const result = await credentialsAPI.getRevocationStatus('cred-123')
@@ -269,7 +253,7 @@ describe('Credentials API Integration', () => {
     it('should create a presentation successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockPresentation }),
+        json: async () => mockPresentation,
       })
 
       const result = await credentialsAPI.createPresentation(
@@ -294,15 +278,7 @@ describe('Credentials API Integration', () => {
     it('should fetch credentials by issuer', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: mockCredentialList.filter(c => c.issuerDid === 'did:web:university.edu'),
-          meta: {
-            total: 1,
-            limit: 50,
-            offset: 0,
-            hasMore: false,
-          },
-        }),
+        json: async () => mockCredentialList.filter(c => c.issuerDid === 'did:web:university.edu'),
       })
 
       const result = await credentialsAPI.getCredentialsByIssuer('did:web:university.edu')
@@ -320,15 +296,7 @@ describe('Credentials API Integration', () => {
     it('should fetch credentials by subject', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: mockCredentialList,
-          meta: {
-            total: 3,
-            limit: 50,
-            offset: 0,
-            hasMore: false,
-          },
-        }),
+        json: async () => mockCredentialList,
       })
 
       const result = await credentialsAPI.getCredentialsBySubject('did:web:alice.com')

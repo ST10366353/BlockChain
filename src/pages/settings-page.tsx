@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/src/components/layout/page-layout"
+import { DashboardLayout } from "@/components/layout/page-layout"
 import {
   Shield,
   Key,
@@ -24,9 +24,9 @@ import {
   Cpu,
   Loader2,
 } from "lucide-react"
-import { auditAPI, apiClient } from "@/src/services"
-import type { SystemMetrics, AuditStats } from "@/src/services"
-import { ThemeSelector } from "@/src/contexts/theme-context"
+import { auditAPI, apiClient } from "@/services"
+import type { SystemMetrics, AuditStats } from "@/services"
+import { ThemeSelector } from "@/contexts/theme-context"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("security")

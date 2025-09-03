@@ -1,26 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Building,
   Users,
   FileText,
-  Shield,
   Activity,
   AlertTriangle,
   CheckCircle,
   Clock,
-  TrendingUp,
   RefreshCw,
   Settings,
   Plus,
   Search,
-  Filter,
-  Download,
-  BarChart3,
-  PieChart,
-  LineChart
+  BarChart3
 } from 'lucide-react';
 
 import { useUserType, useApp } from '../../shared/hooks';
@@ -30,7 +24,7 @@ import { Badge } from '../../shared/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../shared/components/ui/avatar';
 
 import { handshakeService, auditAPI, trustAPI } from '../../services';
-import { HandshakeRequest, TrustRelationship, SystemMetrics } from '../../shared/types';
+import { HandshakeRequest, TrustRelationship } from '../../shared/types';
 
 interface EnterpriseStats {
   totalCredentials: number;
@@ -42,7 +36,7 @@ interface EnterpriseStats {
 }
 
 export default function EnterpriseDashboard() {
-  const { userType, profile } = useUserType();
+  const { profile } = useUserType();
   const { setLoading } = useApp();
 
   const [stats, setStats] = useState<EnterpriseStats>({
@@ -54,16 +48,16 @@ export default function EnterpriseDashboard() {
     systemHealth: 100
   });
 
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{id: string; type: string; timestamp: number; description: string}>>([]);
   const [pendingVerifications, setPendingVerifications] = useState<HandshakeRequest[]>([]);
-  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadEnterpriseData();
-  }, []);
+  }, [loadEnterpriseData]);
 
-  const loadEnterpriseData = async () => {
+  const loadEnterpriseData = useCallback(async () => {
     setLoading({ isLoading: true, message: 'Loading enterprise dashboard...' });
 
     try {
@@ -121,9 +115,9 @@ export default function EnterpriseDashboard() {
     } finally {
       setLoading({ isLoading: false });
     }
-  };
+  }, [setLoading]);
 
-  const calculateComplianceScore = (auditLogs: any[]): number => {
+  const calculateComplianceScore = (auditLogs: Array<{level: string}>): number => {
     if (!auditLogs.length) return 85; // Default score
 
     const violations = auditLogs.filter(log => log.level === 'error' || log.level === 'warning').length;

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/src/components/layout/page-layout"
+import { DashboardLayout } from "@/components/layout/page-layout"
 import { Plus, Globe, Key, Shield, Copy, Share2, Trash2, Eye, CheckCircle, Clock, AlertTriangle, Loader2, RefreshCw, ExternalLink } from "lucide-react"
-import { didAPI, auditAPI } from "@/src/services"
-import type { DIDResolutionResult, DIDRegistryEntry, DIDEvent } from "@/src/services"
+import { didAPI, auditAPI } from "@/services"
+import type { DIDResolutionResult, DIDRegistryEntry, DIDEvent } from "@/services"
 
 interface Identity {
   id: string

@@ -2,7 +2,6 @@
 
 import React, { Component, ReactNode, ErrorInfo } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
-import { useToast } from '../shared/hooks'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -38,8 +37,6 @@ export function DefaultErrorFallback({
   onReport,
   onGoHome
 }: ErrorFallbackProps) {
-  const { toastError } = useToast()
-
   const handleReport = () => {
     // In a real app, this would send error to monitoring service
     console.error('Error Report:', {
@@ -49,7 +46,13 @@ export function DefaultErrorFallback({
       errorId
     })
 
-    toastError("Error Reported", "Thank you for reporting this error. Our team will investigate.")
+    // Show success message without using toast hook
+    const notification = document.createElement('div')
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50'
+    notification.textContent = 'Error report sent successfully'
+    document.body.appendChild(notification)
+    setTimeout(() => document.body.removeChild(notification), 3000)
+
     onReport?.()
   }
 
@@ -129,13 +132,9 @@ export function DefaultErrorFallback({
 
 // Page-level error boundary
 export function PageErrorBoundary({
-  error,
-  errorInfo,
-  errorId,
   onRetry,
-  onReport,
   onGoHome
-}: ErrorFallbackProps) {
+}: Omit<ErrorFallbackProps, 'error' | 'errorInfo' | 'errorId' | 'onReport'>) {
   return (
     <div className="min-h-[60vh] bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
@@ -179,9 +178,8 @@ export function PageErrorBoundary({
 
 // Component-level error boundary for smaller sections
 export function SectionErrorBoundary({
-  error,
   onRetry
-}: Omit<ErrorFallbackProps, 'onReport' | 'onGoHome'>) {
+}: Omit<ErrorFallbackProps, 'error' | 'onReport' | 'onGoHome'>) {
   return (
     <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
       <div className="flex items-start">

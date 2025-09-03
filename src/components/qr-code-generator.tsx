@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { Download, Copy, X, QrCode, Share2, Loader2 } from 'lucide-react'
-import { useToast } from '@/src/hooks/use-toast'
+import { useToast } from '../shared/hooks/use-toast'
 
 // QR Code data types
 export type QRCodeData = {
@@ -419,3 +419,6 @@ export const createUrlQR = (url: string, title?: string, description?: string): 
     timestamp: new Date().toISOString()
   }
 })
+
+// Named export for the component (for testing compatibility)
+export { QRCodeGenerator }

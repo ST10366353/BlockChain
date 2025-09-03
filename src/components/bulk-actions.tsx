@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CheckSquare, Square, MoreHorizontal, Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { BulkOperationProgress } from '@/src/hooks/use-bulk-operations'
+import { BulkOperationProgress } from '@/hooks/use-bulk-operations'
 
 interface BulkActionsToolbarProps {
   selectedCount: number
@@ -51,16 +51,7 @@ export function BulkActionsToolbar({
     setShowActions(false)
   }
 
-  const getVariantClasses = (variant: BulkAction['variant'] = 'secondary') => {
-    switch (variant) {
-      case 'primary':
-        return 'bg-blue-600 hover:bg-blue-700 text-white'
-      case 'danger':
-        return 'bg-red-600 hover:bg-red-700 text-white'
-      default:
-        return 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100'
-    }
-  }
+
 
   return (
     <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">

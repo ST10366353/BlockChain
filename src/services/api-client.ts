@@ -76,6 +76,11 @@ export class APIClient {
         };
       }
 
+      // If the response data is already in APIResponse format, return it as-is
+      if (responseData && typeof responseData === 'object' && 'data' in responseData && 'success' in responseData) {
+        return responseData as APIResponse<T>;
+      }
+
       return {
         data: responseData,
         status: response.status,

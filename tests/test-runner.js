@@ -7,7 +7,7 @@ const path = require('path')
 const config = {
   jest: {
     config: path.join(__dirname, '../jest.config.js'),
-    testPath: 'tests/unit|tests/components|tests/pages|tests/services',
+    testPath: 'tests/(unit|components|pages|services|utils)/.*',
     coverage: true,
   },
   playwright: {
@@ -53,7 +53,7 @@ function runApiTests() {
   console.log('🔗 Running API integration tests...')
 
   try {
-    const apiTestCommand = `npx jest --config=${config.jest.config} --testPathPattern="tests/api" --testNamePattern="API"`
+    const apiTestCommand = `npx jest --config=${config.jest.config} --testPathPattern="tests/api/.*"`
     execSync(apiTestCommand, { stdio: 'inherit', cwd: process.cwd() })
     console.log('✅ API tests completed successfully')
   } catch (error) {

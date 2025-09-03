@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import LoginPage from '@/pages/login-page'
+import LoginPage from '../../src/pages/login-page'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -23,6 +23,21 @@ jest.mock('@/services', () => ({
     isDIDResolvable: jest.fn(),
   },
 }))
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+}
+global.localStorage = localStorageMock
+
+// Spy on localStorage methods
+jest.spyOn(localStorageMock, 'getItem')
+jest.spyOn(localStorageMock, 'setItem')
+jest.spyOn(localStorageMock, 'removeItem')
+jest.spyOn(localStorageMock, 'clear')
 
 // Mock the useToast hook
 jest.mock('@/hooks/use-toast', () => ({
@@ -57,7 +72,7 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/recovery passphrase/i)).toBeInTheDocument()
     expect(screen.getByText(/or authenticate with/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/decentralized identifier/i)).toBeInTheDocument()
-    expect(screen.getByText('Use Biometric')).toBeInTheDocument()
+    expect(screen.getByText('Use Biometric Authentication')).toBeInTheDocument()
   })
 
   it('validates passphrase length', async () => {
@@ -98,7 +113,7 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
-    })
+    }, { timeout: 2000 })
 
     expect(localStorage.setItem).toHaveBeenCalledWith('auth_method', 'passphrase')
     expect(localStorage.setItem).toHaveBeenCalledWith('wallet_unlocked', 'true')
@@ -156,12 +171,12 @@ describe('LoginPage', () => {
 
     render(<LoginPage />)
 
-    const biometricButton = screen.getByText('Use Biometric')
+    const biometricButton = screen.getByText('Use Biometric Authentication')
     fireEvent.click(biometricButton)
 
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard')
-    })
+    }, { timeout: 2000 })
 
     expect(localStorage.setItem).toHaveBeenCalledWith('auth_method', 'biometric')
     expect(localStorage.setItem).toHaveBeenCalledWith('wallet_unlocked', 'true')
@@ -173,7 +188,7 @@ describe('LoginPage', () => {
 
     render(<LoginPage />)
 
-    const biometricButton = screen.getByText('Use Biometric')
+    const biometricButton = screen.getByText('Use Biometric Authentication')
     fireEvent.click(biometricButton)
 
     await waitFor(() => {
@@ -232,7 +247,7 @@ describe('LoginPage', () => {
     const didInput = screen.getByLabelText(/decentralized identifier/i)
     const unlockButton = screen.getByText('Unlock Wallet')
     const didButton = screen.getByText('Authenticate with DID')
-    const biometricButton = screen.getByText('Use Biometric')
+    const biometricButton = screen.getByText('Use Biometric Authentication')
 
     // Start DID authentication
     fireEvent.change(didInput, { target: { value: 'did:web:example.com' } })

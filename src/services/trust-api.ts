@@ -141,6 +141,10 @@ export class TrustAPI {
   }
 
   // Get issuer details
+  async getTrustedIssuer(did: string): Promise<TrustedIssuer> {
+    return this.getIssuerDetails(did);
+  }
+
   async getIssuerDetails(did: string): Promise<TrustedIssuer> {
     // Use mock data in development
     if (API_CONFIG.useMockData) {
@@ -295,6 +299,101 @@ export class TrustAPI {
     }
 
     return errors;
+  }
+
+  // Get issuer verification status
+  async getIssuerVerificationStatus(did: string): Promise<{ verified: boolean; verifiedAt?: string; verifiedBy?: string; evidence?: string[] }> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      try {
+        const issuer = await this.getIssuerDetails(did);
+        return {
+          verified: issuer.status === 'trusted',
+          verifiedAt: issuer.verifiedAt,
+          verifiedBy: issuer.verifiedBy,
+          evidence: issuer.evidenceUri ? [issuer.evidenceUri] : []
+        };
+      } catch (error) {
+        return {
+          verified: false
+        };
+      }
+    }
+
+    const response = await apiClient.get<{ verified: boolean; verifiedAt?: string; verifiedBy?: string; evidence?: string[] }>(
+      `${API_ENDPOINTS.trust.issuer}/${encodeURIComponent(did)}/verification`
+    );
+    return handleAPIResponse(response);
+  }
+
+  // Get trust policies
+  async getTrustPolicies(): Promise<Array<{ id: string; name: string; description: string; rules: any[] }>> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      return [
+        {
+          id: 'policy-1',
+          name: 'Basic Trust Policy',
+          description: 'Default trust policy for credential verification',
+          rules: [
+            { type: 'issuer-trust', required: true },
+            { type: 'credential-validity', required: true }
+          ]
+        }
+      ];
+    }
+
+    const response = await apiClient.get<Array<{ id: string; name: string; description: string; rules: any[] }>>(
+      API_ENDPOINTS.trust.policies
+    );
+    return handleAPIResponse(response);
+  }
+
+  // Search issuers
+  async searchIssuers(query: { query?: string; filters?: { status?: string; tags?: string[] }; limit?: number }): Promise<TrustedIssuer[]> {
+    if (API_CONFIG.useMockData) {
+      await simulateNetworkDelay();
+      let issuers = await this.getTrustedIssuers();
+
+      // Apply text search
+      if (query.query) {
+        const searchTerm = query.query.toLowerCase();
+        issuers = issuers.filter(issuer =>
+          issuer.metadata?.name?.toLowerCase().includes(searchTerm) ||
+          issuer.metadata?.description?.toLowerCase().includes(searchTerm) ||
+          issuer.did.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply filters
+      if (query.filters?.status) {
+        issuers = issuers.filter(issuer => issuer.status === query.filters!.status);
+      }
+
+      if (query.filters?.tags && query.filters.tags.length > 0) {
+        issuers = issuers.filter(issuer =>
+          query.filters!.tags!.some(tag => issuer.tags.includes(tag))
+        );
+      }
+
+      // Apply limit
+      if (query.limit) {
+        issuers = issuers.slice(0, query.limit);
+      }
+
+      return issuers;
+    }
+
+    const searchParams = new URLSearchParams();
+    if (query.query) searchParams.append('q', query.query);
+    if (query.filters?.status) searchParams.append('status', query.filters.status);
+    if (query.filters?.tags) query.filters.tags.forEach(tag => searchParams.append('tags', tag));
+    if (query.limit) searchParams.append('limit', query.limit.toString());
+
+    const response = await apiClient.get<TrustedIssuer[]>(
+      `${API_ENDPOINTS.trust.issuers}?${searchParams.toString()}`
+    );
+    return handleAPIResponse(response);
   }
 
   // Create a trust registry entry from connection data

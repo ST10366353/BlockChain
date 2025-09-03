@@ -2,12 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Shield, Bell, Settings, Menu, X, CheckCircle, RefreshCw, Trash2 } from "lucide-react"
-import { useNotifications } from "@/src/contexts/notifications-context"
-import { ThemeToggle } from "@/src/contexts/theme-context"
-import { SessionStatusIndicator } from "@/src/components/session-status"
-import type { NotificationData } from "@/src/services"
+import { useNotifications } from "@/contexts/notifications-context"
+import { ThemeToggle } from "@/contexts/theme-context"
+import { SessionStatusIndicator } from "@/components/session-status"
+
 
 interface HeaderProps {
   user?: {
@@ -151,7 +151,7 @@ export default function Header({ user }: HeaderProps) {
                     {notifications.length === 0 ? (
                       <div className="p-6 text-center text-gray-500">
                         <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">You're all caught up!</p>
+                        <p className="text-sm">You&apos;re all caught up!</p>
                         <p className="text-xs mt-1">No new notifications</p>
                       </div>
                     ) : (

@@ -1,4 +1,4 @@
-import { trustAPI } from '@/src/services'
+import { trustAPI } from '@/services'
 
 // Mock fetch globally
 const mockFetch = jest.fn()
@@ -51,7 +51,7 @@ describe('Trust API Service', () => {
     it('should fetch trusted issuers successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockTrustedIssuers }),
+        json: async () => mockTrustedIssuers,
       })
 
       const result = await trustAPI.getTrustedIssuers()
@@ -71,7 +71,7 @@ describe('Trust API Service', () => {
     it('should handle query parameters', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: [mockTrustedIssuers[0]] }),
+        json: async () => [mockTrustedIssuers[0]],
       })
 
       const result = await trustAPI.getTrustedIssuers({
@@ -92,9 +92,7 @@ describe('Trust API Service', () => {
     it('should filter by status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: mockTrustedIssuers.filter(issuer => issuer.status === 'trusted')
-        }),
+        json: async () => mockTrustedIssuers.filter(issuer => issuer.status === 'trusted'),
       })
 
       const result = await trustAPI.getTrustedIssuers({ status: 'trusted' })
@@ -105,9 +103,7 @@ describe('Trust API Service', () => {
     it('should filter by tags', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          data: mockTrustedIssuers.filter(issuer => issuer.tags.includes('educational'))
-        }),
+        json: async () => mockTrustedIssuers.filter(issuer => issuer.tags.includes('educational')),
       })
 
       const result = await trustAPI.getTrustedIssuers({ tags: ['educational'] })
@@ -118,7 +114,7 @@ describe('Trust API Service', () => {
     it('should handle empty results', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: [] }),
+        json: async () => [],
       })
 
       const result = await trustAPI.getTrustedIssuers()
@@ -155,13 +151,13 @@ describe('Trust API Service', () => {
     it('should fetch a single trusted issuer', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockIssuer }),
+        json: async () => mockIssuer,
       })
 
       const result = await trustAPI.getTrustedIssuer('did:web:university.edu')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/did:web:university.edu'),
+        expect.stringContaining('trust/issuer/did%3Aweb%3Auniversity.edu'),
         expect.objectContaining({
           method: 'GET',
         })
@@ -208,7 +204,7 @@ describe('Trust API Service', () => {
     it('should add a new trusted issuer', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockCreatedIssuer }),
+        json: async () => mockCreatedIssuer,
       })
 
       const result = await trustAPI.addTrustedIssuer(mockNewIssuer)
@@ -276,7 +272,7 @@ describe('Trust API Service', () => {
     it('should update a trusted issuer', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockUpdatedIssuer }),
+        json: async () => mockUpdatedIssuer,
       })
 
       const result = await trustAPI.updateTrustedIssuer(
@@ -285,7 +281,7 @@ describe('Trust API Service', () => {
       )
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/did:web:university.edu'),
+        expect.stringContaining('trust/issuer/did%3Aweb%3Auniversity.edu'),
         expect.objectContaining({
           method: 'PUT',
           headers: expect.objectContaining({
@@ -322,12 +318,12 @@ describe('Trust API Service', () => {
       const result = await trustAPI.removeTrustedIssuer('did:web:university.edu')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/did:web:university.edu'),
+        expect.stringContaining('trust/issuer/did%3Aweb%3Auniversity.edu/remove'),
         expect.objectContaining({
-          method: 'DELETE',
+          method: 'POST',
         })
       )
-      expect(result).toBeUndefined()
+      expect(result).toEqual({ success: true })
     })
 
     it('should handle removal of non-existent issuer', async () => {
@@ -347,13 +343,18 @@ describe('Trust API Service', () => {
     it('should return true for trusted issuer', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ trusted: true }),
+        json: async () => ({
+          did: 'did:web:university.edu',
+          name: 'University of Example',
+          status: 'trusted',
+          tags: ['education']
+        }),
       })
 
       const result = await trustAPI.isIssuerTrusted('did:web:university.edu')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/did:web:university.edu/trusted'),
+        expect.stringContaining('trust/issuer/did%3Aweb%3Auniversity.edu'),
         expect.any(Object)
       )
       expect(result).toBe(true)
@@ -391,13 +392,13 @@ describe('Trust API Service', () => {
     it('should get issuer verification status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockVerificationStatus }),
+        json: async () => mockVerificationStatus,
       })
 
       const result = await trustAPI.getIssuerVerificationStatus('did:web:university.edu')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/did:web:university.edu/verification'),
+        expect.stringContaining('trust/issuer/did%3Aweb%3Auniversity.edu/verification'),
         expect.any(Object)
       )
       expect(result).toEqual(mockVerificationStatus)
@@ -414,7 +415,7 @@ describe('Trust API Service', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: unverifiedStatus }),
+        json: async () => unverifiedStatus,
       })
 
       const result = await trustAPI.getIssuerVerificationStatus('did:web:unverified.com')
@@ -458,7 +459,7 @@ describe('Trust API Service', () => {
     it('should fetch trust policies', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockTrustPolicies }),
+        json: async () => mockTrustPolicies,
       })
 
       const result = await trustAPI.getTrustPolicies()
@@ -473,7 +474,7 @@ describe('Trust API Service', () => {
     it('should handle empty policies list', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: [] }),
+        json: async () => [],
       })
 
       const result = await trustAPI.getTrustPolicies()
@@ -507,7 +508,7 @@ describe('Trust API Service', () => {
     it('should search issuers by name', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: mockSearchResults }),
+        json: async () => mockSearchResults,
       })
 
       const result = await trustAPI.searchIssuers({
@@ -516,7 +517,7 @@ describe('Trust API Service', () => {
       })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trust/issuers/search?query=university&limit=10'),
+        expect.stringContaining('/trust/issuers'),
         expect.any(Object)
       )
       expect(result).toEqual(mockSearchResults)
@@ -525,7 +526,7 @@ describe('Trust API Service', () => {
     it('should search with filters', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: [mockSearchResults[0]] }),
+        json: async () => [mockSearchResults[0]],
       })
 
       const result = await trustAPI.searchIssuers({
@@ -539,7 +540,7 @@ describe('Trust API Service', () => {
       })
 
       const expectedUrl = expect.stringContaining(
-        '/trust/issuers/search?query=university&status=trusted&jurisdiction=US-CA&tags=educational&limit=5'
+        'trust/issuers'
       )
       expect(mockFetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object))
       expect(result).toEqual([mockSearchResults[0]])

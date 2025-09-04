@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { useSession, useSessionMonitor } from '@/contexts/session-context'
 import { useToast } from '@/hooks/use-toast'
@@ -19,7 +19,7 @@ interface SessionStatusProps {
   showDetails?: boolean
   compact?: boolean
 }
-
+ 
 export function SessionStatus({ showDetails = false, compact = false }: SessionStatusProps) {
   const { session, logout, extendSession } = useSession()
   const { timeUntilExpiry, timeUntilRefresh, isSessionExpired, refreshTokens } = useSessionMonitor()
@@ -299,17 +299,7 @@ export function SessionWarningBanner() {
     </div>
   )
 }
-import { useToast } from '@/hooks/use-toast'
-import {
-  Shield,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  RefreshCw,
-  LogOut,
-  User,
-  Wifi
-} from 'lucide-react'
+// removed duplicate imports and duplicate component block below
 
 interface SessionStatusProps {
   showDetails?: boolean

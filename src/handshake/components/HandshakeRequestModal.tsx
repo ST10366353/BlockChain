@@ -1,82 +1,73 @@
-import React from 'react';
-;;
-import { HandshakeRequest } from '../../shared/types';
-import {
-  Card,
-  CardContent,
-  Button,
-  Badge,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  Checkbox
-} from '../../shared/components/ui';
-import { AlertTriangle, CheckCircle, Clock, Shield, Eye } from 'lucide-react';
+"use client"
 
+import React, { type ReactElement } from "react"
+import type { HandshakeRequest } from "../../shared/types"
+import { Card, CardContent } from "../../shared/components/ui/card"
+import { Button } from "../../shared/components/ui/button"
+import { Badge } from "../../shared/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../shared/components/ui/dialog"
+import { Checkbox } from "../../shared/components/ui/checkbox"
+import { AlertTriangle, CheckCircle, Clock, Shield, Eye } from "lucide-react"
 
 // Type definitions for component props
 interface HandshakeRequestModalProps {
-  request: HandshakeRequest;
-  isOpen: boolean;
-  onClose: () => void;
-  onRespond: (approvedFields: string[], rejectedFields: string[]) => Promise<void>;
+  request: HandshakeRequest | null
+  isOpen: boolean
+  onClose: () => void
+  onRespond: (approvedFields: string[], rejectedFields: string[]) => Promise<void>
 }
 
 export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
   request,
   isOpen,
   onClose,
-  onRespond
+  onRespond,
 }: HandshakeRequestModalProps): ReactElement | null => {
-  const [selectedFields, setSelectedFields] = React.useState<string[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [useZeroKnowledge, setUseZeroKnowledge] = React.useState(false);
-  const [useSelectiveDisclosure, setUseSelectiveDisclosure] = React.useState(true);
+  const [selectedFields, setSelectedFields] = React.useState<string[]>([])
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [useZeroKnowledge, setUseZeroKnowledge] = React.useState(false)
+  const [useSelectiveDisclosure, setUseSelectiveDisclosure] = React.useState(true)
 
   const handleFieldToggle = (fieldId: string): void => {
     setSelectedFields((prev: string[]) =>
-      prev.includes(fieldId)
-        ? prev.filter((f: string) => f !== fieldId)
-        : [...prev, fieldId]
-    );
-  };
+      prev.includes(fieldId) ? prev.filter((f: string) => f !== fieldId) : [...prev, fieldId],
+    )
+  }
 
   const handleSubmit = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const approvedFields = selectedFields;
-      const rejectedFields = request.requestedFields.filter(
-        (field: string) => !selectedFields.includes(field)
-      );
+    if (!request) return
 
-      await onRespond(approvedFields, rejectedFields);
-      onClose();
+    setIsLoading(true)
+    try {
+      const approvedFields = selectedFields
+      const rejectedFields = request.requestedFields.filter((field: string) => !selectedFields.includes(field))
+
+      await onRespond(approvedFields, rejectedFields)
+      onClose()
     } catch (error) {
-      console.error('Failed to respond to handshake:', error);
+      console.error("Failed to respond to handshake:", error)
       // Handle error
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const getFieldDescription = (field: string): string => {
     const fieldDescriptions: Record<string, string> = {
-      'name': 'Your full legal name',
-      'email': 'Email address for contact',
-      'phone': 'Phone number for verification',
-      'address': 'Residential address',
-      'dateOfBirth': 'Date of birth for age verification',
-      'nationalId': 'Government issued ID number',
-      'credentials': 'Professional certifications',
-      'employment': 'Employment history',
-      'education': 'Educational background'
-    };
-    return fieldDescriptions[field] || field.replace(/([A-Z])/g, ' $1').toLowerCase();
-  };
+      name: "Your full legal name",
+      email: "Email address for contact",
+      phone: "Phone number for verification",
+      address: "Residential address",
+      dateOfBirth: "Date of birth for age verification",
+      nationalId: "Government issued ID number",
+      credentials: "Professional certifications",
+      employment: "Employment history",
+      education: "Educational background",
+    }
+    return fieldDescriptions[field] || field.replace(/([A-Z])/g, " $1").toLowerCase()
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen || !request) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -125,11 +116,9 @@ export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
                   />
                   <div className="flex-1">
                     <label htmlFor={field} className="text-sm font-medium cursor-pointer">
-                      {field.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                      {field.replace(/([A-Z])/g, " $1").toLowerCase()}
                     </label>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {getFieldDescription(field)}
-                    </p>
+                    <p className="text-xs text-gray-600 mt-1">{getFieldDescription(field)}</p>
                   </div>
                 </div>
               ))}
@@ -148,10 +137,7 @@ export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
                   <p className="text-xs text-gray-600">Share only necessary information</p>
                 </div>
               </div>
-              <Checkbox
-                checked={useSelectiveDisclosure}
-                onCheckedChange={setUseSelectiveDisclosure}
-              />
+              <Checkbox checked={useSelectiveDisclosure} onCheckedChange={setUseSelectiveDisclosure} />
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -177,8 +163,8 @@ export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
               <div className="text-sm">
                 <p className="font-medium text-yellow-800">Privacy Notice</p>
                 <p className="text-yellow-700 mt-1">
-                  You can choose which information to share. Only approved fields will be verified.
-                  Your privacy preferences will be remembered for future requests.
+                  You can choose which information to share. Only approved fields will be verified. Your privacy
+                  preferences will be remembered for future requests.
                 </p>
               </div>
             </div>
@@ -201,14 +187,11 @@ export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading || selectedFields.length === 0}
-          >
-            {isLoading ? 'Processing...' : `Share Selected (${selectedFields.length})`}
+          <Button onClick={handleSubmit} disabled={isLoading || selectedFields.length === 0}>
+            {isLoading ? "Processing..." : `Share Selected (${selectedFields.length})`}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

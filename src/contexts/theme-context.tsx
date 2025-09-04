@@ -1,6 +1,6 @@
 "use client"
 
-;
+import React, { createContext, type ReactNode } from 'react'
 
 // Theme types
 export type Theme = 'light' | 'dark' | 'system'
@@ -12,7 +12,7 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void
   toggleTheme: () => void
 }
-
+ 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 // Theme storage key

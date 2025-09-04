@@ -1,41 +1,43 @@
-import React from 'react';
-import { AppConfig, LoadingState, ErrorState, DeviceType } from '../types';
+"use client"
+
+import React, { createContext, type ReactNode, type ComponentType } from "react"
+import type { AppConfig, LoadingState, ErrorState, DeviceType } from "../types"
 
 interface AppContextType {
-  config: AppConfig;
-  loading: LoadingState;
-  error: ErrorState;
-  deviceType: DeviceType;
-  isOnline: boolean;
-  theme: 'light' | 'dark' | 'system';
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  language: string;
-  setLanguage: (language: string) => void;
-  resetError: () => void;
-  setLoading: (loading: Partial<LoadingState>) => void;
-  setError: (error: Partial<ErrorState>) => void;
+  config: AppConfig
+  loading: LoadingState
+  error: ErrorState
+  deviceType: DeviceType
+  isOnline: boolean
+  theme: "light" | "dark" | "system"
+  setTheme: (theme: "light" | "dark" | "system") => void
+  language: string
+  setLanguage: (language: string) => void
+  resetError: () => void
+  setLoading: (loading: Partial<LoadingState>) => void
+  setError: (error: Partial<ErrorState>) => void
 }
 
-const AppContext = createContext<AppContextType | null>(null);
+const AppContext = createContext<AppContextType | null>(null)
 
 interface AppProviderProps {
-  children: ReactNode;
-  config: AppConfig;
+  children: ReactNode
+  config: AppConfig
 }
 
 const defaultConfig: AppConfig = {
-  environment: 'development',
-  version: '1.0.0',
-  buildNumber: '1',
+  environment: "development",
+  version: "1.0.0",
+  buildNumber: "1",
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
     timeout: 30000,
-    retryAttempts: 3
+    retryAttempts: 3,
   },
   blockchain: {
-    network: 'mainnet',
-    rpcUrl: '',
-    chainId: 1
+    network: "mainnet",
+    rpcUrl: "",
+    chainId: 1,
   },
   features: {
     handshake: true,
@@ -47,150 +49,147 @@ const defaultConfig: AppConfig = {
     aiRiskAssessment: false,
     multiTenant: true,
     auditLogging: true,
-    complianceReporting: true
+    complianceReporting: true,
   },
   limits: {
     maxFileSize: 10 * 1024 * 1024, // 10MB
     maxCredentials: 1000,
-    maxRequestsPerMinute: 100
-  }
-};
+    maxRequestsPerMinute: 100,
+  },
+}
 
-export const AppProvider: React.FC<AppProviderProps> = ({
-  children,
-  config = defaultConfig
-}) => {
+export const AppProvider: React.FC<AppProviderProps> = ({ children, config = defaultConfig }) => {
   // Theme state
-  const [theme, setThemeState] = React.useState<'light' | 'dark' | 'system'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
+  const [theme, setThemeState] = React.useState<"light" | "dark" | "system">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "light" | "dark" | "system") || "system"
     }
-    return 'system';
-  });
+    return "system"
+  })
 
   // Language state
   const [language, setLanguageState] = React.useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('language') || 'en';
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("language") || "en"
     }
-    return 'en';
-  });
+    return "en"
+  })
 
   // Loading state
   const [loading, setLoadingState] = React.useState<LoadingState>({
     isLoading: false,
     message: undefined,
-    progress: undefined
-  });
+    progress: undefined,
+  })
 
   // Error state
   const [error, setErrorState] = React.useState<ErrorState>({
     hasError: false,
     error: undefined,
-    retry: undefined
-  });
+    retry: undefined,
+  })
 
   // Device type detection
-  const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
+  const [deviceType, setDeviceType] = React.useState<DeviceType>("desktop")
 
   // Online status
-  const [isOnline, setIsOnline] = React.useState<boolean>(true);
+  const [isOnline, setIsOnline] = React.useState<boolean>(true)
 
   // Theme setter with localStorage persistence
-  const setTheme = (newTheme: 'light' | 'dark' | 'system') => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+  const setTheme = (newTheme: "light" | "dark" | "system") => {
+    setThemeState(newTheme)
+    localStorage.setItem("theme", newTheme)
 
     // Apply theme to document
-    const root = document.documentElement;
-    if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.setAttribute('data-theme', systemTheme);
+    const root = document.documentElement
+    if (newTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+      root.setAttribute("data-theme", systemTheme)
     } else {
-      root.setAttribute('data-theme', newTheme);
+      root.setAttribute("data-theme", newTheme)
     }
-  };
+  }
 
   // Language setter with localStorage persistence
   const setLanguage = (newLanguage: string) => {
-    setLanguageState(newLanguage);
-    localStorage.setItem('language', newLanguage);
-  };
+    setLanguageState(newLanguage)
+    localStorage.setItem("language", newLanguage)
+  }
 
   // Loading state setter
   const setLoading = (newLoading: Partial<LoadingState>) => {
-    setLoadingState(prev => ({ ...prev, ...newLoading }));
-  };
+    setLoadingState((prev) => ({ ...prev, ...newLoading }))
+  }
 
   // Error state setter
   const setError = (newError: Partial<ErrorState>) => {
-    setErrorState(prev => ({ ...prev, ...newError }));
-  };
+    setErrorState((prev) => ({ ...prev, ...newError }))
+  }
 
   // Reset error state
   const resetError = () => {
     setErrorState({
       hasError: false,
       error: undefined,
-      retry: undefined
-    });
-  };
+      retry: undefined,
+    })
+  }
 
   // Device type detection
   React.useEffect(() => {
     const detectDeviceType = () => {
-      const width = window.innerWidth;
+      const width = window.innerWidth
       if (width < 768) {
-        setDeviceType('mobile');
+        setDeviceType("mobile")
       } else if (width < 1024) {
-        setDeviceType('tablet');
+        setDeviceType("tablet")
       } else {
-        setDeviceType('desktop');
+        setDeviceType("desktop")
       }
-    };
+    }
 
-    detectDeviceType();
-    window.addEventListener('resize', detectDeviceType);
-    return () => window.removeEventListener('resize', detectDeviceType);
-  }, []);
+    detectDeviceType()
+    window.addEventListener("resize", detectDeviceType)
+    return () => window.removeEventListener("resize", detectDeviceType)
+  }, [])
 
   // Online status detection
   React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
 
     // Initial check
-    setIsOnline(navigator.onLine);
+    setIsOnline(navigator.onLine)
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   // Apply initial theme
   React.useEffect(() => {
-    setTheme(theme);
-  }, []);
+    setTheme(theme)
+  }, [])
 
   // System theme change listener
   React.useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
       const handleChange = () => {
-        const root = document.documentElement;
-        root.setAttribute('data-theme', mediaQuery.matches ? 'dark' : 'light');
-      };
+        const root = document.documentElement
+        root.setAttribute("data-theme", mediaQuery.matches ? "dark" : "light")
+      }
 
-      mediaQuery.addEventListener('change', handleChange);
-      handleChange(); // Initial check
+      mediaQuery.addEventListener("change", handleChange)
+      handleChange() // Initial check
 
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange)
     }
-  }, [theme]);
+  }, [theme])
 
   const contextValue: AppContextType = {
     config,
@@ -204,72 +203,65 @@ export const AppProvider: React.FC<AppProviderProps> = ({
     setLanguage,
     resetError,
     setLoading,
-    setError
-  };
+    setError,
+  }
 
-  return (
-    <AppContext.Provider value={contextValue}>
-      {children}
-    </AppContext.Provider>
-  );
-};
+  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>
+}
 
 export const useApp = (): AppContextType => {
-  const context = React.useContext(AppContext);
+  const context = React.useContext(AppContext)
   if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
+    throw new Error("useApp must be used within an AppProvider")
   }
-  return context;
-};
+  return context
+}
 
 // Convenience hooks
 export const useTheme = () => {
-  const { theme, setTheme } = useApp();
-  return { theme, setTheme };
-};
+  const { theme, setTheme } = useApp()
+  return { theme, setTheme }
+}
 
 export const useLanguage = () => {
-  const { language, setLanguage } = useApp();
-  return { language, setLanguage };
-};
+  const { language, setLanguage } = useApp()
+  return { language, setLanguage }
+}
 
 export const useLoading = () => {
-  const { loading, setLoading } = useApp();
-  return { loading, setLoading };
-};
+  const { loading, setLoading } = useApp()
+  return { loading, setLoading }
+}
 
 export const useError = () => {
-  const { error, setError, resetError } = useApp();
-  return { error, setError, resetError };
-};
+  const { error, setError, resetError } = useApp()
+  return { error, setError, resetError }
+}
 
 export const useDeviceType = () => {
-  const { deviceType } = useApp();
-  return deviceType;
-};
+  const { deviceType } = useApp()
+  return deviceType
+}
 
 export const useOnlineStatus = () => {
-  const { isOnline } = useApp();
-  return isOnline;
-};
+  const { isOnline } = useApp()
+  return isOnline
+}
 
 export const useConfig = () => {
-  const { config } = useApp();
-  return config;
-};
+  const { config } = useApp()
+  return config
+}
 
 // HOC for error boundary
-export const withAppProvider = <P extends object>(
-  Component: ComponentType<P>,
-  appConfig?: Partial<AppConfig>
-) => {
+export const withAppProvider = <P extends object>(Component: ComponentType<P>, appConfig?: Partial<AppConfig>) => {
   const WrappedComponent = (props: P) => (
     <AppProvider config={{ ...defaultConfig, ...appConfig }}>
       <Component {...props} />
     </AppProvider>
-  );
+  )
 
-  WrappedComponent.displayName = `withAppProvider(${Component.displayName || Component.name || 'Component'})`;
+  WrappedComponent.displayName = `withAppProvider(${Component.displayName || Component.name || "Component"})`
 
-  return WrappedComponent;
-};
+  return WrappedComponent
+}

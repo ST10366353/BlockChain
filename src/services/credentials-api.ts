@@ -497,15 +497,3 @@ export class CredentialsAPI {
 
 // Create singleton instance
 export const credentialsAPI = new CredentialsAPI();
-
-
-
-
-
-
-
-
-
-
-
-

@@ -395,6 +395,3 @@ describe('Custom Hooks', () => {
     })
   })
 })
-
-
-

@@ -13,7 +13,7 @@ A comprehensive testing suite has been implemented for the DID Wallet applicatio
 ## 🏗️ Test Structure Created
 
 ### Directory Structure
-```
+\`\`\`
 tests/
 ├── unit/                    ✅ Unit tests (utilities, components)
 ├── integration/            ✅ Integration tests (component interactions)
@@ -29,7 +29,7 @@ tests/
 ├── setup.js                ✅ Jest setup file
 ├── test-runner.js          ✅ Custom test runner script
 └── README.md               ✅ Comprehensive documentation
-```
+\`\`\`
 
 ## 🧪 Test Coverage
 
@@ -70,7 +70,7 @@ tests/
 ## 🛠️ Testing Infrastructure
 
 ### Dependencies Added
-```json
+\`\`\`json
 {
   "devDependencies": {
     "@playwright/test": "^1.40.0",
@@ -84,10 +84,10 @@ tests/
     "msw": "^1.3.0"
   }
 }
-```
+\`\`\`
 
 ### Test Scripts Added
-```json
+\`\`\`json
 {
   "scripts": {
     "test": "node tests/test-runner.js all",
@@ -101,7 +101,7 @@ tests/
     "playwright:ui": "playwright test --ui"
   }
 }
-```
+\`\`\`
 
 ## 🔧 Configuration Files
 
@@ -144,7 +144,7 @@ tests/
 ## 🚀 Getting Started
 
 ### Quick Start
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
@@ -161,10 +161,10 @@ npm run test:api     # API tests only
 
 # Generate coverage report
 npm run test:coverage
-```
+\`\`\`
 
 ### Development Workflow
-```bash
+\`\`\`bash
 # Watch mode for unit tests
 npm run test:watch
 
@@ -173,7 +173,7 @@ npm run test:debug
 
 # Playwright UI mode
 npm run playwright:ui
-```
+\`\`\`
 
 ## 📈 Coverage Goals
 

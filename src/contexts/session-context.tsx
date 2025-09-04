@@ -1,6 +1,6 @@
 "use client"
 
-;
+import React, { createContext, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
 // Session and token types
@@ -13,7 +13,7 @@ export interface User {
   roles?: string[]
   preferences?: UserPreferences
 }
-
+ 
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system'
   notifications: boolean
@@ -130,7 +130,7 @@ const secureStorage = {
 
 // Token validation utilities
 const tokenUtils = {
-  decodeToken: (token: string): unknown => {
+  decodeToken: (token: string): any => {
     try {
       const payload = token.split('.')[1]
       return JSON.parse(atob(payload))
@@ -141,14 +141,14 @@ const tokenUtils = {
   },
 
   isTokenExpired: (token: string): boolean => {
-    const decoded = tokenUtils.decodeToken(token)
+    const decoded = tokenUtils.decodeToken(token) as any
     if (!decoded || !decoded.exp) return true
 
     return decoded.exp * 1000 < Date.now()
   },
 
   getTokenExpiry: (token: string): number => {
-    const decoded = tokenUtils.decodeToken(token)
+    const decoded = tokenUtils.decodeToken(token) as any
     return decoded?.exp ? decoded.exp * 1000 : 0
   }
 }
@@ -167,178 +167,6 @@ export function SessionProvider({ children }: SessionProviderProps) {
     lastActivity: Date.now(),
     sessionExpiry: 0
   })
-
-  // Initialize session from storage
-  React.useEffect(() => {
-    const initializeSession = () => {
-      try {
-        const storedUser = secureStorage.get(USER_STORAGE_KEY) as User | null
-        const storedTokens = secureStorage.get(TOKENS_STORAGE_KEY) as TokenPair | null
-        const storedSession = secureStorage.get(SESSION_STORAGE_KEY) as Partial<SessionState> | null
-
-        if (storedUser && storedTokens && storedTokens.accessToken) {
-          // Validate tokens
-          if (!tokenUtils.isTokenExpired(storedTokens.accessToken)) {
-            const sessionExpiry = storedSession?.sessionExpiry || Date.now() + SESSION_CONFIG.SESSION_EXPIRY
-
-            setSession({
-              user: storedUser,
-              tokens: storedTokens,
-              isAuthenticated: true,
-              isLoading: false,
-              lastActivity: storedSession?.lastActivity || Date.now(),
-              sessionExpiry
-            })
-          } else {
-            // Tokens expired, clear session
-            handleLogout()
-          }
-        } else {
-          setSession(prev => ({ ...prev, isLoading: false }))
-        }
-      } catch (error) {
-        console.error('Failed to initialize session:', error)
-        setSession(prev => ({ ...prev, isLoading: false }))
-      }
-    }
-
-    initializeSession()
-  }, [handleLogout])
-
-  // Logout function
-  const handleLogout = React.useCallback(async () => {
-    try {
-      // Clear all session data
-      secureStorage.clear()
-
-      setSession({
-        user: null,
-        tokens: null,
-        isAuthenticated: false,
-        isLoading: false,
-        lastActivity: 0,
-        sessionExpiry: 0
-      })
-
-      // Navigate to login
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }, [router])
-
-  // Activity tracking
-  React.useEffect(() => {
-    const updateActivity = () => {
-      setSession(prev => ({
-        ...prev,
-        lastActivity: Date.now()
-      }))
-    }
-
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
-    events.forEach(event => {
-      document.addEventListener(event, updateActivity, { passive: true })
-    })
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, updateActivity)
-      })
-    }
-  }, [])
-
-  // Session monitoring and auto-refresh
-  React.useEffect(() => {
-    if (!session.isAuthenticated || !session.tokens) return
-
-    const checkSession = async () => {
-      const now = Date.now()
-
-      // Check for activity timeout
-      if (now - session.lastActivity > SESSION_CONFIG.ACTIVITY_TIMEOUT) {
-        console.log('Session expired due to inactivity')
-        await handleLogout()
-        return
-      }
-
-      // Check if session is expired
-      if (now > session.sessionExpiry) {
-        console.log('Session expired')
-        await handleLogout()
-        return
-      }
-
-      // Check if tokens need refresh
-      if (session.tokens) {
-        const timeUntilExpiry = session.tokens.expiresAt - now
-        const timeUntilRefresh = session.tokens.refreshExpiresAt - now
-
-        // Warn user about upcoming expiry
-        if (timeUntilExpiry < SESSION_CONFIG.WARNING_THRESHOLD && timeUntilExpiry > 0) {
-          // Could show a warning toast here
-          console.log('Session will expire soon')
-        }
-
-        // Auto-refresh tokens if needed
-        if (timeUntilExpiry < SESSION_CONFIG.REFRESH_THRESHOLD && timeUntilRefresh > SESSION_CONFIG.REFRESH_THRESHOLD) {
-          console.log('Auto-refreshing tokens')
-          await refreshTokens()
-        }
-
-        // Check if refresh token is expired
-        if (timeUntilRefresh < SESSION_CONFIG.REFRESH_THRESHOLD) {
-          console.log('Refresh token expired, logging out')
-          await handleLogout()
-          return
-        }
-      }
-    }
-
-    // Set up periodic checks
-    const activityCheck = setInterval(checkSession, SESSION_CONFIG.ACTIVITY_CHECK_INTERVAL)
-    const refreshCheck = setInterval(checkSession, SESSION_CONFIG.REFRESH_CHECK_INTERVAL)
-
-    // Initial check
-    checkSession()
-
-    return () => {
-      clearInterval(activityCheck)
-      clearInterval(refreshCheck)
-    }
-  }, [session.isAuthenticated, session.tokens, session.lastActivity, session.sessionExpiry, handleLogout, refreshTokens])
-
-  // Login function
-  const login = React.useCallback(async (user: User, tokens: TokenPair) => {
-    try {
-      const sessionExpiry = Date.now() + SESSION_CONFIG.SESSION_EXPIRY
-
-      const newSession: SessionState = {
-        user,
-        tokens,
-        isAuthenticated: true,
-        isLoading: false,
-        lastActivity: Date.now(),
-        sessionExpiry
-      }
-
-      setSession(newSession)
-
-      // Store in secure storage
-      secureStorage.set(USER_STORAGE_KEY, user)
-      secureStorage.set(TOKENS_STORAGE_KEY, tokens)
-      secureStorage.set(SESSION_STORAGE_KEY, {
-        lastActivity: newSession.lastActivity,
-        sessionExpiry: newSession.sessionExpiry
-      })
-
-      // Navigate to dashboard
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Login failed:', error)
-      throw error
-    }
-  }, [router])
 
   // Refresh tokens
   const refreshTokens = React.useCallback(async (): Promise<boolean> => {
@@ -387,6 +215,131 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
   }, [session.tokens])
 
+  // Session monitoring and auto-refresh
+  React.useEffect(() => {
+    if (!session.isAuthenticated || !session.tokens) return
+
+    const checkSession = async () => {
+      const now = Date.now()
+
+      // Check for activity timeout
+      if (now - session.lastActivity > SESSION_CONFIG.ACTIVITY_TIMEOUT) {
+        console.log('Session expired due to inactivity')
+        await (async () => {
+          secureStorage.clear()
+          setSession({
+            user: null,
+            tokens: null,
+            isAuthenticated: false,
+            isLoading: false,
+            lastActivity: 0,
+            sessionExpiry: 0
+          })
+          router.push('/login')
+        })()
+        return
+      }
+
+      // Check if session is expired
+      if (now > session.sessionExpiry) {
+        console.log('Session expired')
+        await (async () => {
+          secureStorage.clear()
+          setSession({
+            user: null,
+            tokens: null,
+            isAuthenticated: false,
+            isLoading: false,
+            lastActivity: 0,
+            sessionExpiry: 0
+          })
+          router.push('/login')
+        })()
+        return
+      }
+
+      // Check if tokens need refresh
+      if (session.tokens) {
+        const timeUntilExpiry = session.tokens.expiresAt - now
+        const timeUntilRefresh = session.tokens.refreshExpiresAt - now
+
+        // Warn user about upcoming expiry
+        if (timeUntilExpiry < SESSION_CONFIG.WARNING_THRESHOLD && timeUntilExpiry > 0) {
+          // Could show a warning toast here
+          console.log('Session will expire soon')
+        }
+
+        // Auto-refresh tokens if needed
+        if (timeUntilExpiry < SESSION_CONFIG.REFRESH_THRESHOLD && timeUntilRefresh > SESSION_CONFIG.REFRESH_THRESHOLD) {
+          console.log('Auto-refreshing tokens')
+          await refreshTokens()
+        }
+
+        // Check if refresh token is expired
+        if (timeUntilRefresh < SESSION_CONFIG.REFRESH_THRESHOLD) {
+          console.log('Refresh token expired, logging out')
+          await (async () => {
+            secureStorage.clear()
+            setSession({
+              user: null,
+              tokens: null,
+              isAuthenticated: false,
+              isLoading: false,
+              lastActivity: 0,
+              sessionExpiry: 0
+            })
+            router.push('/login')
+          })()
+          return
+        }
+      }
+    }
+
+    // Set up periodic checks
+    const activityCheck = setInterval(checkSession, SESSION_CONFIG.ACTIVITY_CHECK_INTERVAL)
+    const refreshCheck = setInterval(checkSession, SESSION_CONFIG.REFRESH_CHECK_INTERVAL)
+
+    // Initial check
+    checkSession()
+
+    return () => {
+      clearInterval(activityCheck)
+      clearInterval(refreshCheck)
+    }
+  }, [session.isAuthenticated, session.tokens, session.lastActivity, session.sessionExpiry, refreshTokens])
+
+  // Login function
+  const login = React.useCallback(async (user: User, tokens: TokenPair) => {
+    try {
+      const sessionExpiry = Date.now() + SESSION_CONFIG.SESSION_EXPIRY
+
+      const newSession: SessionState = {
+        user,
+        tokens,
+        isAuthenticated: true,
+        isLoading: false,
+        lastActivity: Date.now(),
+        sessionExpiry
+      }
+
+      setSession(newSession)
+
+      // Store in secure storage
+      secureStorage.set(USER_STORAGE_KEY, user)
+      secureStorage.set(TOKENS_STORAGE_KEY, tokens)
+      secureStorage.set(SESSION_STORAGE_KEY, {
+        lastActivity: newSession.lastActivity,
+        sessionExpiry: newSession.sessionExpiry
+      })
+
+      // Navigate to dashboard
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Login failed:', error)
+      throw error
+    }
+  }, [router])
+
   // Update user data
   const updateUser = React.useCallback((userData: Partial<User>) => {
     if (!session.user) return
@@ -412,8 +365,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }))
 
     // Update stored activity
+    const prevSession = secureStorage.get(SESSION_STORAGE_KEY)
     secureStorage.set(SESSION_STORAGE_KEY, {
-      ...secureStorage.get(SESSION_STORAGE_KEY),
+      ...(typeof prevSession === 'object' && prevSession ? prevSession as Record<string, unknown> : {}),
       lastActivity: now
     })
   }, [])
@@ -428,10 +382,91 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }))
 
     // Update stored session
+    const prev = secureStorage.get(SESSION_STORAGE_KEY)
     secureStorage.set(SESSION_STORAGE_KEY, {
-      ...secureStorage.get(SESSION_STORAGE_KEY),
+      ...(typeof prev === 'object' && prev ? prev as Record<string, unknown> : {}),
       sessionExpiry: newExpiry
     })
+  }, [])
+
+  // Logout function
+  const handleLogout = React.useCallback(async () => {
+    try {
+      // Clear all session data
+      secureStorage.clear()
+
+      setSession({
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isLoading: false,
+        lastActivity: 0,
+        sessionExpiry: 0
+      })
+
+      // Navigate to login
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }, [router])
+
+  // Initialize session from storage
+  React.useEffect(() => {
+    const initializeSession = () => {
+      try {
+        const storedUser = secureStorage.get(USER_STORAGE_KEY) as User | null
+        const storedTokens = secureStorage.get(TOKENS_STORAGE_KEY) as TokenPair | null
+        const storedSession = secureStorage.get(SESSION_STORAGE_KEY) as Partial<SessionState> | null
+
+        if (storedUser && storedTokens && storedTokens.accessToken) {
+          // Validate tokens
+          if (!tokenUtils.isTokenExpired(storedTokens.accessToken)) {
+            const sessionExpiry = storedSession?.sessionExpiry || Date.now() + SESSION_CONFIG.SESSION_EXPIRY
+
+            setSession({
+              user: storedUser,
+              tokens: storedTokens,
+              isAuthenticated: true,
+              isLoading: false,
+              lastActivity: storedSession?.lastActivity || Date.now(),
+              sessionExpiry
+            })
+          } else {
+            // Tokens expired, clear session
+            handleLogout()
+          }
+        } else {
+          setSession(prev => ({ ...prev, isLoading: false }))
+        }
+      } catch (error) {
+        console.error('Failed to initialize session:', error)
+        setSession(prev => ({ ...prev, isLoading: false }))
+      }
+    }
+
+    initializeSession()
+  }, [handleLogout])
+
+  // Activity tracking
+  React.useEffect(() => {
+    const updateActivity = () => {
+      setSession(prev => ({
+        ...prev,
+        lastActivity: Date.now()
+      }))
+    }
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity, { passive: true })
+    })
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity)
+      })
+    }
   }, [])
 
   // Utility functions

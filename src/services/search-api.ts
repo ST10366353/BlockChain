@@ -315,4 +315,3 @@ export class SystemAPI {
 // Create singleton instances
 export const searchAPI = new SearchAPI();
 export const systemAPI = new SystemAPI();
-

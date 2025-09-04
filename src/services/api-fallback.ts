@@ -109,4 +109,4 @@ export class APIFallback {
       securityScore: 100
     };
   }
-} 
+}

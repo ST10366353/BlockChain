@@ -1,6 +1,6 @@
 "use client"
 
-;
+import React, { createContext, type ReactNode } from 'react'
 import { notificationsAPI } from '@/services'
 import type { NotificationData, NotificationPreferences } from '@/services/notifications-api'
 import { useToast } from '@/hooks/use-toast'
@@ -15,7 +15,7 @@ interface NotificationState {
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error'
   lastFetched: string | null
 }
-
+ 
 // Action types
 type NotificationAction =
   | { type: 'SET_LOADING'; payload: boolean }

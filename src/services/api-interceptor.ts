@@ -108,4 +108,4 @@ if (typeof window !== 'undefined') {
 
     return originalFetch(input, init);
   };
-} 
+}

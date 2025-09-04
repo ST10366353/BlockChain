@@ -106,4 +106,3 @@ describe('Button Component', () => {
     expect(button).toHaveAttribute('type', 'submit')
   })
 })
-

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+;
 
 // Theme types
 export type Theme = 'light' | 'dark' | 'system'
@@ -93,12 +93,12 @@ export function ThemeProvider({
   disableTransitions = false
 }: ThemeProviderProps) {
   // Initialize theme state
-  const [theme, setThemeState] = useState<Theme>(defaultTheme)
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light')
-  const [mounted, setMounted] = useState(false)
+  const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
+  const [resolvedTheme, setResolvedTheme] = React.useState<ResolvedTheme>('light')
+  const [mounted, setMounted] = React.useState(false)
 
   // Initialize theme on mount
-  useEffect(() => {
+  React.useEffect(() => {
     const storedTheme = getStoredTheme()
     const initialTheme = enableSystemTheme ? storedTheme : (storedTheme === 'system' ? 'light' : storedTheme)
 
@@ -107,13 +107,13 @@ export function ThemeProvider({
   }, [enableSystemTheme])
 
   // Update resolved theme when theme changes
-  useEffect(() => {
+  React.useEffect(() => {
     const newResolvedTheme = resolveTheme(theme)
     setResolvedTheme(newResolvedTheme)
   }, [theme])
 
   // Apply theme when resolved theme changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (!mounted) return
 
     applyTheme(resolvedTheme)
@@ -128,7 +128,7 @@ export function ThemeProvider({
   }, [resolvedTheme, mounted, disableTransitions])
 
   // Listen for system theme changes when using system theme
-  useEffect(() => {
+  React.useEffect(() => {
     if (theme !== 'system' || !enableSystemTheme) return
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -177,7 +177,7 @@ export function ThemeProvider({
 
 // Hook to use theme context
 export function useTheme(): ThemeContextType {
-  const context = useContext(ThemeContext)
+  const context = React.useContext(ThemeContext)
 
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider')

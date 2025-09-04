@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React from 'react';
+;;
 import { useAnalytics } from '../../contexts/AnalyticsContext';
-import { MessageSquare, Camera, Play, Pause, Square, CheckCircle, XCircle } from 'lucide-react';
+import { MessageSquare, Camera, Play, Square, CheckCircle } from 'lucide-react';
 
 interface UserTestingTask {
   id: string;
@@ -39,7 +40,7 @@ const UserTestingContext = createContext<{
 } | null>(null);
 
 export function useUserTesting() {
-  const context = useContext(UserTestingContext);
+  const context = React.useContext(UserTestingContext);
   if (!context) {
     throw new Error('useUserTesting must be used within UserTestingProvider');
   }
@@ -56,9 +57,9 @@ export function UserTestingProvider({
   tasks: UserTestingTask[];
 }) {
   const { recordUserTestingEvent } = useAnalytics();
-  const [currentTask, setCurrentTask] = useState<UserTestingTask | null>(tasks[0] || null);
-  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
-  const [startTime] = useState(Date.now());
+  const [currentTask, setCurrentTask] = React.useState<UserTestingTask | null>(tasks[0] || null);
+  const [completedTasks, setCompletedTasks] = React.useState<string[]>([]);
+  const [startTime] = React.useState(Date.now());
 
   const recordTaskCompletion = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -108,14 +109,14 @@ export function UserTestingToolkit({
   showFeedbackPrompts = true
 }: UserTestingToolkitProps) {
   const { startUserTestingSession, endUserTestingSession, recordUserTestingEvent } = useAnalytics();
-  const [sessionId, setSessionId] = useState<string>('');
-  const [isActive, setIsActive] = useState(false);
-  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
-  const [taskStartTime, setTaskStartTime] = useState<number>(0);
-  const [feedback, setFeedback] = useState('');
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [completedTasks, setCompletedTasks] = useState<UserTestingTask[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
+  const [sessionId, setSessionId] = React.useState<string>('');
+  const [isActive, setIsActive] = React.useState(false);
+  const [currentTaskIndex, setCurrentTaskIndex] = React.useState(0);
+  const [taskStartTime, setTaskStartTime] = React.useState<number>(0);
+  const [feedback, setFeedback] = React.useState('');
+  const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
+  const [completedTasks, setCompletedTasks] = React.useState<UserTestingTask[]>([]);
+  const [isRecording, setIsRecording] = React.useState(false);
 
   const currentTask = tasks[currentTaskIndex];
 

@@ -91,7 +91,8 @@ describe('LoginPage', () => {
   })
 
   it('handles valid passphrase unlock', async () => {
-    const { oidcAPI, didAPI } = require('@/services')
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { oidcAPI, didAPI: _didAPI } = require('@/services')
 
     // Mock successful passphrase validation
     oidcAPI.completeLoginFlow.mockResolvedValue({

@@ -1,4 +1,5 @@
-import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
+import React from 'react';
+import { apiClient, handleAPIResponse, createQueryParams } from './api-client';
 import { API_ENDPOINTS } from './api-config';
 import { API_CONFIG } from './api-config';
 import { mockData, simulateNetworkDelay } from './mock-data';
@@ -236,7 +237,7 @@ export class TrustAPI {
     try {
       const issuer = await this.getIssuerDetails(did);
       return issuer.status === 'trusted';
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return false;
     }
   }
@@ -258,7 +259,8 @@ export class TrustAPI {
   async bulkUpdateIssuerStatus(
     issuerDIDs: string[],
     status: 'trusted' | 'suspended' | 'revoked',
-    reason?: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _reason?: string
   ): Promise<{ success: boolean; updated: string[]; failed: string[] }> {
     const results = await Promise.allSettled(
       issuerDIDs.map(did =>
@@ -313,7 +315,7 @@ export class TrustAPI {
           verifiedBy: issuer.verifiedBy,
           evidence: issuer.evidenceUri ? [issuer.evidenceUri] : []
         };
-      } catch (error) {
+      } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
         return {
           verified: false
         };

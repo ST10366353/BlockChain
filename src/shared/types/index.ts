@@ -1,3 +1,4 @@
+import React from 'react';
 // Shared Type Definitions for Dual-Purpose DID Wallet
 
 // ============================================================================

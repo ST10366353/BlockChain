@@ -1,5 +1,6 @@
-import { apiClient, handleAPIResponse, createQueryParams, APIResponse } from './api-client';
-import { API_ENDPOINTS, SearchParams, RateLimitStatus, SystemMetrics, FeatureFlags, APIConfig } from './api-config';
+import React from 'react';
+import { apiClient, handleAPIResponse } from './api-client';
+import { API_ENDPOINTS, SearchParams, RateLimitStatus, FeatureFlags, APIConfig } from './api-config';
 
 // Search interfaces
 export interface SearchResult<T> {

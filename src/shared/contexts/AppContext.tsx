@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React from 'react';
 import { AppConfig, LoadingState, ErrorState, DeviceType } from '../types';
 
 interface AppContextType {
@@ -61,7 +61,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   config = defaultConfig
 }) => {
   // Theme state
-  const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>(() => {
+  const [theme, setThemeState] = React.useState<'light' | 'dark' | 'system'>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
     }
@@ -69,7 +69,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   });
 
   // Language state
-  const [language, setLanguageState] = useState<string>(() => {
+  const [language, setLanguageState] = React.useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('language') || 'en';
     }
@@ -77,24 +77,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   });
 
   // Loading state
-  const [loading, setLoadingState] = useState<LoadingState>({
+  const [loading, setLoadingState] = React.useState<LoadingState>({
     isLoading: false,
     message: undefined,
     progress: undefined
   });
 
   // Error state
-  const [error, setErrorState] = useState<ErrorState>({
+  const [error, setErrorState] = React.useState<ErrorState>({
     hasError: false,
     error: undefined,
     retry: undefined
   });
 
   // Device type detection
-  const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
+  const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
 
   // Online status
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = React.useState<boolean>(true);
 
   // Theme setter with localStorage persistence
   const setTheme = (newTheme: 'light' | 'dark' | 'system') => {
@@ -137,7 +137,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   };
 
   // Device type detection
-  useEffect(() => {
+  React.useEffect(() => {
     const detectDeviceType = () => {
       const width = window.innerWidth;
       if (width < 768) {
@@ -155,7 +155,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   }, []);
 
   // Online status detection
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -172,12 +172,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({
   }, []);
 
   // Apply initial theme
-  useEffect(() => {
+  React.useEffect(() => {
     setTheme(theme);
   }, []);
 
   // System theme change listener
-  useEffect(() => {
+  React.useEffect(() => {
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => {
@@ -215,7 +215,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({
 };
 
 export const useApp = (): AppContextType => {
-  const context = useContext(AppContext);
+  const context = React.useContext(AppContext);
   if (!context) {
     throw new Error('useApp must be used within an AppProvider');
   }
@@ -260,12 +260,16 @@ export const useConfig = () => {
 
 // HOC for error boundary
 export const withAppProvider = <P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   appConfig?: Partial<AppConfig>
 ) => {
-  return (props: P) => (
+  const WrappedComponent = (props: P) => (
     <AppProvider config={{ ...defaultConfig, ...appConfig }}>
       <Component {...props} />
     </AppProvider>
   );
+
+  WrappedComponent.displayName = `withAppProvider(${Component.displayName || Component.name || 'Component'})`;
+
+  return WrappedComponent;
 };

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React from 'react';
+;;
 
 export interface UserJourneyEvent {
   id: string;
@@ -32,7 +33,7 @@ export interface ABTestVariant {
   id: string;
   testId: string;
   name: string;
-  component: React.ComponentType<unknown>;
+  component: ComponentType<unknown>;
   weight: number;
 }
 
@@ -116,14 +117,14 @@ export function AnalyticsProvider({
   enableABTesting = true,
   enableUserTesting = true
 }: AnalyticsProviderProps) {
-  const [currentUserId] = useState(() => userId || generateUserId());
-  const [sessionId] = useState(() => generateSessionId());
-  const [currentPage, setCurrentPage] = useState<string>('');
-  const [pageLoadStart, setPageLoadStart] = useState<number>(0);
+  const [currentUserId] = React.useState(() => userId || generateUserId());
+  const [sessionId] = React.useState(() => generateSessionId());
+  const [currentPage, setCurrentPage] = React.useState<string>('');
+  const [pageLoadStart, setPageLoadStart] = React.useState<number>(0);
 
 
   // A/B Tests configuration
-  const [abTests] = useState<ABTest[]>([
+  const [abTests] = React.useState<ABTest[]>([
     {
       id: 'onboarding_flow',
       name: 'Onboarding Flow Optimization',
@@ -189,7 +190,7 @@ export function AnalyticsProvider({
   }
 
   // Track page views and performance
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleRouteChange = (url: string) => {
         const page = url.split('/').pop() || 'home';
@@ -229,7 +230,7 @@ export function AnalyticsProvider({
   }, [measurePageLoad, trackPageView, trackPerformance]);
 
   // Track user interactions
-  useEffect(() => {
+  React.useEffect(() => {
     if (!enableTracking) return;
 
     const handleClick = (event: MouseEvent) => {
@@ -293,7 +294,7 @@ export function AnalyticsProvider({
   }, [enableTracking, currentPage, trackEvent]);
 
   // Core tracking functions
-  const trackEvent = useCallback((eventData: Omit<UserJourneyEvent, 'id' | 'userId' | 'sessionId' | 'timestamp' | 'userAgent' | 'url'>) => {
+  const trackEvent = React.useCallback((eventData: Omit<UserJourneyEvent, 'id' | 'userId' | 'sessionId' | 'timestamp' | 'userAgent' | 'url'>) => {
     if (!enableTracking) return;
 
     const event: UserJourneyEvent = {
@@ -316,7 +317,7 @@ export function AnalyticsProvider({
     console.log('Analytics Event:', event);
   }, [enableTracking, currentUserId, sessionId]);
 
-  const trackPageView = useCallback((page: string, data?: Record<string, unknown>) => {
+  const trackPageView = React.useCallback((page: string, data?: Record<string, unknown>) => {
     setCurrentPage(page);
     trackEvent({
       eventType: 'page_view',
@@ -335,7 +336,7 @@ export function AnalyticsProvider({
     });
   };
 
-  const trackPerformance = useCallback((metricData: Omit<PerformanceMetric, 'id' | 'userId' | 'sessionId' | 'timestamp' | 'userAgent'>) => {
+  const trackPerformance = React.useCallback((metricData: Omit<PerformanceMetric, 'id' | 'userId' | 'sessionId' | 'timestamp' | 'userAgent'>) => {
     const metric: PerformanceMetric = {
       id: `metric_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: currentUserId,
@@ -352,7 +353,7 @@ export function AnalyticsProvider({
     console.log('Performance Metric:', metric);
   }, [currentUserId, sessionId]);
 
-  const measurePageLoad = useCallback((page: string) => {
+  const measurePageLoad = React.useCallback((page: string) => {
     const loadTime = Date.now() - pageLoadStart;
     trackPerformance({
       metric: 'page_load',
@@ -599,7 +600,7 @@ export function AnalyticsProvider({
 }
 
 export function useAnalytics(): AnalyticsContextType {
-  const context = useContext(AnalyticsContext);
+  const context = React.useContext(AnalyticsContext);
   if (!context) {
     throw new Error('useAnalytics must be used within an AnalyticsProvider');
   }

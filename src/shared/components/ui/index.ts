@@ -1,3 +1,4 @@
+import React from 'react';
 // UI Components Index File
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
 export { Badge, badgeVariants } from './badge';

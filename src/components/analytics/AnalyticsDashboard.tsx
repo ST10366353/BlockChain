@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
 import {
   BarChart3,
@@ -34,13 +34,13 @@ export function AnalyticsDashboard({
     getConversionFunnel
   } = useAnalytics();
 
-  const [userJourney, setUserJourney] = useState<Array<{step: string; timestamp: number; duration?: number}>>([]);
-  const [feedbackSummary, setFeedbackSummary] = useState<Record<string, number>>({});
-  const [dropOffPoints, setDropOffPoints] = useState<Record<string, number>>({});
-  const [conversionFunnel, setConversionFunnel] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [userJourney, setUserJourney] = React.useState<Array<{step: string; timestamp: number; duration?: number}>>([]);
+  const [feedbackSummary, setFeedbackSummary] = React.useState<Record<string, number>>({});
+  const [dropOffPoints, setDropOffPoints] = React.useState<Record<string, number>>({});
+  const [conversionFunnel, setConversionFunnel] = React.useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const loadAnalytics = useCallback(() => {
+  const loadAnalytics = React.useCallback(() => {
     if (userId) {
       setUserJourney(getUserJourney(userId));
     }
@@ -50,7 +50,7 @@ export function AnalyticsDashboard({
     setIsLoading(false);
   }, [userId, getUserJourney, getFeedbackSummary, getDropOffPoints, getConversionFunnel]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     loadAnalytics();
 
     const interval = setInterval(loadAnalytics, refreshInterval);

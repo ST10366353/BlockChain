@@ -1,3 +1,4 @@
+import React from 'react';
 import { APIError } from '../types';
 
 export interface ErrorHandlerOptions {

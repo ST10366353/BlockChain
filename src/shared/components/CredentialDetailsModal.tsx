@@ -17,8 +17,7 @@ import {
   AlertTriangle,
   Copy,
   Download,
-  Share2,
-  ExternalLink
+  Share2
 } from 'lucide-react';
 import { VerifiableCredential } from '../types';
 import { formatDate, formatDID } from '../../lib/utils';

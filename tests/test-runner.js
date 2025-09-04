@@ -27,7 +27,7 @@ function runJestTests() {
     const jestCommand = `npx jest --config=${config.jest.config} --testPathPattern="${config.jest.testPath}" --coverage=${config.jest.coverage}`
     execSync(jestCommand, { stdio: 'inherit', cwd: process.cwd() })
     console.log('✅ Jest tests completed successfully')
-  } catch (error) {
+  } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     console.error('❌ Jest tests failed')
     process.exit(1)
   }
@@ -43,7 +43,7 @@ function runPlaywrightTests() {
     const playwrightCommand = `npx playwright test --config=${config.playwright.config}`
     execSync(playwrightCommand, { stdio: 'inherit', cwd: process.cwd() })
     console.log('✅ Playwright tests completed successfully')
-  } catch (error) {
+  } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     console.error('❌ Playwright tests failed')
     process.exit(1)
   }
@@ -56,7 +56,7 @@ function runApiTests() {
     const apiTestCommand = `npx jest --config=${config.jest.config} --testPathPattern="tests/api/.*"`
     execSync(apiTestCommand, { stdio: 'inherit', cwd: process.cwd() })
     console.log('✅ API tests completed successfully')
-  } catch (error) {
+  } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     console.error('❌ API tests failed')
     process.exit(1)
   }
@@ -71,7 +71,7 @@ function runCoverageReport() {
       cwd: process.cwd()
     })
     console.log('✅ Coverage report generated in coverage/index.html')
-  } catch (error) {
+  } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     console.error('❌ Coverage report generation failed')
     process.exit(1)
   }

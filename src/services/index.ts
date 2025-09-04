@@ -1,3 +1,4 @@
+import React from 'react';
 // Main API services exports
 export { apiClient, APIClient } from './api-client';
 export { API_CONFIG, API_ENDPOINTS, HTTP_STATUS } from './api-config';

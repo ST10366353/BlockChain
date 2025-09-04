@@ -3,22 +3,19 @@
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/page-layout"
 import {
-  Search,
   Filter,
   Download,
-  Calendar,
   User,
   Activity,
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle,
   RefreshCw,
   Eye,
-  FileText,
+  FileText, 
   Loader2
 } from "lucide-react"
-import { auditAPI, dataExportImportAPI } from "@/services"
+import { auditAPI } from "@/services"
 import { useToast } from "@/hooks/use-toast"
 import type { AuditLogEntry, AuditStats } from "@/services"
 

@@ -1,3 +1,4 @@
+import React from 'react';
 // API Fallback service to ensure robust API handling
 import { API_CONFIG } from './api-config';
 import { simulateNetworkDelay } from './mock-data';

@@ -13,6 +13,13 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testEnvironment: 'jsdom',
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react-jsx'
+      }
+    }
+  },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',

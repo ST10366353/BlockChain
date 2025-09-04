@@ -1,9 +1,5 @@
-import { apiClient, handleAPIResponse, APIResponse, APIError } from './api-client'
-import { API_ENDPOINTS } from './api-config'
+import React from 'react';
 import { auditAPI } from './audit-api'
-import { credentialsAPI } from './credentials-api'
-import { trustAPI } from './trust-api'
-import { didAPI } from './did-api'
 
 // Data export/import types
 export interface WalletExportData {
@@ -126,7 +122,8 @@ export class DataExportImportAPI {
         credentials,
         connections,
         auditLogs,
-        systemMetrics
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _systemMetrics
       ] = await Promise.allSettled([
         this.getIdentitiesForExport(),
         this.getCredentialsForExport(includePrivateData),
@@ -255,7 +252,8 @@ export class DataExportImportAPI {
   }
 
   // Get credentials for export
-  private async getCredentialsForExport(includePrivateData: boolean): Promise<WalletCredential[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async getCredentialsForExport(_includePrivateData: boolean): Promise<WalletCredential[]> {
     // In a real implementation, this would fetch from credentials API
     return [
       {
@@ -407,7 +405,8 @@ export class DataExportImportAPI {
   // Parse CSV data
   private parseCSV(csvData: string): WalletExportData {
     // Simple CSV parsing - in production, use a proper CSV library
-    const lines = csvData.split('\n').filter(line => line.trim())
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _lines = csvData.split('\n').filter(line => line.trim())
 
     return {
       version: '1.0.0',
@@ -478,22 +477,26 @@ export class DataExportImportAPI {
   }
 
   // Import methods (placeholders)
-  private async importIdentities(identities: WalletIdentity[], result: ImportResult, overwrite: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async importIdentities(identities: WalletIdentity[], result: ImportResult, _overwrite: boolean) {
     // Implementation would import identities
     result.imported.identities = identities.length
   }
 
-  private async importCredentials(credentials: WalletCredential[], result: ImportResult, overwrite: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async importCredentials(credentials: WalletCredential[], result: ImportResult, _overwrite: boolean) {
     // Implementation would import credentials
     result.imported.credentials = credentials.length
   }
 
-  private async importConnections(connections: WalletConnection[], result: ImportResult, overwrite: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async importConnections(connections: WalletConnection[], result: ImportResult, _overwrite: boolean) {
     // Implementation would import connections
     result.imported.connections = connections.length
   }
 
-  private async importPreferences(preferences: UserPreferences, result: ImportResult, overwrite: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async importPreferences(preferences: UserPreferences, result: ImportResult, _overwrite: boolean) {
     // Implementation would import preferences
     result.imported.preferences = 1
   }

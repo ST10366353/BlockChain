@@ -1,3 +1,4 @@
+import React from 'react';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { generateAPIDocs } from '@/lib/api-documentation';
 

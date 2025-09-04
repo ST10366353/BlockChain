@@ -1,4 +1,5 @@
-import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
+import React from 'react';
+import { apiClient, handleAPIResponse, createQueryParams } from './api-client';
 import { API_ENDPOINTS, API_CONFIG } from './api-config';
 import { mockData, simulateNetworkDelay } from './mock-data';
 
@@ -253,7 +254,7 @@ export class DIDAPI {
         }
       }
       return true;
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return false;
     }
   }

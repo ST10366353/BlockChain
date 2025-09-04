@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react'
+;
 import { notificationsAPI } from '@/services'
 import type { NotificationData, NotificationPreferences } from '@/services/notifications-api'
 import { useToast } from '@/hooks/use-toast'
@@ -158,11 +158,11 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children, userId }: NotificationProviderProps) {
-  const [state, dispatch] = useReducer(notificationReducer, initialState)
+  const [state, dispatch] = React.useReducer(notificationReducer, initialState)
   const { toastSuccess, toastError } = useToast()
 
   // Connect to WebSocket on mount if userId provided
-  useEffect(() => {
+  React.useEffect(() => {
     if (userId) {
       connectWebSocket(userId)
     }
@@ -173,7 +173,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
   }, [userId])
 
   // Set up WebSocket event listener
-  useEffect(() => {
+  React.useEffect(() => {
     const handleWebSocketNotification = (notification: NotificationData) => {
       dispatch({ type: 'ADD_NOTIFICATION', payload: notification })
 
@@ -191,7 +191,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
   }, [toastSuccess])
 
   // Update connection status periodically
-  useEffect(() => {
+  React.useEffect(() => {
     const updateConnectionStatus = () => {
       const status = notificationsAPI.getConnectionStatus()
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: status })
@@ -203,7 +203,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     return () => clearInterval(interval)
   }, [])
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = React.useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true })
 
     try {
@@ -223,7 +223,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     try {
       await notificationsAPI.markAsRead(id)
       dispatch({ type: 'MARK_READ', payload: id })
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to mark notification as read")
     }
   }
@@ -232,7 +232,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     try {
       await notificationsAPI.markAsUnread(id)
       dispatch({ type: 'MARK_UNREAD', payload: id })
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to mark notification as unread")
     }
   }
@@ -242,7 +242,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       await notificationsAPI.markAllAsRead()
       dispatch({ type: 'MARK_ALL_READ' })
       toastSuccess("Success", "All notifications marked as read")
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to mark all notifications as read")
     }
   }
@@ -251,7 +251,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
     try {
       await notificationsAPI.deleteNotification(id)
       dispatch({ type: 'REMOVE_NOTIFICATION', payload: id })
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to delete notification")
     }
   }
@@ -261,16 +261,16 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       await notificationsAPI.deleteAllNotifications()
       dispatch({ type: 'SET_NOTIFICATIONS', payload: [] })
       toastSuccess("Success", "All notifications deleted")
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to delete all notifications")
     }
   }
 
-  const fetchPreferences = useCallback(async () => {
+  const fetchPreferences = React.useCallback(async () => {
     try {
       const preferences = await notificationsAPI.getPreferences()
       dispatch({ type: 'SET_PREFERENCES', payload: preferences })
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to load notification preferences")
     }
   }, [toastError])
@@ -280,7 +280,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
       const updatedPreferences = await notificationsAPI.updatePreferences(preferences)
       dispatch({ type: 'SET_PREFERENCES', payload: updatedPreferences })
       toastSuccess("Success", "Notification preferences updated")
-    } catch (_error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       toastError("Error", "Failed to update notification preferences")
     }
   }
@@ -292,8 +292,8 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
 
       // Start polling as fallback
       notificationsAPI.startPolling(30000)
-    } catch (_error) {
-      console.error('WebSocket connection failed:', error)
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      console.error('WebSocket connection failed:', _error)
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: 'error' })
 
       // Fall back to polling only
@@ -314,7 +314,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
   }
 
   // Auto-fetch notifications on mount
-  useEffect(() => {
+  React.useEffect(() => {
     if (userId) {
       fetchNotifications()
       fetchPreferences()
@@ -345,7 +345,7 @@ export function NotificationProvider({ children, userId }: NotificationProviderP
 
 // Custom hook to use notifications
 export function useNotifications() {
-  const context = useContext(NotificationContext)
+  const context = React.useContext(NotificationContext)
   if (context === undefined) {
     throw new Error('useNotifications must be used within a NotificationProvider')
   }

@@ -305,7 +305,8 @@ describe('Error Boundary Components', () => {
         return <div>Success after {errorCount} attempts</div>
       }
 
-      const { rerender } = render(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { rerender: _rerender } = render(
         <ErrorBoundary name="RecoveryTest">
           <ConditionalError />
         </ErrorBoundary>

@@ -1,4 +1,5 @@
-import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
+import React from 'react';
+import { apiClient, handleAPIResponse, createQueryParams } from './api-client';
 import { API_ENDPOINTS } from './api-config';
 
 // OIDC Authorization request
@@ -200,9 +201,12 @@ export class OIDCAPI {
     state: string,
     did: string,
     signedNonce: string,
-    clientId: string,
-    clientSecret: string,
-    redirectUri: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _clientId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _clientSecret: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _redirectUri: string
   ): Promise<{
     tokens: OIDCTokenResponse;
     userInfo?: OIDCUserInfo;
@@ -283,7 +287,7 @@ export class OIDCAPI {
       ];
 
       return requiredFields.every(field => config[field]);
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return false;
     }
   }
@@ -355,7 +359,7 @@ export class OIDCAPI {
 
     try {
       return JSON.parse(stored);
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       return null;
     }
   }

@@ -1,6 +1,5 @@
-import React from 'react'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import { useRouter } from 'next/navigation'
+import React, { createElement } from 'react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import Dashboard from '../../src/pages/dashboard'
 
 // Mock next/navigation
@@ -14,7 +13,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 jest.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => React.createElement('a', { href, ...props }, children),
+  default: ({ children, href, ...props }: any) => createElement('a', { href, ...props }, children),
 }))
 
 // Mock services
@@ -104,7 +103,8 @@ jest.mock('@/services', () => ({
     })
   },
   trustAPI: {
-    getTrustedIssuers: jest.fn((params) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getTrustedIssuers: jest.fn((_params) => {
       return Promise.resolve([
         {
           did: 'did:web:university.edu',
@@ -142,7 +142,8 @@ jest.mock('@/services', () => ({
     })
   },
   auditAPI: {
-    getAuditLogs: jest.fn((params) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getAuditLogs: jest.fn((_params) => {
       return Promise.resolve([
         {
           actor: 'did:web:Lerato.com',
@@ -268,7 +269,8 @@ jest.mock('@/services', () => ({
     ])),
   },
   auditAPI: {
-    getAuditLogs: jest.fn((params) => Promise.resolve([
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getAuditLogs: jest.fn((_params) => Promise.resolve([
       {
         actor: 'did:web:user.com',
         action: 'vc.issue',
@@ -332,7 +334,7 @@ jest.mock('@/contexts/notifications-context', () => ({
 }))
 
 jest.mock('@/contexts/theme-context', () => ({
-  ThemeToggle: () => React.createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
+  ThemeToggle: () => createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
 }))
 
 jest.mock('@/contexts/session-context', () => ({
@@ -364,33 +366,33 @@ jest.mock('@/hooks/use-toast', () => ({
 }))
 
 jest.mock('lucide-react', () => ({
-  Shield: jest.fn(() => React.createElement('svg', {}, 'Shield')),
-  Clock: jest.fn(() => React.createElement('svg', {}, 'Clock')),
-  AlertTriangle: jest.fn(() => React.createElement('svg', {}, 'AlertTriangle')),
-  CheckCircle: jest.fn(() => React.createElement('svg', {}, 'CheckCircle')),
-  RefreshCw: jest.fn(() => React.createElement('svg', {}, 'RefreshCw')),
-  LogOut: jest.fn(() => React.createElement('svg', {}, 'LogOut')),
-  User: jest.fn(() => React.createElement('svg', {}, 'User')),
-  Wifi: jest.fn(() => React.createElement('svg', {}, 'Wifi')),
-  WifiOff: jest.fn(() => React.createElement('svg', {}, 'WifiOff')),
-  Fingerprint: jest.fn(() => React.createElement('svg', {}, 'Fingerprint')),
-  Lock: jest.fn(() => React.createElement('svg', {}, 'Lock')),
-  LockOpen: jest.fn(() => React.createElement('svg', {}, 'LockOpen')),
-  Loader2: jest.fn(() => React.createElement('svg', {}, 'Loader2')),
-  Bell: jest.fn(() => React.createElement('svg', {}, 'Bell')),
-  Settings: jest.fn(() => React.createElement('svg', {}, 'Settings')),
-  Menu: jest.fn(() => React.createElement('svg', {}, 'Menu')),
-  X: jest.fn(() => React.createElement('svg', {}, 'X')),
-  Trash2: jest.fn(() => React.createElement('svg', {}, 'Trash2'))
+  Shield: jest.fn(() => createElement('svg', {}, 'Shield')),
+  Clock: jest.fn(() => createElement('svg', {}, 'Clock')),
+  AlertTriangle: jest.fn(() => createElement('svg', {}, 'AlertTriangle')),
+  CheckCircle: jest.fn(() => createElement('svg', {}, 'CheckCircle')),
+  RefreshCw: jest.fn(() => createElement('svg', {}, 'RefreshCw')),
+  LogOut: jest.fn(() => createElement('svg', {}, 'LogOut')),
+  User: jest.fn(() => createElement('svg', {}, 'User')),
+  Wifi: jest.fn(() => createElement('svg', {}, 'Wifi')),
+  WifiOff: jest.fn(() => createElement('svg', {}, 'WifiOff')),
+  Fingerprint: jest.fn(() => createElement('svg', {}, 'Fingerprint')),
+  Lock: jest.fn(() => createElement('svg', {}, 'Lock')),
+  LockOpen: jest.fn(() => createElement('svg', {}, 'LockOpen')),
+  Loader2: jest.fn(() => createElement('svg', {}, 'Loader2')),
+  Bell: jest.fn(() => createElement('svg', {}, 'Bell')),
+  Settings: jest.fn(() => createElement('svg', {}, 'Settings')),
+  Menu: jest.fn(() => createElement('svg', {}, 'Menu')),
+  X: jest.fn(() => createElement('svg', {}, 'X')),
+  Trash2: jest.fn(() => createElement('svg', {}, 'Trash2'))
 }))
 
 jest.mock('@/components/session-status', () => ({
-  SessionStatusIndicator: () => React.createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
-  SessionStatus: () => React.createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
+  SessionStatusIndicator: () => createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
+  SessionStatus: () => createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
 }))
 
 jest.mock('@/components/layout/header.tsx', () => ({
-  default: jest.fn(() => React.createElement('header', { 'data-testid': 'header' }, 'Header Component'))
+  default: jest.fn(() => createElement('header', { 'data-testid': 'header' }, 'Header Component'))
 }))
 
 jest.mock('@/hooks/use-toast', () => ({

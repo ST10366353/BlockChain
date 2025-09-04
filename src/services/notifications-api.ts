@@ -1,4 +1,5 @@
-import { apiClient, handleAPIResponse, APIResponse, APIError } from './api-client'
+import React from 'react';
+import { apiClient, handleAPIResponse } from './api-client'
 import { API_ENDPOINTS, API_CONFIG } from './api-config'
 import { mockData, simulateNetworkDelay } from './mock-data'
 
@@ -79,7 +80,8 @@ export class NotificationsAPI {
 
   // WebSocket Connection Management
   connect(userId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return new Promise((resolve, _reject) => {
       // Don't attempt connection if we've already reached max reconnection attempts
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.log('Max reconnection attempts reached, skipping WebSocket connection')

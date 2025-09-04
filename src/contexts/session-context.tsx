@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
+;
 import { useRouter } from 'next/navigation'
 
 // Session and token types
@@ -159,7 +159,7 @@ interface SessionProviderProps {
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const router = useRouter()
-  const [session, setSession] = useState<SessionState>({
+  const [session, setSession] = React.useState<SessionState>({
     user: null,
     tokens: null,
     isAuthenticated: false,
@@ -169,7 +169,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   })
 
   // Initialize session from storage
-  useEffect(() => {
+  React.useEffect(() => {
     const initializeSession = () => {
       try {
         const storedUser = secureStorage.get(USER_STORAGE_KEY) as User | null
@@ -206,7 +206,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [handleLogout])
 
   // Logout function
-  const handleLogout = useCallback(async () => {
+  const handleLogout = React.useCallback(async () => {
     try {
       // Clear all session data
       secureStorage.clear()
@@ -228,7 +228,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [router])
 
   // Activity tracking
-  useEffect(() => {
+  React.useEffect(() => {
     const updateActivity = () => {
       setSession(prev => ({
         ...prev,
@@ -249,7 +249,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [])
 
   // Session monitoring and auto-refresh
-  useEffect(() => {
+  React.useEffect(() => {
     if (!session.isAuthenticated || !session.tokens) return
 
     const checkSession = async () => {
@@ -309,7 +309,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [session.isAuthenticated, session.tokens, session.lastActivity, session.sessionExpiry, handleLogout, refreshTokens])
 
   // Login function
-  const login = useCallback(async (user: User, tokens: TokenPair) => {
+  const login = React.useCallback(async (user: User, tokens: TokenPair) => {
     try {
       const sessionExpiry = Date.now() + SESSION_CONFIG.SESSION_EXPIRY
 
@@ -341,7 +341,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [router])
 
   // Refresh tokens
-  const refreshTokens = useCallback(async (): Promise<boolean> => {
+  const refreshTokens = React.useCallback(async (): Promise<boolean> => {
     if (!session.tokens?.refreshToken) return false
 
     try {
@@ -388,7 +388,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [session.tokens])
 
   // Update user data
-  const updateUser = useCallback((userData: Partial<User>) => {
+  const updateUser = React.useCallback((userData: Partial<User>) => {
     if (!session.user) return
 
     const updatedUser = { ...session.user, ...userData }
@@ -403,7 +403,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [session.user])
 
   // Update activity timestamp
-  const updateActivity = useCallback(() => {
+  const updateActivity = React.useCallback(() => {
     const now = Date.now()
 
     setSession(prev => ({
@@ -419,7 +419,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [])
 
   // Extend session
-  const extendSession = useCallback(() => {
+  const extendSession = React.useCallback(() => {
     const newExpiry = Date.now() + SESSION_CONFIG.SESSION_EXPIRY
 
     setSession(prev => ({
@@ -435,20 +435,20 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [])
 
   // Utility functions
-  const isTokenExpired = useCallback((token: string): boolean => {
+  const isTokenExpired = React.useCallback((token: string): boolean => {
     return tokenUtils.isTokenExpired(token)
   }, [])
 
-  const isSessionExpired = useCallback((): boolean => {
+  const isSessionExpired = React.useCallback((): boolean => {
     return Date.now() > session.sessionExpiry
   }, [session.sessionExpiry])
 
-  const getTimeUntilExpiry = useCallback((): number => {
+  const getTimeUntilExpiry = React.useCallback((): number => {
     if (!session.tokens) return 0
     return Math.max(0, session.tokens.expiresAt - Date.now())
   }, [session.tokens])
 
-  const getTimeUntilRefresh = useCallback((): number => {
+  const getTimeUntilRefresh = React.useCallback((): number => {
     if (!session.tokens) return 0
     return Math.max(0, session.tokens.refreshExpiresAt - Date.now())
   }, [session.tokens])
@@ -476,7 +476,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
 // Hook to use session context
 export function useSession(): SessionContextType {
-  const context = useContext(SessionContext)
+  const context = React.useContext(SessionContext)
 
   if (context === undefined) {
     throw new Error('useSession must be used within a SessionProvider')

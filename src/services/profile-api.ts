@@ -1,6 +1,6 @@
-import { apiClient, handleAPIResponse, APIResponse, APIError } from './api-client'
-import { API_ENDPOINTS, API_CONFIG } from './api-config'
-import { mockData, simulateNetworkDelay } from './mock-data'
+import React from 'react';
+import { apiClient, handleAPIResponse } from './api-client'
+import { API_CONFIG } from './api-config'
 
 // Helper function to get default preferences
 function getDefaultPreferences(): UserPreferences {

@@ -1,3 +1,4 @@
+import React from 'react';
 // Mock data service to provide consistent test data across the application
 import { UserProfile } from '../shared/types';
 
@@ -347,7 +348,8 @@ export const mockData = {
   },
 
   // Search Results
-  getSearchResults: (query: string): Promise<{
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getSearchResults: (_query: string): Promise<{
     results: any[];
     total: number;
     page: number;

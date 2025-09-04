@@ -1,3 +1,4 @@
+import React from 'react';
 // API Configuration
 export const API_CONFIG = {
   // Use local development for now to avoid external API issues

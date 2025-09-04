@@ -1,12 +1,12 @@
+import React from 'react';
 import {
   HandshakeRequest,
   HandshakeResponse,
   HandshakeParticipant,
-  APIResponse,
-  NotificationType
+  APIResponse
 } from '../../shared/types';
 import { handshakeProtocol } from '../protocol/handshake-protocol';
-import { apiClient, notificationsAPI, profileAPI } from '../../services';
+import { apiClient, profileAPI } from '../../services';
 
 export interface HandshakeServiceConfig {
   enableRealTimeUpdates: boolean;

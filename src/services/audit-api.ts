@@ -1,4 +1,5 @@
-import { apiClient, handleAPIResponse, createQueryParams, type APIResponse } from './api-client';
+import React from 'react';
+import { apiClient, handleAPIResponse, createQueryParams } from './api-client';
 import { API_ENDPOINTS } from './api-config';
 import { API_CONFIG } from './api-config';
 import { mockData, simulateNetworkDelay } from './mock-data';

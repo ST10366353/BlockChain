@@ -1,6 +1,6 @@
 "use client"
 
-import React, { Component, ReactNode, ErrorInfo } from 'react'
+;
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
 
 interface ErrorBoundaryState {
@@ -12,7 +12,7 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   children: ReactNode
-  fallback?: React.ComponentType<ErrorFallbackProps>
+  fallback?: ComponentType<ErrorFallbackProps>
   onError?: (error: Error, errorInfo: ErrorInfo) => void
   showErrorDetails?: boolean
   enableRetry?: boolean
@@ -299,9 +299,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
 // Hook for functional components to catch async errors
 export function useAsyncError() {
-  const [, setError] = React.useState()
+  const [, setError] = React.React.useState()
 
-  return React.useCallback((error: Error) => {
+  return React.React.useCallback((error: Error) => {
     setError(() => {
       throw error
     })
@@ -310,7 +310,7 @@ export function useAsyncError() {
 
 // Higher-order component for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
 ) {
   const WrappedComponent = (props: P) => (

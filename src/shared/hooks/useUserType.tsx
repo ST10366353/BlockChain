@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
+import React from 'react';
+;;
 import { useRouter } from 'next/router';
 import { UserType } from '../types';
 import { profileAPI, auditAPI } from '@/services';
@@ -19,10 +20,10 @@ interface UserTypeContext {
 const UserTypeContext = createContext<UserTypeContext | null>(null);
 
 export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [userType, setUserTypeState] = useState<UserType>('consumer');
-  const [profile, setProfile] = useState<SharedUserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [userType, setUserTypeState] = React.useState<UserType>('consumer');
+  const [profile, setProfile] = React.useState<SharedUserProfile | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const setUserType = (type: UserType) => {
     setUserTypeState(type);
@@ -188,7 +189,7 @@ export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     let isMounted = true;
 
     const initializeUserType = async () => {
@@ -239,7 +240,7 @@ export const UserTypeProvider: React.FC<{ children: ReactNode }> = ({ children }
 };
 
 export const useUserType = (): UserTypeContext => {
-  const context = useContext(UserTypeContext);
+  const context = React.useContext(UserTypeContext);
   if (!context) {
     throw new Error('useUserType must be used within a UserTypeProvider');
   }

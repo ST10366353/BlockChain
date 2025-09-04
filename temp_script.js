@@ -3,8 +3,8 @@ const content = fs.readFileSync('tests/components/search-filter-bar.test.tsx', '
 
 // Replace the mock at the bottom of the file
 const updated = content.replace(
-  /jest\.mock\('..\/..\/src\/hooks\/use-search', \(\) => \(\{\s*useSearch: jest\.fn\(\(\) => \(\{\s*searchTerm: '',\s*filters: \{\},\s*sortBy: '',\s*sortOrder: 'asc',\s*result: \{\s*items: \[\],\s*total: 0,\s*filtered: 0,\s*searchTerm: '',\s*filters: \{\},\s*highlightedItems: \[\],\s*query: '',\s*filteredItems: \[\]\s*\},\s*updateSearchTerm: jest\.fn\(\),\s*updateFilter: jest\.fn\(\),\s*clearFilter: jest\.fn\(\),\s*clearAllFilters: jest\.fn\(\),\s*updateSort: jest\.fn\(\),\s*getFilterOptions: jest\.fn\(\(\) => \[\]\)\s*\}\)\)\s*\}\)\)\);/,
-  \jest.mock('../../src/hooks/use-search', () => {
+  /jest\.mock\('..\/..\/src\/hooks\/use-search', \(\) => \(\{\s*useSearch: jest\.fn\(\(\) => \(\{\s*searchTerm: '',\s*filters: \{\},\s*sortBy: '',\s*sortOrder: 'asc',\s*result: \{\s*items: \[\],\s*total: 0,\s*filtered: 0,\s*searchTerm: '',\s*filters: \{\},\s*highlightedItems: \[\],\s*query: '',\s*filteredItems: \[\]\s*\},\s*updateSearchTerm: jest\.fn\(\),\s*updateFilter: jest\.fn\(\),\s*clearFilter: jest\.fn\(\),\s*clearAllFilters: jest\.fn\(\),\s*updateSort: jest\.fn\(\),\s*getFilterOptions: jest\.fn\(\(\) => \[\]\)\s*\}\)\)\s*\}\)\)\);/g,
+  `\jest.mock('../../src/hooks/use-search', () => {
   let mockSearchTerm = '';
   let mockFilters = {};
   let mockSortBy = '';
@@ -80,8 +80,8 @@ const updated = content.replace(
   });
   
   return { useSearch };
-});;\
-);
+});
+`);
 
 fs.writeFileSync('tests/components/search-filter-bar.test.tsx', updated);
 console.log('Updated SearchFilterBar test mock');

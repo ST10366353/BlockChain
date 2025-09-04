@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { createElement } from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import PresentationsPage from '../../src/pages/presentations-page'
@@ -14,7 +14,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 jest.mock('next/link', () => ({
-  default: ({ children, href, ...props }: any) => React.createElement('a', { href, ...props }, children),
+  default: ({ children, href, ...props }: any) => createElement('a', { href, ...props }, children),
 }))
 
 // Session hooks are mocked in the context mocks below
@@ -43,48 +43,48 @@ jest.mock('@/hooks/use-toast', () => ({
 
 // Mock Lucide React icons
 jest.mock('lucide-react', () => ({
-  Shield: jest.fn(() => React.createElement('svg', {}, 'Shield')),
-  Clock: jest.fn(() => React.createElement('svg', {}, 'Clock')),
-  AlertTriangle: jest.fn(() => React.createElement('svg', {}, 'AlertTriangle')),
-  CheckCircle: jest.fn(() => React.createElement('svg', {}, 'CheckCircle')),
-  RefreshCw: jest.fn(() => React.createElement('svg', {}, 'RefreshCw')),
-  LogOut: jest.fn(() => React.createElement('svg', {}, 'LogOut')),
-  User: jest.fn(() => React.createElement('svg', {}, 'User')),
-  Wifi: jest.fn(() => React.createElement('svg', {}, 'Wifi')),
-  WifiOff: jest.fn(() => React.createElement('svg', {}, 'WifiOff')),
-  Fingerprint: jest.fn(() => React.createElement('svg', {}, 'Fingerprint')),
-  Lock: jest.fn(() => React.createElement('svg', {}, 'Lock')),
-  LockOpen: jest.fn(() => React.createElement('svg', {}, 'LockOpen')),
-  Loader2: jest.fn(() => React.createElement('svg', {}, 'Loader2')),
-  Bell: jest.fn(() => React.createElement('svg', {}, 'Bell')),
-  Settings: jest.fn(() => React.createElement('svg', {}, 'Settings')),
-  Menu: jest.fn(() => React.createElement('svg', {}, 'Menu')),
-  X: jest.fn(() => React.createElement('svg', {}, 'X')),
-  Trash2: jest.fn(() => React.createElement('svg', {}, 'Trash2')),
-  Plus: jest.fn(() => React.createElement('svg', {}, 'Plus')),
-  Eye: jest.fn(() => React.createElement('svg', {}, 'Eye')),
-  EyeOff: jest.fn(() => React.createElement('svg', {}, 'EyeOff')),
-  Download: jest.fn(() => React.createElement('svg', {}, 'Download')),
-  Upload: jest.fn(() => React.createElement('svg', {}, 'Upload')),
-  Share: jest.fn(() => React.createElement('svg', {}, 'Share')),
-  Edit: jest.fn(() => React.createElement('svg', {}, 'Edit')),
-  Copy: jest.fn(() => React.createElement('svg', {}, 'Copy')),
-  Search: jest.fn(() => React.createElement('svg', {}, 'Search')),
-  Filter: jest.fn(() => React.createElement('svg', {}, 'Filter')),
-  MoreVertical: jest.fn(() => React.createElement('svg', {}, 'MoreVertical')),
-  ChevronDown: jest.fn(() => React.createElement('svg', {}, 'ChevronDown')),
-  ChevronUp: jest.fn(() => React.createElement('svg', {}, 'ChevronUp'))
+  Shield: jest.fn(() => createElement('svg', {}, 'Shield')),
+  Clock: jest.fn(() => createElement('svg', {}, 'Clock')),
+  AlertTriangle: jest.fn(() => createElement('svg', {}, 'AlertTriangle')),
+  CheckCircle: jest.fn(() => createElement('svg', {}, 'CheckCircle')),
+  RefreshCw: jest.fn(() => createElement('svg', {}, 'RefreshCw')),
+  LogOut: jest.fn(() => createElement('svg', {}, 'LogOut')),
+  User: jest.fn(() => createElement('svg', {}, 'User')),
+  Wifi: jest.fn(() => createElement('svg', {}, 'Wifi')),
+  WifiOff: jest.fn(() => createElement('svg', {}, 'WifiOff')),
+  Fingerprint: jest.fn(() => createElement('svg', {}, 'Fingerprint')),
+  Lock: jest.fn(() => createElement('svg', {}, 'Lock')),
+  LockOpen: jest.fn(() => createElement('svg', {}, 'LockOpen')),
+  Loader2: jest.fn(() => createElement('svg', {}, 'Loader2')),
+  Bell: jest.fn(() => createElement('svg', {}, 'Bell')),
+  Settings: jest.fn(() => createElement('svg', {}, 'Settings')),
+  Menu: jest.fn(() => createElement('svg', {}, 'Menu')),
+  X: jest.fn(() => createElement('svg', {}, 'X')),
+  Trash2: jest.fn(() => createElement('svg', {}, 'Trash2')),
+  Plus: jest.fn(() => createElement('svg', {}, 'Plus')),
+  Eye: jest.fn(() => createElement('svg', {}, 'Eye')),
+  EyeOff: jest.fn(() => createElement('svg', {}, 'EyeOff')),
+  Download: jest.fn(() => createElement('svg', {}, 'Download')),
+  Upload: jest.fn(() => createElement('svg', {}, 'Upload')),
+  Share: jest.fn(() => createElement('svg', {}, 'Share')),
+  Edit: jest.fn(() => createElement('svg', {}, 'Edit')),
+  Copy: jest.fn(() => createElement('svg', {}, 'Copy')),
+  Search: jest.fn(() => createElement('svg', {}, 'Search')),
+  Filter: jest.fn(() => createElement('svg', {}, 'Filter')),
+  MoreVertical: jest.fn(() => createElement('svg', {}, 'MoreVertical')),
+  ChevronDown: jest.fn(() => createElement('svg', {}, 'ChevronDown')),
+  ChevronUp: jest.fn(() => createElement('svg', {}, 'ChevronUp'))
 }))
 
 // Mock session status components
 jest.mock('@/components/session-status', () => ({
-  SessionStatusIndicator: () => React.createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
-  SessionStatus: () => React.createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
+  SessionStatusIndicator: () => createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
+  SessionStatus: () => createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
 }))
 
 // Mock Header component
 jest.mock('@/components/layout/header.tsx', () => ({
-  default: jest.fn(() => React.createElement('header', { 'data-testid': 'header' }, 'Header Component'))
+  default: jest.fn(() => createElement('header', { 'data-testid': 'header' }, 'Header Component'))
 }))
 
 // Mock error handler hook
@@ -192,7 +192,7 @@ jest.mock('@/services', () => ({
 
 // Mock Header component
 jest.mock('@/components/layout/header.tsx', () => ({
-  default: jest.fn(() => React.createElement('header', { 'data-testid': 'header' }, 'Header Component'))
+  default: jest.fn(() => createElement('header', { 'data-testid': 'header' }, 'Header Component'))
 }))
 
 // Mock hooks
@@ -263,51 +263,51 @@ jest.mock('@/contexts/notifications-context', () => ({
 
 // Mock theme context
 jest.mock('@/contexts/theme-context', () => ({
-  ThemeToggle: () => React.createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
+  ThemeToggle: () => createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
 }))
 
 // Mock session status component
 jest.mock('@/components/session-status', () => ({
-  SessionStatusIndicator: () => React.createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
-  SessionStatus: () => React.createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
+  SessionStatusIndicator: () => createElement('div', { 'data-testid': 'session-status' }, 'Session Status'),
+  SessionStatus: () => createElement('div', { 'data-testid': 'session-status-full' }, 'Full Session Status')
 }))
 
 jest.mock('@/contexts/theme-context', () => ({
-  ThemeToggle: () => React.createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
+  ThemeToggle: () => createElement('div', { 'data-testid': 'theme-toggle' }, 'Theme Toggle'),
 }))
 
 // Mock Lucide React icons
 jest.mock('lucide-react', () => ({
-  Plus: jest.fn(() => React.createElement('svg', {}, 'Plus')),
-  Eye: jest.fn(() => React.createElement('svg', {}, 'Eye')),
-  Share2: jest.fn(() => React.createElement('svg', {}, 'Share2')),
-  Clock: jest.fn(() => React.createElement('svg', {}, 'Clock')),
-  CheckCircle: jest.fn(() => React.createElement('svg', {}, 'CheckCircle')),
-  AlertTriangle: jest.fn(() => React.createElement('svg', {}, 'AlertTriangle')),
-  Calendar: jest.fn(() => React.createElement('svg', {}, 'Calendar')),
-  User: jest.fn(() => React.createElement('svg', {}, 'User')),
-  RefreshCw: jest.fn(() => React.createElement('svg', {}, 'RefreshCw')),
-  Loader2: jest.fn(() => React.createElement('svg', {}, 'Loader2')),
-  Trash2: jest.fn(() => React.createElement('svg', {}, 'Trash2')),
-  FileText: jest.fn(() => React.createElement('svg', {}, 'FileText')),
-  Award: jest.fn(() => React.createElement('svg', {}, 'Award')),
-  Bell: jest.fn(() => React.createElement('svg', {}, 'Bell')),
-  Settings: jest.fn(() => React.createElement('svg', {}, 'Settings')),
-  Menu: jest.fn(() => React.createElement('svg', {}, 'Menu')),
-  X: jest.fn(() => React.createElement('svg', {}, 'X')),
-  Shield: jest.fn(() => React.createElement('svg', {}, 'Shield')),
-  Wifi: jest.fn(() => React.createElement('svg', {}, 'Wifi')),
-  WifiOff: jest.fn(() => React.createElement('svg', {}, 'WifiOff')),
-  Fingerprint: jest.fn(() => React.createElement('svg', {}, 'Fingerprint')),
-  Lock: jest.fn(() => React.createElement('svg', {}, 'Lock')),
-  LockOpen: jest.fn(() => React.createElement('svg', {}, 'LockOpen')),
-  Filter: jest.fn(() => React.createElement('svg', {}, 'Filter')),
-  Search: jest.fn(() => React.createElement('svg', {}, 'Search')),
-  ChevronDown: jest.fn(() => React.createElement('svg', {}, 'ChevronDown')),
-  ChevronUp: jest.fn(() => React.createElement('svg', {}, 'ChevronUp')),
-  MoreVertical: jest.fn(() => React.createElement('svg', {}, 'MoreVertical')),
-  Download: jest.fn(() => React.createElement('svg', {}, 'Download')),
-  Upload: jest.fn(() => React.createElement('svg', {}, 'Upload'))
+  Plus: jest.fn(() => createElement('svg', {}, 'Plus')),
+  Eye: jest.fn(() => createElement('svg', {}, 'Eye')),
+  Share2: jest.fn(() => createElement('svg', {}, 'Share2')),
+  Clock: jest.fn(() => createElement('svg', {}, 'Clock')),
+  CheckCircle: jest.fn(() => createElement('svg', {}, 'CheckCircle')),
+  AlertTriangle: jest.fn(() => createElement('svg', {}, 'AlertTriangle')),
+  Calendar: jest.fn(() => createElement('svg', {}, 'Calendar')),
+  User: jest.fn(() => createElement('svg', {}, 'User')),
+  RefreshCw: jest.fn(() => createElement('svg', {}, 'RefreshCw')),
+  Loader2: jest.fn(() => createElement('svg', {}, 'Loader2')),
+  Trash2: jest.fn(() => createElement('svg', {}, 'Trash2')),
+  FileText: jest.fn(() => createElement('svg', {}, 'FileText')),
+  Award: jest.fn(() => createElement('svg', {}, 'Award')),
+  Bell: jest.fn(() => createElement('svg', {}, 'Bell')),
+  Settings: jest.fn(() => createElement('svg', {}, 'Settings')),
+  Menu: jest.fn(() => createElement('svg', {}, 'Menu')),
+  X: jest.fn(() => createElement('svg', {}, 'X')),
+  Shield: jest.fn(() => createElement('svg', {}, 'Shield')),
+  Wifi: jest.fn(() => createElement('svg', {}, 'Wifi')),
+  WifiOff: jest.fn(() => createElement('svg', {}, 'WifiOff')),
+  Fingerprint: jest.fn(() => createElement('svg', {}, 'Fingerprint')),
+  Lock: jest.fn(() => createElement('svg', {}, 'Lock')),
+  LockOpen: jest.fn(() => createElement('svg', {}, 'LockOpen')),
+  Filter: jest.fn(() => createElement('svg', {}, 'Filter')),
+  Search: jest.fn(() => createElement('svg', {}, 'Search')),
+  ChevronDown: jest.fn(() => createElement('svg', {}, 'ChevronDown')),
+  ChevronUp: jest.fn(() => createElement('svg', {}, 'ChevronUp')),
+  MoreVertical: jest.fn(() => createElement('svg', {}, 'MoreVertical')),
+  Download: jest.fn(() => createElement('svg', {}, 'Download')),
+  Upload: jest.fn(() => createElement('svg', {}, 'Upload'))
 }))
 
 
@@ -743,7 +743,8 @@ describe('PresentationsPage', () => {
   it('should display presentation cards when presentations exist', () => {
     // Mock presentations data by setting up initial state
     // This would normally come from API, but for testing we can simulate it
-    const mockPresentations = [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _mockPresentations = [
       {
         id: 'pres-1',
         name: 'Academic Presentation',

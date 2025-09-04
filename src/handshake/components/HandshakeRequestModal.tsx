@@ -1,4 +1,5 @@
-import React, { useState, ReactElement } from 'react';
+import React from 'react';
+;;
 import { HandshakeRequest } from '../../shared/types';
 import {
   Card,
@@ -29,10 +30,10 @@ export const HandshakeRequestModal: React.FC<HandshakeRequestModalProps> = ({
   onClose,
   onRespond
 }: HandshakeRequestModalProps): ReactElement | null => {
-  const [selectedFields, setSelectedFields] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [useZeroKnowledge, setUseZeroKnowledge] = useState(false);
-  const [useSelectiveDisclosure, setUseSelectiveDisclosure] = useState(true);
+  const [selectedFields, setSelectedFields] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [useZeroKnowledge, setUseZeroKnowledge] = React.useState(false);
+  const [useSelectiveDisclosure, setUseSelectiveDisclosure] = React.useState(true);
 
   const handleFieldToggle = (fieldId: string): void => {
     setSelectedFields((prev: string[]) =>

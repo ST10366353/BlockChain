@@ -18,7 +18,8 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-const actionTypes = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
   DISMISS_TOAST: "DISMISS_TOAST",
@@ -205,9 +206,9 @@ const toastWarning = (title: string, description?: string) => {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = React.React.useState<State>(memoryState)
 
-  React.useEffect(() => {
+  React.React.useEffect(() => {
     listeners.push(setState)
     return () => {
       const index = listeners.indexOf(setState)

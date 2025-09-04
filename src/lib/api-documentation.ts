@@ -1,4 +1,5 @@
-import { API_ENDPOINTS, API_CONFIG, HTTP_STATUS } from '../services/api-config';
+import React from 'react';
+import { API_CONFIG, HTTP_STATUS } from '../services/api-config';
 
 interface OpenAPISpec {
   openapi: string;
@@ -1041,10 +1042,13 @@ export function generateAPIDocs(format: 'json' | 'yaml' | 'html' | 'postman' = '
 }
 
 // Auto-generate documentation files
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 export function generateDocumentationFiles(): void {
   if (typeof window === 'undefined') {
     // Node.js environment
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require('path');
 
     const docsDir = path.join(process.cwd(), 'docs', 'api');

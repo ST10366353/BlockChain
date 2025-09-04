@@ -1,3 +1,4 @@
+import React from 'react';
 // Shared constants for the DID Blockchain Wallet
 
 // ============================================================================

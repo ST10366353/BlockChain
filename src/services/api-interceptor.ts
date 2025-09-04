@@ -1,3 +1,4 @@
+import React from 'react';
 // API Interceptor to handle undefined endpoints and provide mock responses
 import { API_CONFIG } from './api-config';
 import { simulateNetworkDelay } from './mock-data';

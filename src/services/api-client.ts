@@ -1,3 +1,4 @@
+import React from 'react';
 import { API_CONFIG, API_ENDPOINTS, getDefaultHeaders, type APIResponse, type APIError } from './api-config';
 import { mockData, simulateNetworkDelay } from './mock-data';
 
@@ -36,7 +37,7 @@ export class APIClient {
     customHeaders?: Record<string, string>
   ): Promise<APIResponse<T>> {
     // In development with mock data, avoid real HTTP requests for certain endpoints
-    if (API_CONFIG.useMockData && this.shouldUseMockResponse(path, method)) {
+    if (API_CONFIG.useMockData && this.shouldUseMockResponse(path)) {
       await simulateNetworkDelay(200);
       return this.getMockResponse<T>(path, method, data);
     }
@@ -101,7 +102,7 @@ export class APIClient {
   }
 
   // Check if we should use mock response for this endpoint
-  private shouldUseMockResponse(path: string, method: string): boolean {
+  private shouldUseMockResponse(path: string): boolean {
     // In development mode, use mock data for ALL API calls to prevent any real HTTP requests
     if (API_CONFIG.useMockData) {
       return true;
@@ -121,7 +122,8 @@ export class APIClient {
   }
 
   // Generate mock response for development
-  private async getMockResponse<T>(path: string, method: string, data?: any): Promise<APIResponse<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async getMockResponse<T>(path: string, method: string, _data?: any): Promise<APIResponse<T>> {
     // Handle profile-related mock responses
     if (path.includes('/profile')) {
       if (method === 'GET' && path === '/profile') {

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   HandshakeRequest,
   HandshakeResponse,
@@ -233,7 +234,8 @@ export class HandshakeProtocol {
   cleanupExpiredSessions(): void {
     const now = new Date().toISOString();
 
-    for (const [sessionId, session] of this.activeSessions) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [_sessionId, session] of this.activeSessions) {
       if (session.expiresAt < now && session.status === 'pending') {
         session.status = 'expired';
         session.updatedAt = now;

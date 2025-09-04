@@ -2,15 +2,16 @@
 // If you delete this file, remove `setupFilesAfterEnv` from `jest.config.js`
 
 // Learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 
 // Configure React for testing
-import React from 'react';
+import React, { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // Ensure React is available globally
 global.React = React;
 global.createRoot = createRoot;
+global.createElement = createElement;
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -178,7 +179,8 @@ global.testUtils = {
 
   // Helper to render components with providers
   renderWithProviders: (component, options = {}) => {
-    const { userType = 'consumer', theme = 'light', ...rest } = options;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { userType: _userType = 'consumer', theme: _theme = 'light', ..._rest } = options;
 
     // This would wrap the component with all necessary providers
     // Implementation depends on your testing library setup

@@ -228,7 +228,8 @@ describe('Credentials API Integration', () => {
   })
 
   describe('createPresentation', () => {
-    const mockPresentationRequest = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _mockPresentationRequest = {
       credentials: ['cred-123', 'cred-456'],
       holder: 'did:web:alice.com',
       challenge: 'presentation-challenge',

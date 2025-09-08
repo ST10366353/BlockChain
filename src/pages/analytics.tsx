@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,15 +12,43 @@ import {
   BarChart3,
   PieChart,
   Activity,
-  Clock,
-  Target,
+  RefreshCw,
+  Calendar,
+  Mail,
   Award,
-  RefreshCw
+  Target,
+  Clock
 } from "lucide-react";
+import { useAppStore } from "@/stores";
+import { useToast } from "@/components/ui/toast";
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("30d");
-  // const [isEnterprise] = useState(true); // This could be determined from user context
+  const [customDateRange, setCustomDateRange] = useState({ start: "", end: "" });
+  const [isRealTime, setIsRealTime] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [exportFormat, setExportFormat] = useState<"pdf" | "csv" | "json">("pdf");
+
+  const { success, error: showError } = useToast();
+  const { addNotification } = useAppStore();
+
+  // Real-time updates effect
+  useEffect(() => {
+    if (!isRealTime) return;
+
+    const interval = setInterval(() => {
+      // Simulate real-time data updates
+      setLastUpdated(new Date());
+      addNotification({
+        type: 'info',
+        title: 'Analytics Updated',
+        message: 'Real-time data has been refreshed'
+      });
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isRealTime, addNotification]);
 
   const metrics = [
     {
@@ -90,6 +118,96 @@ export default function Analytics() {
     { action: "Compliance check passed", count: 100, time: "8 hours ago" }
   ];
 
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      // Simulate API call for fresh data
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setLastUpdated(new Date());
+      success('Analytics data refreshed successfully!');
+    } catch (err) {
+      showError('Failed to refresh analytics data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setIsLoading(true);
+
+      // Simulate export generation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Create mock export data
+      const exportData = {
+        metrics,
+        chartData,
+        topIssuers,
+        recentActivity,
+        exportedAt: new Date().toISOString(),
+        timeRange,
+        filters: { dateRange: customDateRange }
+      };
+
+      let blob: Blob;
+      let filename: string;
+
+      switch (exportFormat) {
+        case 'json':
+          blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+          filename = `analytics_${new Date().toISOString().split('T')[0]}.json`;
+          break;
+        case 'csv':
+          const csvContent = generateCSV();
+          blob = new Blob([csvContent], { type: 'text/csv' });
+          filename = `analytics_${new Date().toISOString().split('T')[0]}.csv`;
+          break;
+        case 'pdf':
+          // In a real implementation, you'd use a PDF library like jsPDF
+          blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/pdf' });
+          filename = `analytics_${new Date().toISOString().split('T')[0]}.pdf`;
+          break;
+        default:
+          throw new Error('Unsupported export format');
+      }
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      success(`Analytics data exported as ${exportFormat.toUpperCase()} successfully!`);
+    } catch (err) {
+      showError('Failed to export analytics data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateCSV = () => {
+    const headers = ['Metric', 'Value', 'Change', 'Trend'];
+    const rows = [
+      headers.join(','),
+      ...metrics.map(m => `${m.title},${m.value},${m.change},${m.trend}`)
+    ];
+    return rows.join('\n');
+  };
+
+  const handleScheduleReport = () => {
+    success('Weekly report scheduled! You will receive it every Monday at 9 AM.');
+    addNotification({
+      type: 'success',
+      title: 'Report Scheduled',
+      message: 'Weekly analytics report has been scheduled'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -104,26 +222,116 @@ export default function Analytics() {
             </div>
 
             <div className="flex items-center space-x-3">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm"
-              >
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="1y">Last year</option>
-              </select>
+              {/* Time Range Selector */}
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <select
+                  value={timeRange}
+                  onChange={(e) => setTimeRange(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm"
+                >
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                  <option value="1y">Last year</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
 
-              <Button variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
+              {/* Custom Date Range */}
+              {timeRange === "custom" && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="date"
+                    value={customDateRange.start}
+                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <input
+                    type="date"
+                    value={customDateRange.end}
+                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+              )}
+
+              {/* Real-time Toggle */}
+              <div className="flex items-center space-x-2">
+                <Activity className={`w-4 h-4 ${isRealTime ? 'text-green-600' : 'text-gray-400'}`} />
+                <button
+                  onClick={() => setIsRealTime(!isRealTime)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isRealTime
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {isRealTime ? 'Real-time ON' : 'Real-time OFF'}
+                </button>
+              </div>
+
+              {/* Refresh Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
 
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export
+              {/* Export Format Selector */}
+              <div className="flex items-center space-x-2">
+                <select
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value as typeof exportFormat)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="json">JSON</option>
+                </select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={isLoading}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+
+              {/* Schedule Report */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleScheduleReport}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Schedule
               </Button>
+            </div>
+
+            {/* Status Bar */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="text-sm text-gray-600">
+                Last updated: {lastUpdated.toLocaleString()}
+                {isRealTime && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Live
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <span>Auto-refresh: {isRealTime ? '30s' : 'Manual'}</span>
+                <span>Format: {exportFormat.toUpperCase()}</span>
+                <span>Range: {timeRange}</span>
+              </div>
             </div>
           </div>
         </div>

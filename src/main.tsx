@@ -9,13 +9,13 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <AuthProvider>
         <ToastProvider>
           <OfflineIndicator />
           <App />
         </ToastProvider>
-      </ErrorBoundary>
-    </AuthProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

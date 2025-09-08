@@ -1,124 +1,166 @@
-import { useOffline, useOfflineQueue } from "@/hooks/useOffline";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wifi, WifiOff, Clock, Database, AlertCircle } from "lucide-react";
+import {
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
+import { useOfflineStatus, useOfflineQueue, useOfflineStore } from "@/stores/offline-store";
 import { useToast } from "@/components/ui/toast";
 
 export function OfflineIndicator() {
-  const { isOnline, wasOffline, lastOnlineTime, connectionType, effectiveType } = useOffline();
-  const { queueLength } = useOfflineQueue();
-  const { info } = useToast();
+  const { isOnline, lastSync, pendingItems, failedItems, isProcessingQueue } = useOfflineStatus();
+  const queue = useOfflineQueue();
+  const { processQueue, retryFailedItems } = useOfflineStore();
+  const { success, error: showError } = useToast();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  if (isOnline && !wasOffline) {
-    return null; // Don't show anything if consistently online
+  // Don't show if online and no pending items
+  if (isOnline && pendingItems === 0 && failedItems === 0) {
+    return null;
   }
 
-  const handleRetryConnection = () => {
-    // Force a connectivity check
-    fetch(window.location.origin, { method: "HEAD", cache: "no-cache" })
-      .then(() => {
-        info("Connection restored", "You're back online!");
-      })
-      .catch(() => {
-        info("Still offline", "Please check your internet connection.");
-      });
+  const handleSyncNow = async () => {
+    try {
+      await processQueue();
+      success('Sync completed successfully!');
+    } catch (err) {
+      showError('Sync failed. Please try again.');
+    }
   };
+
+  const handleRetryFailed = async () => {
+    try {
+      await retryFailedItems();
+      success('Failed items queued for retry.');
+    } catch (err) {
+      showError('Failed to retry items.');
+    }
+  };
+
+  const failedQueueItems = queue.filter(item => item.retryCount >= 3);
 
   return (
     <Card className={`fixed bottom-4 right-4 z-50 max-w-sm shadow-lg border-2 ${
       isOnline
-        ? "border-green-200 bg-green-50"
+        ? failedItems > 0 ? "border-orange-200 bg-orange-50" : "border-green-200 bg-green-50"
         : "border-yellow-200 bg-yellow-50"
     }`}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-3">
           <div className={`flex-shrink-0 mt-0.5 ${
-            isOnline ? "text-green-600" : "text-yellow-600"
+            isOnline ? (failedItems > 0 ? "text-orange-600" : "text-green-600") : "text-yellow-600"
           }`}>
-            {isOnline ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
+            {isOnline ? (
+              failedItems > 0 ? <AlertTriangle className="w-5 h-5" /> : <Wifi className="w-5 h-5" />
+            ) : (
+              <WifiOff className="w-5 h-5" />
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between">
               <p className={`text-sm font-medium ${
-                isOnline ? "text-green-800" : "text-yellow-800"
+                isOnline ? (failedItems > 0 ? "text-orange-800" : "text-green-800") : "text-yellow-800"
               }`}>
-                {isOnline ? "Back Online" : "You're Offline"}
+                {isOnline ? (failedItems > 0 ? "Sync Issues" : "Online & Synced") : "Offline Mode"}
               </p>
-              {!isOnline && (
-                <div className="flex items-center space-x-1">
-                  <Clock className="w-3 h-3 text-yellow-600" />
-                  <span className="text-xs text-yellow-600">
-                    {lastOnlineTime && Math.floor((Date.now() - lastOnlineTime.getTime()) / 1000 / 60)}m ago
-                  </span>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <p className={`text-sm mt-1 ${
+              isOnline ? (failedItems > 0 ? "text-orange-700" : "text-green-700") : "text-yellow-700"
+            }`}>
+              {isOnline
+                ? failedItems > 0
+                  ? `${failedItems} sync error${failedItems > 1 ? 's' : ''} detected`
+                  : pendingItems > 0
+                    ? `${pendingItems} item${pendingItems > 1 ? 's' : ''} syncing...`
+                    : "All changes synchronized"
+                : "Working offline - changes will sync when online"
+              }
+            </p>
+
+            {/* Status Details */}
+            <div className="mt-2 space-y-1 text-xs">
+              {lastSync && (
+                <div className="text-gray-600">
+                  Last sync: {new Date(lastSync).toLocaleTimeString()}
+                </div>
+              )}
+              {pendingItems > 0 && (
+                <div className="text-blue-600">
+                  {pendingItems} pending sync
+                </div>
+              )}
+              {failedItems > 0 && (
+                <div className="text-red-600">
+                  {failedItems} failed to sync
                 </div>
               )}
             </div>
 
-            <p className={`text-sm mt-1 ${
-              isOnline ? "text-green-700" : "text-yellow-700"
-            }`}>
-              {isOnline
-                ? "All features are now available."
-                : "Some features may be limited while offline."
-              }
-            </p>
-
-            {/* Connection Details */}
-            {isOnline && connectionType !== "unknown" && (
-              <div className="mt-2 flex items-center space-x-2 text-xs text-green-600">
-                <Database className="w-3 h-3" />
-                <span>
-                  {connectionType} • {effectiveType}
-                </span>
-              </div>
-            )}
-
-            {/* Offline Queue */}
-            {!isOnline && queueLength > 0 && (
-              <div className="mt-2 flex items-center space-x-2 text-xs text-yellow-600">
-                <Database className="w-3 h-3" />
-                <span>{queueLength} actions queued</span>
+            {/* Expanded Details */}
+            {isExpanded && (
+              <div className="mt-3 space-y-2">
+                {failedQueueItems.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded p-2">
+                    <p className="text-xs font-medium text-red-800 mb-1">Failed Operations:</p>
+                    <div className="space-y-1 max-h-20 overflow-y-auto">
+                      {failedQueueItems.slice(0, 3).map((item) => (
+                        <div key={item.id} className="text-xs text-red-700">
+                          {item.type} {item.resource} - {item.lastError || 'Unknown error'}
+                        </div>
+                      ))}
+                      {failedQueueItems.length > 3 && (
+                        <div className="text-xs text-red-600">
+                          +{failedQueueItems.length - 3} more...
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Actions */}
             <div className="mt-3 flex space-x-2">
-              {!isOnline && (
+              {isOnline && pendingItems > 0 && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={handleRetryConnection}
+                  onClick={handleSyncNow}
+                  disabled={isProcessingQueue}
                   className="text-xs h-7"
                 >
-                  Check Connection
+                  {isProcessingQueue ? (
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                  )}
+                  Sync Now
                 </Button>
               )}
-              {isOnline && wasOffline && (
+              {failedItems > 0 && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => window.location.reload()}
+                  onClick={handleRetryFailed}
                   className="text-xs h-7"
                 >
-                  Refresh Page
+                  Retry Failed
                 </Button>
               )}
             </div>
           </div>
-
-          {/* Close button for online state */}
-          {isOnline && wasOffline && (
-            <button
-              onClick={() => {
-                // In a real implementation, you'd hide this component
-                console.log("Hide online indicator");
-              }}
-              className="flex-shrink-0 text-green-600 hover:text-green-800"
-            >
-              <AlertCircle className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </CardContent>
     </Card>
@@ -127,26 +169,53 @@ export function OfflineIndicator() {
 
 // Offline Banner for full-width notifications
 export function OfflineBanner() {
-  const { isOnline } = useOffline();
+  const { isOnline, pendingItems, failedItems } = useOfflineStatus();
 
-  if (isOnline) {
+  if (isOnline && pendingItems === 0 && failedItems === 0) {
     return null;
   }
 
   return (
-    <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
+    <div className={`border-b px-4 py-2 ${
+      isOnline
+        ? failedItems > 0 ? "bg-orange-100 border-orange-200" : "bg-green-100 border-green-200"
+        : "bg-yellow-100 border-yellow-200"
+    }`}>
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <WifiOff className="w-4 h-4 text-yellow-600" />
-          <span className="text-sm text-yellow-800">
-            You're currently offline. Some features may be limited.
+          {isOnline ? (
+            failedItems > 0 ? (
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
+            ) : (
+              <Wifi className="w-4 h-4 text-green-600" />
+            )
+          ) : (
+            <WifiOff className="w-4 h-4 text-yellow-600" />
+          )}
+          <span className={`text-sm ${
+            isOnline
+              ? failedItems > 0 ? "text-orange-800" : "text-green-800"
+              : "text-yellow-800"
+          }`}>
+            {isOnline
+              ? failedItems > 0
+                ? `Sync issues detected (${failedItems} failed)`
+                : pendingItems > 0
+                  ? `Syncing ${pendingItems} item${pendingItems > 1 ? 's' : ''}...`
+                  : "Online and synchronized"
+              : "You're currently offline. Working in offline mode."
+            }
           </span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-xs text-yellow-600">
-            Auto-retry enabled
+          <span className={`text-xs ${
+            isOnline ? "text-green-600" : "text-yellow-600"
+          }`}>
+            {isOnline ? "Auto-sync enabled" : "Auto-retry enabled"}
           </span>
-          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+          <div className={`w-2 h-2 rounded-full animate-pulse ${
+            isOnline ? (failedItems > 0 ? "bg-orange-500" : "bg-green-500") : "bg-yellow-500"
+          }`}></div>
         </div>
       </div>
     </div>

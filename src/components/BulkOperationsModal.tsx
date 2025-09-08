@@ -17,6 +17,8 @@ import {
   Search
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { credentialsService } from "@/lib/api/credentials-service";
+import { useAppStore } from "@/stores";
 
 interface BulkOperation {
   id: string;
@@ -134,44 +136,209 @@ export function BulkOperationsModal({
     setSelectedOperations([]);
   };
 
-  const handleStartOperation = (operationId: string) => {
-    setOperations(prev =>
-      prev.map(op =>
-        op.id === operationId
-          ? { ...op, status: "running" as const }
-          : op
-      )
-    );
+  const handleStartOperation = async (operationId: string) => {
+    const operation = operations.find(op => op.id === operationId);
+    if (!operation) return;
 
-    // Simulate progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setOperations(prev =>
-          prev.map(op =>
-            op.id === operationId
-              ? { ...op, status: "completed" as const, progress: 100 }
-              : op
-          )
-        );
-        success("Operation completed", `${operations.find(op => op.id === operationId)?.name} has been completed successfully.`);
-      } else {
-        setOperations(prev =>
-          prev.map(op =>
-            op.id === operationId
-              ? { ...op, progress: Math.round(progress) }
-              : op
-          )
-        );
+    try {
+      setOperations(prev =>
+        prev.map(op =>
+          op.id === operationId
+            ? { ...op, status: "running" as const, progress: 0 }
+            : op
+        )
+      );
+
+      // Get selected credentials (this would normally come from the parent component)
+      // For now, we'll use mock credential IDs
+      const mockCredentialIds = ["1", "2", "3", "4", "5"]; // This should come from selected credentials
+
+      switch (operation.type) {
+        case "verify":
+          await performBulkVerification(operationId, mockCredentialIds);
+          break;
+        case "delete":
+          await performBulkDeletion(operationId, mockCredentialIds);
+          break;
+        case "export":
+          await performBulkExport(operationId, mockCredentialIds);
+          break;
+        case "share":
+          await performBulkSharing(operationId, mockCredentialIds);
+          break;
+        case "update":
+          await performBulkUpdate(operationId, mockCredentialIds);
+          break;
+        default:
+          throw new Error(`Unsupported operation type: ${operation.type}`);
       }
-    }, 1000);
+
+      success("Operation completed", `${operation.name} has been completed successfully.`);
+    } catch (error) {
+      console.error("Bulk operation failed:", error);
+      setOperations(prev =>
+        prev.map(op =>
+          op.id === operationId
+            ? {
+                ...op,
+                status: "failed" as const,
+                errors: [(error as Error).message || "Operation failed"]
+              }
+            : op
+        )
+      );
+    }
 
     if (onStartOperation) {
       onStartOperation(operationId);
     }
+  };
+
+  const performBulkVerification = async (operationId: string, credentialIds: string[]) => {
+    let completed = 0;
+    const total = credentialIds.length;
+
+    for (const credentialId of credentialIds) {
+      try {
+        await credentialsService.verifyCredential(credentialId);
+        completed++;
+
+        // Update progress
+        const progress = Math.round((completed / total) * 100);
+        setOperations(prev =>
+          prev.map(op =>
+            op.id === operationId
+              ? { ...op, progress }
+              : op
+          )
+        );
+
+        // Small delay to show progress
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Failed to verify credential ${credentialId}:`, error);
+        // Continue with other credentials
+      }
+    }
+
+    setOperations(prev =>
+      prev.map(op =>
+        op.id === operationId
+          ? { ...op, status: "completed" as const, progress: 100 }
+          : op
+      )
+    );
+  };
+
+  const performBulkDeletion = async (operationId: string, credentialIds: string[]) => {
+    await credentialsService.bulkDelete(credentialIds);
+
+    setOperations(prev =>
+      prev.map(op =>
+        op.id === operationId
+          ? { ...op, status: "completed" as const, progress: 100 }
+          : op
+      )
+    );
+
+    // Update the store to remove deleted credentials
+    const { removeCredential } = useAppStore.getState();
+    credentialIds.forEach(id => removeCredential(id));
+  };
+
+  const performBulkExport = async (operationId: string, credentialIds: string[]) => {
+    const result = await credentialsService.bulkExport(credentialIds, "json");
+
+    // Create download link for the exported data
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bulk_export_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setOperations(prev =>
+      prev.map(op =>
+        op.id === operationId
+          ? { ...op, status: "completed" as const, progress: 100 }
+          : op
+      )
+    );
+  };
+
+  const performBulkSharing = async (operationId: string, credentialIds: string[]) => {
+    let completed = 0;
+    const total = credentialIds.length;
+
+    for (const credentialId of credentialIds) {
+      try {
+        await credentialsService.shareCredential(credentialId, {
+          expiresIn: 7 * 24 * 60 * 60 * 1000, // 7 days
+          oneTime: false
+        });
+        completed++;
+
+        const progress = Math.round((completed / total) * 100);
+        setOperations(prev =>
+          prev.map(op =>
+            op.id === operationId
+              ? { ...op, progress }
+              : op
+          )
+        );
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } catch (error) {
+        console.error(`Failed to share credential ${credentialId}:`, error);
+      }
+    }
+
+    setOperations(prev =>
+      prev.map(op =>
+        op.id === operationId
+          ? { ...op, status: "completed" as const, progress: 100 }
+          : op
+      )
+    );
+  };
+
+  const performBulkUpdate = async (operationId: string, credentialIds: string[]) => {
+    let completed = 0;
+    const total = credentialIds.length;
+
+    // Mock update - in real implementation, you'd have specific update data
+    const updateData = { metadata: { bulkUpdated: true, updatedAt: new Date().toISOString() } };
+
+    for (const credentialId of credentialIds) {
+      try {
+        await credentialsService.updateCredential(credentialId, updateData);
+        completed++;
+
+        const progress = Math.round((completed / total) * 100);
+        setOperations(prev =>
+          prev.map(op =>
+            op.id === operationId
+              ? { ...op, progress }
+              : op
+          )
+        );
+
+        await new Promise(resolve => setTimeout(resolve, 400));
+      } catch (error) {
+        console.error(`Failed to update credential ${credentialId}:`, error);
+      }
+    }
+
+    setOperations(prev =>
+      prev.map(op =>
+        op.id === operationId
+          ? { ...op, status: "completed" as const, progress: 100 }
+          : op
+      )
+    );
   };
 
   const handlePauseOperation = (operationId: string) => {

@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import { credentialsService } from '@/lib/api/credentials-service';
+import { handshakeService } from '@/lib/api/handshake-service';
+import { authService } from '@/lib/api/auth-service';
+import { useAppStore } from './app-store';
 
 // Offline Queue Item
 interface QueueItem {
@@ -10,6 +14,8 @@ interface QueueItem {
   timestamp: number;
   retryCount: number;
   lastError?: string;
+  version?: number; // For conflict resolution
+  originalData?: any; // Store original data for conflict resolution
 }
 
 // Sync Status
@@ -18,6 +24,20 @@ interface SyncStatus {
   lastSync: number | null;
   pendingItems: number;
   failedItems: number;
+}
+
+// Conflict Resolution
+interface ConflictResolution {
+  type: 'local-wins' | 'remote-wins' | 'merge' | 'manual';
+  resolvedData?: any;
+}
+
+interface ConflictData {
+  localData: any;
+  remoteData: any;
+  conflictType: 'version' | 'data' | 'content' | 'deletion';
+  resourceId: string;
+  timestamp: number;
 }
 
 // Offline Store State
@@ -110,18 +130,21 @@ export const useOfflineStore = create<OfflineState>()(
 
             for (const item of itemsToProcess) {
               try {
-                // Here you would make the actual API call based on item.type and item.resource
-                // For now, we'll simulate success/failure
-                await simulateApiCall(item);
+                await processQueueItem(item);
 
                 // Remove successful item from queue
                 get().removeFromQueue(item.id);
               } catch (error) {
-                // Increment retry count and update error
-                get().updateQueueItem(item.id, {
-                  retryCount: item.retryCount + 1,
-                  lastError: error instanceof Error ? error.message : 'Unknown error',
-                });
+                // Check if it's a conflict error
+                if (error instanceof Error && error.message.includes('conflict')) {
+                  await handleConflict(item, error);
+                } else {
+                  // Increment retry count and update error
+                  get().updateQueueItem(item.id, {
+                    retryCount: item.retryCount + 1,
+                    lastError: error instanceof Error ? error.message : 'Unknown error',
+                  });
+                }
               }
             }
 
@@ -164,18 +187,175 @@ export const useOfflineStore = create<OfflineState>()(
   )
 );
 
-// Simulate API call for demonstration
-async function simulateApiCall(item: QueueItem): Promise<void> {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+// Process individual queue item with real API calls
+async function processQueueItem(item: QueueItem): Promise<void> {
+  const { addCredential, updateCredential, removeCredential, addNotification } = useAppStore.getState();
 
-  // Simulate random failure (10% chance)
-  if (Math.random() < 0.1) {
-    throw new Error('Network error');
+  switch (item.resource) {
+    case 'credential':
+      await processCredentialOperation(item, addCredential, updateCredential, removeCredential);
+      break;
+    case 'handshake':
+      await processHandshakeOperation(item);
+      break;
+    case 'profile':
+      await processProfileOperation(item);
+      break;
+    default:
+      throw new Error(`Unknown resource type: ${item.resource}`);
   }
 
-  // Simulate successful API call
-  console.log(`Processed ${item.type} operation for ${item.resource}:`, item.data);
+  // Add success notification
+  addNotification({
+    type: 'success',
+    title: 'Offline Operation Synced',
+    message: `${item.type} operation for ${item.resource} has been synced successfully.`
+  });
+}
+
+async function processCredentialOperation(
+  item: QueueItem,
+  addCredential: any,
+  updateCredential: any,
+  removeCredential: any
+): Promise<void> {
+  switch (item.type) {
+    case 'create':
+      const newCredential = await credentialsService.createCredential(item.data);
+      addCredential(newCredential);
+      break;
+
+    case 'update':
+      const updatedCredential = await credentialsService.updateCredential(item.data.id, item.data.updates);
+      updateCredential(updatedCredential.id, updatedCredential);
+      break;
+
+    case 'delete':
+      await credentialsService.deleteCredential(item.data.id);
+      removeCredential(item.data.id);
+      break;
+
+    case 'share':
+      await credentialsService.shareCredential(item.data.id, item.data.options || {});
+      break;
+
+    case 'verify':
+      await credentialsService.verifyCredential(item.data.id);
+      break;
+
+    default:
+      throw new Error(`Unknown credential operation: ${item.type}`);
+  }
+}
+
+async function processHandshakeOperation(item: QueueItem): Promise<void> {
+  switch (item.type) {
+    case 'create':
+      await handshakeService.createRequest(item.data);
+      break;
+    case 'update':
+      // Update not supported by handshake API - could use respondToRequest for status updates
+      console.warn('Handshake update not implemented in offline sync');
+      break;
+    default:
+      throw new Error(`Unknown handshake operation: ${item.type}`);
+  }
+}
+
+async function processProfileOperation(item: QueueItem): Promise<void> {
+  switch (item.type) {
+    case 'update':
+      await authService.updateProfile(item.data);
+      break;
+    default:
+      throw new Error(`Unknown profile operation: ${item.type}`);
+  }
+}
+
+async function handleConflict(item: QueueItem, error: Error): Promise<void> {
+  // Extract conflict information from error
+  const conflictData = parseConflictError(error);
+
+  // Apply automatic conflict resolution based on strategy
+  const resolution = await resolveConflict(conflictData);
+
+  // If resolution requires manual intervention, add to failed items
+  if (resolution.type === 'manual') {
+    useOfflineStore.getState().updateQueueItem(item.id, {
+      retryCount: 3, // Mark as failed
+      lastError: 'Conflict requires manual resolution'
+    });
+
+    // Notify user about conflict
+    const { addNotification } = useAppStore.getState();
+    addNotification({
+      type: 'warning',
+      title: 'Sync Conflict Detected',
+      message: `A conflict was detected for ${item.resource}. Please resolve manually.`
+    });
+  } else {
+    // Apply resolved data
+    await applyConflictResolution(item, resolution);
+  }
+}
+
+function parseConflictError(error: Error): ConflictData {
+  // Parse conflict information from error message or response
+  // This would depend on how the API returns conflict information
+  let localData = {};
+  let remoteData = {};
+  let resourceId = '';
+  let conflictType: 'version' | 'content' | 'deletion' = 'version';
+
+  // Try to extract conflict information from error message
+  if (error.message.includes('version conflict')) {
+    conflictType = 'version';
+  } else if (error.message.includes('content conflict')) {
+    conflictType = 'content';
+  } else if (error.message.includes('deletion conflict')) {
+    conflictType = 'deletion';
+  }
+
+  // Try to extract resource ID from error message
+  const resourceMatch = error.message.match(/resource[:\s]+([a-zA-Z0-9-]+)/i);
+  if (resourceMatch) {
+    resourceId = resourceMatch[1];
+  }
+
+  return {
+    localData,
+    remoteData,
+    conflictType,
+    resourceId,
+    timestamp: Date.now()
+  };
+}
+
+async function resolveConflict(_conflictData: ConflictData): Promise<ConflictResolution> {
+  // Implement automatic conflict resolution strategies
+  // For now, default to local-wins strategy
+  return {
+    type: 'local-wins'
+  };
+}
+
+async function applyConflictResolution(item: QueueItem, resolution: ConflictResolution): Promise<void> {
+  // Apply the resolved data based on resolution strategy
+  switch (resolution.type) {
+    case 'local-wins':
+      await processQueueItem(item);
+      break;
+    case 'remote-wins':
+      // Skip local changes, remote data takes precedence
+      break;
+    case 'merge':
+      // Merge local and remote data
+      if (resolution.resolvedData) {
+        const mergedItem = { ...item, data: resolution.resolvedData };
+        await processQueueItem(mergedItem);
+      }
+      break;
+  }
 }
 
 // Selectors

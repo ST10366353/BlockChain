@@ -105,24 +105,64 @@ export function QRCodeScanner() {
           if (scanError instanceof NotFoundException) {
             // No QR code found, this is normal - continue scanning
             console.log('No QR code detected, continuing to scan...');
+            // Don't set error for NotFoundException - it's expected
           } else if (scanError instanceof ChecksumException) {
-            setError('QR code appears to be corrupted');
-            showError('QR code appears to be corrupted');
+            setError('QR code appears to be corrupted or damaged');
+            showError('QR code appears to be corrupted or damaged. Try scanning again.');
+            setIsScanning(false);
           } else if (scanError instanceof FormatException) {
-            setError('Invalid QR code format');
-            showError('Invalid QR code format');
+            setError('Invalid QR code format - not a supported type');
+            showError('This QR code format is not supported. Please scan a valid credential or DID code.');
+            setIsScanning(false);
+          } else if (scanError instanceof Error) {
+            // Handle other specific error types
+            if (scanError.message.includes('permission')) {
+              setError('Camera permission denied');
+              showError('Camera access denied. Please allow camera permissions and try again.');
+            } else if (scanError.message.includes('not found')) {
+              setError('Camera not found');
+              showError('No camera found. Please connect a camera and try again.');
+            } else {
+              console.error('Scan error:', scanError);
+              setError(`Scan failed: ${scanError.message}`);
+              showError('Failed to scan QR code. Please try again.');
+            }
+            setIsScanning(false);
           } else {
-            console.error('Scan error:', scanError);
-            setError('Error scanning QR code');
-            showError('Error scanning QR code');
+            console.error('Unknown scan error:', scanError);
+            setError('An unknown error occurred while scanning');
+            showError('An unexpected error occurred. Please try again.');
+            setIsScanning(false);
           }
-          setIsScanning(false);
         }
       }
     } catch (err) {
       console.error('Error starting scan:', err);
-      setError('Failed to start camera');
-      showError('Failed to start camera');
+
+      // More specific error handling for camera issues
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError' || err.message.includes('permission')) {
+          setError('Camera permission denied');
+          setHasPermission(false);
+          showError('Camera access denied. Please allow camera permissions in your browser settings and try again.');
+        } else if (err.name === 'NotFoundError' || err.message.includes('not found')) {
+          setError('No camera found');
+          showError('No camera detected. Please connect a camera and refresh the page.');
+        } else if (err.name === 'NotReadableError' || err.message.includes('busy')) {
+          setError('Camera is busy');
+          showError('Camera is being used by another application. Please close other apps and try again.');
+        } else if (err.name === 'OverconstrainedError' || err.message.includes('constraint')) {
+          setError('Camera constraints not supported');
+          showError('Your camera does not support the required settings. Try using a different camera.');
+        } else {
+          setError('Failed to start camera');
+          showError(`Failed to start camera: ${err.message}`);
+        }
+      } else {
+        setError('Failed to start camera');
+        showError('An unexpected error occurred while starting the camera.');
+      }
+
       setIsScanning(false);
     } finally {
       setIsInitializing(false);

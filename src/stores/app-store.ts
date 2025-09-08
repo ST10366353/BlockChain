@@ -45,6 +45,7 @@ interface AppState extends UIState {
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   removeNotification: (id: string) => void;
   markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
   clearNotifications: () => void;
 
   // Modal actions
@@ -68,30 +69,10 @@ interface AppState extends UIState {
 }
 
 // Initial state
-const initialState: Omit<AppState, keyof {
-  setSidebarOpen: any;
-  setTheme: any;
-  setLoading: any;
-  addNotification: any;
-  removeNotification: any;
-  markNotificationRead: any;
-  clearNotifications: any;
-  openModal: any;
-  closeModal: any;
-  setCredentials: any;
-  addCredential: any;
-  updateCredential: any;
-  removeCredential: any;
-  setSelectedCredential: any;
-  setHandshakeRequests: any;
-  addHandshakeRequest: any;
-  updateHandshakeRequest: any;
-  removeHandshakeRequest: any;
-  reset: any;
-}> = {
+const initialState = {
   // UI State
   sidebarOpen: false,
-  theme: 'system',
+  theme: 'system' as const,
   loading: {
     global: false,
     credentials: false,
@@ -151,6 +132,11 @@ export const useAppStore = create<AppState>()(
             notifications: state.notifications.map((n) =>
               n.id === id ? { ...n, read: true } : n
             ),
+          })),
+
+        markAllNotificationsRead: () =>
+          set((state) => ({
+            notifications: state.notifications.map((n) => ({ ...n, read: true })),
           })),
 
         clearNotifications: () => set({ notifications: [] }),

@@ -13,10 +13,12 @@ import Settings from "@/pages/Settings";
 import Analytics from "@/pages/Analytics";
 import AuditTrail from "@/pages/AuditTrail";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { ModalProvider } from "@/components/ModalProvider";
 
 export default function App() {
   return (
     <Router>
+      <ModalProvider />
       <Routes>
         {/* Main Pages */}
         <Route path="/" element={<HomePage />} />

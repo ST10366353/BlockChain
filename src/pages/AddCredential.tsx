@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Upload,
   QrCode,
@@ -18,20 +17,99 @@ import {
   X,
   Building
 } from "lucide-react";
+import {
+  FormField,
+  FormValidationSummary,
+  FormProgressIndicator,
+  FormActions,
+  ValidatedInput,
+  ValidatedTextarea,
+  ValidatedSelect,
+  FieldValidationHint,
+  useZodForm,
+  useValidationState
+} from "@/components/forms/form-utils";
+import { manualCredentialSchema, ManualCredentialForm } from "@/shared/types";
+import { credentialsService } from "@/lib/api/credentials-service";
+import { useAppStore } from "@/stores";
 
 export default function AddCredential() {
   const navigate = useNavigate();
   const [activeMethod, setActiveMethod] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [manualData, setManualData] = useState({
-    title: "",
-    issuer: "",
-    type: "",
-    description: "",
-    issueDate: "",
-    expiryDate: ""
+
+  // Enhanced form with real-time validation
+  const form = useZodForm<ManualCredentialForm>(manualCredentialSchema, {
+    defaultValues: {
+      title: "",
+      issuer: "",
+      type: "education" as const,
+      description: "",
+      issueDate: "",
+      expiryDate: ""
+    }
   });
+
+  const { register, handleSubmit, formState: { errors, isValid }, watch } = form;
+
+  // Get store actions
+  const { addCredential, addNotification, setLoading } = useAppStore();
+
+  // Real-time validation states for each field
+  const titleValidation = useValidationState(form, "title");
+  const issuerValidation = useValidationState(form, "issuer");
+  const typeValidation = useValidationState(form, "type");
+  const descriptionValidation = useValidationState(form, "description");
+  const issueDateValidation = useValidationState(form, "issueDate");
+  const expiryDateValidation = useValidationState(form, "expiryDate");
+
+  // Watch form values for dynamic validation
+  const watchedTitle = watch("title");
+  const watchedIssuer = watch("issuer");
+  const watchedType = watch("type");
+
+  const onSubmit = async (data: ManualCredentialForm) => {
+    try {
+      setLoading('credentials', true);
+
+      // Create the credential via API
+      const newCredential = await credentialsService.createCredential({
+        name: data.title,
+        type: data.type,
+        issuer: data.issuer,
+        description: data.description,
+        expirationDate: data.expiryDate,
+        metadata: {
+          manualEntry: true,
+          createdVia: 'web-app',
+          issueDate: data.issueDate
+        }
+      });
+
+      // Add to local store
+      addCredential(newCredential);
+
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'Credential Created',
+        message: `${data.title} has been successfully created.`
+      });
+
+      // Navigate to credentials list
+      navigate("/consumer/credentials");
+    } catch (error) {
+      console.error("Failed to create credential:", error);
+      addNotification({
+        type: 'error',
+        title: 'Creation Failed',
+        message: 'Failed to create credential. Please try again.'
+      });
+    } finally {
+      setLoading('credentials', false);
+    }
+  };
 
   const importMethods = [
     {
@@ -227,100 +305,161 @@ export default function AddCredential() {
       case "manual":
         return (
           <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Credential Title *
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., University Degree"
-                    value={manualData.title}
-                    onChange={(e) => setManualData({...manualData, title: e.target.value})}
-                  />
-                </div>
+            {/* Form Validation Summary */}
+            <FormValidationSummary form={form} />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Issuer *
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Stanford University"
-                    value={manualData.issuer}
-                    onChange={(e) => setManualData({...manualData, issuer: e.target.value})}
-                  />
-                </div>
+            {/* Form Progress Indicator */}
+            <FormProgressIndicator form={form} totalFields={6} />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Credential Type
-                  </label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={manualData.type}
-                    onChange={(e) => setManualData({...manualData, type: e.target.value})}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <FormField
+                    label="Credential Title"
+                    error={errors.title?.message}
+                    validationState={titleValidation.validationState}
+                    required
+                    description="Enter a descriptive title for your credential"
                   >
-                    <option value="">Select type...</option>
-                    <option value="education">Education</option>
-                    <option value="employment">Employment</option>
-                    <option value="license">License</option>
-                    <option value="certification">Certification</option>
-                    <option value="achievement">Achievement</option>
-                  </select>
+                    <ValidatedInput
+                      type="text"
+                      placeholder="e.g., University Degree"
+                      validationState={titleValidation.validationState}
+                      {...register("title")}
+                    />
+                    <FieldValidationHint
+                      hint={`${watchedTitle?.length || 0}/100 characters`}
+                      validationState={watchedTitle?.length > 100 ? 'error' : watchedTitle?.length > 80 ? 'warning' : 'success'}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Issuer"
+                    error={errors.issuer?.message}
+                    validationState={issuerValidation.validationState}
+                    required
+                    description="Organization or institution that issued this credential"
+                  >
+                    <ValidatedInput
+                      type="text"
+                      placeholder="e.g., Stanford University"
+                      validationState={issuerValidation.validationState}
+                      {...register("issuer")}
+                    />
+                    <FieldValidationHint
+                      hint={`${watchedIssuer?.length || 0}/100 characters`}
+                      validationState={watchedIssuer?.length > 100 ? 'error' : watchedIssuer?.length > 80 ? 'warning' : 'success'}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Credential Type"
+                    error={errors.type?.message}
+                    validationState={typeValidation.validationState}
+                    required
+                  >
+                    <ValidatedSelect
+                      validationState={typeValidation.validationState}
+                      {...register("type")}
+                    >
+                      <option value="">Select type...</option>
+                      <option value="education">🎓 Education</option>
+                      <option value="employment">💼 Employment</option>
+                      <option value="license">📋 License</option>
+                      <option value="certification">🏆 Certification</option>
+                      <option value="achievement">⭐ Achievement</option>
+                    </ValidatedSelect>
+                    <FieldValidationHint
+                      hint={
+                        watchedType === 'education' ? 'Academic degrees, diplomas, transcripts' :
+                        watchedType === 'employment' ? 'Job positions, roles, experience' :
+                        watchedType === 'license' ? 'Professional licenses, permits' :
+                        watchedType === 'certification' ? 'Professional certifications, training' :
+                        watchedType === 'achievement' ? 'Awards, recognitions, honors' :
+                        'Select a credential type to see description'
+                      }
+                      validationState="info"
+                    />
+                  </FormField>
+                </div>
+
+                <div className="space-y-4">
+                  <FormField
+                    label="Issue Date"
+                    error={errors.issueDate?.message}
+                    validationState={issueDateValidation.validationState}
+                    description="When was this credential issued?"
+                  >
+                    <ValidatedInput
+                      type="date"
+                      validationState={issueDateValidation.validationState}
+                      {...register("issueDate")}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Expiry Date"
+                    error={errors.expiryDate?.message}
+                    validationState={expiryDateValidation.validationState}
+                    description="When does this credential expire? (optional)"
+                  >
+                    <ValidatedInput
+                      type="date"
+                      validationState={expiryDateValidation.validationState}
+                      {...register("expiryDate")}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Description"
+                    error={errors.description?.message}
+                    validationState={descriptionValidation.validationState}
+                    description="Additional details about this credential"
+                  >
+                    <ValidatedTextarea
+                      rows={3}
+                      placeholder="Brief description of the credential..."
+                      validationState={descriptionValidation.validationState}
+                      {...register("description")}
+                    />
+                    <FieldValidationHint
+                      hint={`${(watch("description") || "").length}/500 characters`}
+                      validationState={(watch("description") || "").length > 500 ? 'error' : (watch("description") || "").length > 400 ? 'warning' : 'success'}
+                    />
+                  </FormField>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Issue Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={manualData.issueDate}
-                    onChange={(e) => setManualData({...manualData, issueDate: e.target.value})}
-                  />
-                </div>
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const { openModal } = useAppStore.getState();
+                    openModal("qr-generator", {
+                      data: JSON.stringify({
+                        title: watch("title"),
+                        issuer: watch("issuer"),
+                        type: watch("type"),
+                        description: watch("description"),
+                        issueDate: watch("issueDate"),
+                        expiryDate: watch("expiryDate")
+                      }),
+                      title: "Credential QR Code"
+                    });
+                  }}
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Generate QR Code
+                </Button>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Expiry Date
-                  </label>
-                  <Input
-                    type="date"
-                    value={manualData.expiryDate}
-                    onChange={(e) => setManualData({...manualData, expiryDate: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                    rows={3}
-                    placeholder="Brief description of the credential..."
-                    value={manualData.description}
-                    onChange={(e) => setManualData({...manualData, description: e.target.value})}
-                  />
-                </div>
+                <FormActions
+                  onCancel={() => navigate(-1)}
+                  submitLabel="Create Credential"
+                  isValid={isValid}
+                  isLoading={false}
+                />
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <Button variant="outline">
-                Preview
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                disabled={!manualData.title || !manualData.issuer}
-              >
-                Create Credential
-              </Button>
-            </div>
+            </form>
           </div>
         );
 
@@ -461,7 +600,15 @@ export default function AddCredential() {
                   ? "ring-2 ring-indigo-500 shadow-lg"
                   : "hover:shadow-md"
               }`}
-              onClick={() => setActiveMethod(method.id)}
+              onClick={() => {
+                if (method.id === "qr") {
+                  // Open QR scanner modal
+                  const { openModal } = useAppStore.getState();
+                  openModal("qr-scanner");
+                } else {
+                  setActiveMethod(method.id);
+                }
+              }}
             >
               <CardContent className="p-6 text-center">
                 <div className={`w-12 h-12 bg-gradient-to-r ${method.color} rounded-lg flex items-center justify-center mx-auto mb-4`}>

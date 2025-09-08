@@ -1,6 +1,16 @@
 import { apiClient } from './http-client';
 import { LoginCredentials, LoginResponse, User, ApiResponse } from '@/shared/types';
 
+// Helper function to convert ArrayBuffer to base64
+function ArrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 // Authentication API endpoints
 export const authService = {
   // Login with different methods
@@ -14,8 +24,32 @@ export const authService = {
     return response.data;
   },
 
-  async loginWithBiometric(): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/login/biometric');
+  async loginWithBiometric(credentialData?: {
+    id: string;
+    rawId: ArrayBuffer;
+    response: {
+      authenticatorData: ArrayBuffer;
+      clientDataJSON: ArrayBuffer;
+      signature: ArrayBuffer;
+      userHandle?: ArrayBuffer;
+    };
+    type: string;
+  }): Promise<LoginResponse> {
+    const response = await apiClient.post<LoginResponse>('/auth/login/biometric', {
+      credential: credentialData ? {
+        id: credentialData.id,
+        rawId: ArrayBufferToBase64(credentialData.rawId),
+        response: {
+          authenticatorData: ArrayBufferToBase64(credentialData.response.authenticatorData),
+          clientDataJSON: ArrayBufferToBase64(credentialData.response.clientDataJSON),
+          signature: ArrayBufferToBase64(credentialData.response.signature),
+          userHandle: credentialData.response.userHandle
+            ? ArrayBufferToBase64(credentialData.response.userHandle)
+            : null,
+        },
+        type: credentialData.type,
+      } : null
+    });
     return response.data;
   },
 

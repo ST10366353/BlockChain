@@ -37,13 +37,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Check user type if required
   if (requiredUserType && user.type !== requiredUserType) {
     // Redirect based on user type
-    const userTypeRedirects = {
+    const userTypeRedirects: Record<string, string> = {
       'consumer': '/dashboard',
       'enterprise': '/enterprise/dashboard',
       'power-user': '/power-user/dashboard',
     };
 
-    const redirectPath = userTypeRedirects[user.type] || '/dashboard';
+    const redirectPath = userTypeRedirects[user.type];
+
+    // If user type is not recognized, redirect to login
+    if (!redirectPath) {
+      console.warn(`Unknown user type: ${user.type}. Redirecting to login.`);
+      return <Navigate to="/login" replace />;
+    }
+
     return <Navigate to={redirectPath} replace />;
   }
 

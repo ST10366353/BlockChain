@@ -89,7 +89,7 @@ interface AuthProviderProps {
 const loginWithCredentials = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   try {
     // Determine login method based on credentials
-    if (credentials.passphrase && credentials.did.startsWith('did:')) {
+    if (credentials.passphrase && credentials.did && credentials.did.startsWith('did:')) {
       // DID-based login
       return await authService.loginWithDID(credentials.did);
     } else if (credentials.passphrase) {
@@ -112,9 +112,19 @@ const loginWithCredentials = async (credentials: LoginCredentials): Promise<Logi
   }
 };
 
-const loginWithBiometric = async (): Promise<LoginResponse> => {
+const loginWithBiometric = async (credentialData?: {
+  id: string;
+  rawId: ArrayBuffer;
+  response: {
+    authenticatorData: ArrayBuffer;
+    clientDataJSON: ArrayBuffer;
+    signature: ArrayBuffer;
+    userHandle?: ArrayBuffer;
+  };
+  type: string;
+}): Promise<LoginResponse> => {
   try {
-    return await authService.loginWithBiometric();
+    return await authService.loginWithBiometric(credentialData);
   } catch (error: any) {
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);

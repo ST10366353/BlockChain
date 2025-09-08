@@ -11,7 +11,6 @@ import {
   Camera,
   Globe,
   Lock,
-  Save,
   ArrowLeft,
   Building,
   Users,
@@ -19,6 +18,21 @@ import {
   Mail,
   Smartphone
 } from "lucide-react";
+import {
+  FormField,
+  FormValidationSummary,
+  ValidatedInput,
+  ValidatedTextarea,
+  FieldValidationHint,
+  PasswordStrengthIndicator,
+  FormActions,
+  useZodForm,
+  useValidationState
+} from "@/components/forms/form-utils";
+import { enhancedSecuritySettingsSchema, profileSettingsSchema, EnhancedSecuritySettingsForm, ProfileSettingsForm } from "@/shared/types";
+import { authService } from "@/lib/api/auth-service";
+import { useAppStore } from "@/stores";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SettingsProps {
   isEnterprise?: boolean;
@@ -30,18 +44,123 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  const [profileData, setProfileData] = useState({
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    bio: "Digital identity enthusiast and privacy advocate"
+  // Get auth context and store
+  const { user } = useAuth();
+  const { addNotification, setLoading } = useAppStore();
+
+  // Enhanced forms with real-time validation
+  const profileForm = useZodForm<ProfileSettingsForm>(profileSettingsSchema, {
+    defaultValues: {
+      name: user?.name || "",
+      email: user?.email || "",
+      bio: ""
+    }
   });
 
-  const [securityData, setSecurityData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
+  const securityForm = useZodForm<EnhancedSecuritySettingsForm>(enhancedSecuritySettingsSchema, {
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+      twoFactorEnabled: false,
+      biometricEnabled: true
+    }
   });
+
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    formState: { errors: profileErrors, isValid: isProfileValid },
+    watch: watchProfile
+  } = profileForm;
+
+  const {
+    register: registerSecurity,
+    handleSubmit: handleSecuritySubmit,
+    formState: { errors: securityErrors, isValid: isSecurityValid },
+    watch: watchSecurity
+  } = securityForm;
+
+  // Real-time validation states
+  const nameValidation = useValidationState(profileForm, "name");
+  const emailValidation = useValidationState(profileForm, "email");
+  const bioValidation = useValidationState(profileForm, "bio");
+  const currentPasswordValidation = useValidationState(securityForm, "currentPassword");
+  const newPasswordValidation = useValidationState(securityForm, "newPassword");
+  const confirmPasswordValidation = useValidationState(securityForm, "confirmPassword");
+
+  // Watch form values for dynamic feedback
+  const watchedName = watchProfile("name");
+  const watchedEmail = watchProfile("email");
+  const watchedBio = watchProfile("bio");
+  const watchedNewPassword = watchSecurity("newPassword");
+  const watchedConfirmPassword = watchSecurity("confirmPassword");
+
+  // Form submit handlers
+  const onProfileSubmit = async (data: ProfileSettingsForm) => {
+    try {
+      setLoading('global', true);
+
+      // Update profile via API
+      await authService.updateProfile({
+        name: data.name,
+        email: data.email
+      });
+
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'Profile Updated',
+        message: 'Your profile has been successfully updated.'
+      });
+
+      // Reset form to show updated values
+      profileForm.reset(data);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update profile. Please try again.'
+      });
+    } finally {
+      setLoading('global', false);
+    }
+  };
+
+  const onSecuritySubmit = async (data: EnhancedSecuritySettingsForm) => {
+    try {
+      setLoading('global', true);
+
+      // Update password via API
+      await authService.changePassword(data.currentPassword, data.newPassword);
+
+      // Show success notification
+      addNotification({
+        type: 'success',
+        title: 'Security Updated',
+        message: 'Your password has been successfully changed.'
+      });
+
+      // Reset form
+      securityForm.reset({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+        twoFactorEnabled: data.twoFactorEnabled,
+        biometricEnabled: data.biometricEnabled
+      });
+    } catch (error) {
+      console.error("Failed to update security settings:", error);
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update security settings. Please try again.'
+      });
+    } finally {
+      setLoading('global', false);
+    }
+  };
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -64,10 +183,6 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
     ] : [])
   ];
 
-  const handleSave = (section: string) => {
-    // In a real app, this would make API calls to save the data
-    console.log(`Saving ${section} settings...`);
-  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -88,69 +203,95 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <Input
-                  type="text"
-                  value={profileData.name}
-                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                />
+            <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                  label="Full Name"
+                  error={profileErrors.name?.message}
+                  validationState={nameValidation.validationState}
+                  required
+                  validationIcon={nameValidation.icon}
+                  description="Your full legal name as it appears on official documents"
+                >
+                  <ValidatedInput
+                    type="text"
+                    placeholder="Enter your full name"
+                    validationState={nameValidation.validationState}
+                    {...registerProfile("name")}
+                  />
+                  <FieldValidationHint
+                    hint={`${watchedName?.length || 0}/50 characters`}
+                    validationState={watchedName?.length > 50 ? 'error' : watchedName?.length > 40 ? 'warning' : 'success'}
+                  />
+                </FormField>
+
+                <FormField
+                  label="Email Address"
+                  error={profileErrors.email?.message}
+                  validationState={emailValidation.validationState}
+                  required
+                  validationIcon={emailValidation.icon}
+                  description="Your primary email address for notifications and recovery"
+                >
+                  <ValidatedInput
+                    type="email"
+                    placeholder="your.email@example.com"
+                    validationState={emailValidation.validationState}
+                    {...registerProfile("email")}
+                  />
+                    <FieldValidationHint
+                      hint={
+                        (watchedEmail || "").includes('@') && (watchedEmail || "").includes('.')
+                          ? "✓ Valid email format"
+                          : (watchedEmail || "").length > 0
+                            ? "Please enter a valid email address"
+                            : "Required for account recovery"
+                      }
+                      validationState={
+                        (watchedEmail || "").includes('@') && (watchedEmail || "").includes('.') ? 'success' :
+                        (watchedEmail || "").length > 0 ? 'error' : 'idle'
+                      }
+                    />
+                </FormField>
+
+                <div className="md:col-span-2">
+                  <FormField
+                    label="Bio"
+                    error={profileErrors.bio?.message}
+                    validationState={bioValidation.validationState}
+                    validationIcon={bioValidation.icon}
+                    description="Tell others about yourself and your interests"
+                  >
+                    <ValidatedTextarea
+                      rows={3}
+                      placeholder="Brief description of yourself..."
+                      validationState={bioValidation.validationState}
+                      {...registerProfile("bio")}
+                    />
+                    <FieldValidationHint
+                      hint={`${(watchedBio || "").length}/500 characters`}
+                      validationState={(watchedBio || "").length > 500 ? 'error' : (watchedBio || "").length > 400 ? 'warning' : 'success'}
+                    />
+                  </FormField>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <Input
-                  type="tel"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bio
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  rows={3}
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                onClick={() => handleSave("profile")}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
-            </div>
+              <FormActions
+                onCancel={() => profileForm.reset()}
+                submitLabel="Save Changes"
+                isValid={isProfileValid}
+                isLoading={false}
+              />
+            </form>
           </div>
         );
 
       case "security":
         return (
           <div className="space-y-6">
-            <div className="space-y-6">
+            <FormValidationSummary form={securityForm} />
+
+            <form onSubmit={handleSecuritySubmit(onSecuritySubmit)} className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -162,15 +303,20 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Password
-                    </label>
+                  <FormField
+                    label="Current Password"
+                    error={securityErrors.currentPassword?.message}
+                    validationState={currentPasswordValidation.validationState}
+                    required
+                    validationIcon={currentPasswordValidation.icon}
+                    description="Enter your current password to verify your identity"
+                  >
                     <div className="relative">
-                      <Input
+                      <ValidatedInput
                         type={showPassword ? "text" : "password"}
-                        value={securityData.currentPassword}
-                        onChange={(e) => setSecurityData({...securityData, currentPassword: e.target.value})}
+                        placeholder="Enter current password"
+                        validationState={currentPasswordValidation.validationState}
+                        {...registerSecurity("currentPassword")}
                       />
                       <button
                         type="button"
@@ -180,33 +326,55 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                  </div>
+                  </FormField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      New Password
-                    </label>
-                    <Input
+                  <FormField
+                    label="New Password"
+                    error={securityErrors.newPassword?.message}
+                    validationState={newPasswordValidation.validationState}
+                    required
+                    validationIcon={newPasswordValidation.icon}
+                    description="Create a strong password with uppercase, lowercase, numbers, and special characters"
+                  >
+                    <div className="relative">
+                      <ValidatedInput
+                        type="password"
+                        placeholder="Enter new password"
+                        validationState={newPasswordValidation.validationState}
+                        {...registerSecurity("newPassword")}
+                      />
+                      <PasswordStrengthIndicator password={watchedNewPassword || ""} />
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label="Confirm New Password"
+                    error={securityErrors.confirmPassword?.message}
+                    validationState={confirmPasswordValidation.validationState}
+                    required
+                    validationIcon={confirmPasswordValidation.icon}
+                    description="Re-enter your new password to confirm"
+                  >
+                    <ValidatedInput
                       type="password"
-                      value={securityData.newPassword}
-                      onChange={(e) => setSecurityData({...securityData, newPassword: e.target.value})}
+                      placeholder="Confirm new password"
+                      validationState={confirmPasswordValidation.validationState}
+                      {...registerSecurity("confirmPassword")}
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm New Password
-                    </label>
-                    <Input
-                      type="password"
-                      value={securityData.confirmPassword}
-                      onChange={(e) => setSecurityData({...securityData, confirmPassword: e.target.value})}
+                    <FieldValidationHint
+                      hint={
+                        watchedConfirmPassword && watchedNewPassword === watchedConfirmPassword
+                          ? "✓ Passwords match"
+                          : watchedConfirmPassword
+                            ? "❌ Passwords don't match"
+                            : "Re-enter your new password"
+                      }
+                      validationState={
+                        watchedConfirmPassword && watchedNewPassword === watchedConfirmPassword ? 'success' :
+                        watchedConfirmPassword ? 'error' : 'idle'
+                      }
                     />
-                  </div>
-
-                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
-                    Update Password
-                  </Button>
+                  </FormField>
                 </CardContent>
               </Card>
 
@@ -263,7 +431,14 @@ export default function Settings({ isEnterprise = false }: SettingsProps) {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+
+              <FormActions
+                onCancel={() => securityForm.reset()}
+                submitLabel="Update Security Settings"
+                isValid={isSecurityValid}
+                isLoading={false}
+              />
+            </form>
           </div>
         );
 

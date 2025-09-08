@@ -1,34 +1,39 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Shield, Key, Fingerprint, ArrowLeft, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react"
 import { Link } from "react-router"
 import { useAuth } from "@/contexts/AuthContext"
 import { passphraseLoginSchema, didLoginSchema, PassphraseLoginForm, DIDLoginForm } from "@/shared/types"
-import { FormField, SubmitButton } from "@/components/forms/form-utils"
+import { useToast } from "@/components/ui/toast"
+import {
+  FormField,
+  FormValidationSummary,
+  ValidatedInput,
+  FieldValidationHint,
+  useZodForm,
+  useValidationState,
+  SubmitButton
+} from "@/components/forms/form-utils"
 
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login, loginBiometric, isLoading, error, clearError, isAuthenticated } = useAuth()
+  const { success, error: showError } = useToast()
 
   const [showPassphrase, setShowPassphrase] = useState(false)
   const [activeTab, setActiveTab] = useState("passphrase")
 
-  // Form hooks for different authentication methods
-  const passphraseForm = useForm<PassphraseLoginForm>({
-    resolver: zodResolver(passphraseLoginSchema),
+  // Enhanced form hooks with real-time validation
+  const passphraseForm = useZodForm<PassphraseLoginForm>(passphraseLoginSchema, {
     defaultValues: { passphrase: "" },
   })
 
-  const didForm = useForm<DIDLoginForm>({
-    resolver: zodResolver(didLoginSchema),
+  const didForm = useZodForm<DIDLoginForm>(didLoginSchema, {
     defaultValues: { did: "" },
   })
 
@@ -36,13 +41,23 @@ export default function Login() {
     register: registerPassphrase,
     handleSubmit: handlePassphraseSubmit,
     formState: { errors: passphraseErrors },
+    watch: watchPassphrase
   } = passphraseForm
 
   const {
     register: registerDID,
     handleSubmit: handleDIDSubmit,
     formState: { errors: didErrors },
+    watch: watchDID
   } = didForm
+
+  // Real-time validation states
+  const passphraseValidation = useValidationState(passphraseForm, "passphrase")
+  const didValidation = useValidationState(didForm, "did")
+
+  // Watch form values for dynamic feedback
+  const watchedPassphrase = watchPassphrase("passphrase")
+  const watchedDID = watchDID("did")
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -92,10 +107,64 @@ export default function Login() {
   // Handle biometric login
   const handleBiometricLogin = async () => {
     try {
-      await loginBiometric()
+      // Check if WebAuthn is supported
+      if (!window.PublicKeyCredential || !window.navigator.credentials) {
+        showError('Biometric authentication is not supported on this device');
+        return;
+      }
+
+      // Check if biometric authentication is available
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!available) {
+        showError('Biometric authentication is not available on this device');
+        return;
+      }
+
+      // Create authentication options
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+
+      const credentialRequestOptions: PublicKeyCredentialRequestOptions = {
+        challenge,
+        rpId: window.location.hostname,
+        userVerification: 'required',
+        timeout: 60000,
+      };
+
+      // Request authentication
+      const credential = await navigator.credentials.get({
+        publicKey: credentialRequestOptions
+      }) as PublicKeyCredential;
+
+      if (credential) {
+        // Send credential data to authentication service
+        await loginBiometric({
+          id: credential.id,
+          rawId: credential.rawId,
+          response: {
+            authenticatorData: (credential.response as any).authenticatorData,
+            clientDataJSON: credential.response.clientDataJSON,
+            signature: (credential.response as any).signature,
+            userHandle: (credential.response as any).userHandle,
+          },
+          type: credential.type,
+        });
+
+        success('Biometric authentication successful!');
+      }
     } catch (error) {
-      // Error is handled by the auth context
-      console.error("Biometric login failed:", error)
+      console.error("Biometric login failed:", error);
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          showError('Biometric authentication was cancelled or denied');
+        } else if (error.name === 'AbortError') {
+          showError('Biometric authentication timed out');
+        } else {
+          showError('Biometric authentication failed. Please try again.');
+        }
+      } else {
+        showError('An unexpected error occurred during biometric authentication');
+      }
     }
   }
 
@@ -160,16 +229,22 @@ export default function Login() {
               </TabsList>
 
               <TabsContent value="passphrase" className="space-y-4">
+                <FormValidationSummary form={passphraseForm} />
+
                 <form onSubmit={handlePassphraseSubmit(handlePassphraseLogin)}>
                   <FormField
                     label="Recovery Passphrase"
                     error={passphraseErrors.passphrase?.message}
+                    validationState={passphraseValidation.validationState}
                     required
+                    validationIcon={passphraseValidation.icon}
+                    description="Enter your 12-word recovery phrase to access your wallet"
                   >
                     <div className="relative">
-                      <Input
+                      <ValidatedInput
                         type={showPassphrase ? "text" : "password"}
                         placeholder="Enter your 12-word recovery phrase"
+                        validationState={passphraseValidation.validationState}
                         {...registerPassphrase("passphrase")}
                         className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10"
                       />
@@ -181,44 +256,78 @@ export default function Login() {
                         {showPassphrase ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Enter the 12-word phrase you saved when creating your wallet
-                    </p>
+                    <FieldValidationHint
+                      hint={
+                        watchedPassphrase?.length >= 12
+                          ? "✓ Valid 12-word passphrase"
+                          : watchedPassphrase?.length > 0
+                            ? `Enter ${12 - watchedPassphrase.length} more words`
+                            : "Enter your 12-word recovery phrase"
+                      }
+                      validationState={
+                        watchedPassphrase?.length >= 12 ? 'success' :
+                        watchedPassphrase?.length > 0 ? 'warning' : 'idle'
+                      }
+                    />
                   </FormField>
-                  <SubmitButton
-                    className="w-full"
-                    isLoading={isLoading}
-                    loadingText="Accessing Wallet..."
-                  >
-                    Access Wallet
-                  </SubmitButton>
+
+                  <div className="mt-4">
+                    <SubmitButton
+                      className="w-full"
+                      isLoading={isLoading}
+                      disabled={!passphraseForm.formState.isValid}
+                      loadingText="Accessing Wallet..."
+                    >
+                      Access Wallet
+                    </SubmitButton>
+                  </div>
                 </form>
               </TabsContent>
 
               <TabsContent value="did" className="space-y-4">
+                <FormValidationSummary form={didForm} />
+
                 <form onSubmit={handleDIDSubmit(handleDIDLogin)}>
                   <FormField
                     label="Decentralized Identifier (DID)"
                     error={didErrors.did?.message}
+                    validationState={didValidation.validationState}
                     required
+                    validationIcon={didValidation.icon}
+                    description="Enter your DID to authenticate via OIDC flow"
                   >
-                    <Input
+                    <ValidatedInput
                       type="text"
                       placeholder="did:example:123abc..."
+                      validationState={didValidation.validationState}
                       {...registerDID("did")}
                       className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 font-mono text-sm"
                     />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Enter your DID to authenticate via OIDC flow
-                    </p>
+                    <FieldValidationHint
+                      hint={
+                        watchedDID?.startsWith('did:')
+                          ? "✓ Valid DID format"
+                          : watchedDID?.length > 0
+                            ? "DID must start with 'did:'"
+                            : "Enter your decentralized identifier"
+                      }
+                      validationState={
+                        watchedDID?.startsWith('did:') ? 'success' :
+                        watchedDID?.length > 0 ? 'error' : 'idle'
+                      }
+                    />
                   </FormField>
-                  <SubmitButton
-                    className="w-full"
-                    isLoading={isLoading}
-                    loadingText="Authenticating..."
-                  >
-                    Authenticate with DID
-                  </SubmitButton>
+
+                  <div className="mt-4">
+                    <SubmitButton
+                      className="w-full"
+                      isLoading={isLoading}
+                      disabled={!didForm.formState.isValid}
+                      loadingText="Authenticating..."
+                    >
+                      Authenticate with DID
+                    </SubmitButton>
+                  </div>
                 </form>
               </TabsContent>
 

@@ -1,990 +1,425 @@
-"use client"
-
-import Link from "next/link"
-import { Globe, Key, CheckCircle, Lock, Award, Users, Bell, RefreshCw, AlertTriangle, Loader2 } from "lucide-react"
-import { useState, useEffect, "use client"
-
-import Link from "next/link"
-import { Globe, Key, CheckCircle, Lock, Award, Users, Bell, RefreshCw, AlertTriangle, Loader2 } from "lucide-react"
-import { useState, useEffect } from "react"
-import { didAPI, auditAPI, credentialsAPI, trustAPI } from "@/services"
-import { useToast } from "@/hooks/use-toast"
-import { useAPIErrorHandler } from "@/hooks/use-error-handler"
-import { DashboardLayout } from "@/components/layout/page-layout"
-import type { DIDDocument, AuditLogEntry } from "@/services"
-
-interface DashboardData {
-  user: {
-    name: string
-    primaryDID: string
-    anonymousDID?: string
-  }
-  identities: Array<{
-    did: string
-    method: string 
-    status: string
-    isPrimary: boolean
-    document?: DIDDocument
-  }>
-  recentActivity: Array<{
-    action: string
-    time: string
-    timestamp: string
-  }>
-  stats: {
-    credentials: number
-    connections: number
-    validCredentials: number
-    trustedIssuers: number
-  }
-}
+import { useEffect } from "react"
+import { useNavigate } from "react-router"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+import { LoadingWrapper } from "@/components/ui/loading-wrapper"
+import { useAppStore } from "@/stores"
+import { Shield, Plus, Eye, Share2, Download, Bell, Search, Filter, MoreVertical, User, Settings, LogOut } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Dashboard() {
-  const { toastError } = useToast()
-  const { handleAsyncError, withRetry } = useAPIErrorHandler()
-  const [dashboardData, setDashboardData] = React.useState<DashboardData>({
-    user: {
-      name: "Loading...",
-      primaryDID: "Loading...",
-      anonymousDID: "Loading..."
-    },
-    identities: [],
-    recentActivity: [],
-    stats: {
-      credentials: 0,
-      connections: 0,
-      validCredentials: 0,
-      trustedIssuers: 0
-    }
-  })
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
-  // Load dashboard data on component mount
-  React.useEffect(() => {
+  // Use Zustand store for global state
+  const {
+    loading,
+    setLoading,
+    credentials,
+    setCredentials,
+    addNotification,
+  } = useAppStore()
+
+  // Simulate loading data and populate store
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setLoading('global', true)
+      setLoading('credentials', true)
+
+      try {
+        // Simulate API calls
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        // Mock credentials data
+        const mockCredentials = [
+          {
+            id: '1',
+            name: 'University Degree',
+            type: 'Educational',
+            issuer: 'MIT University',
+            holder: 'john.doe@example.com',
+            description: 'Bachelor of Computer Science',
+            status: 'active' as const,
+            issuedAt: new Date('2023-01-15').toISOString(),
+            metadata: { gpa: '3.8', graduationYear: '2023' },
+          },
+          {
+            id: '2',
+            name: 'Driver License',
+            type: 'Government',
+            issuer: 'DMV',
+            holder: 'john.doe@example.com',
+            description: 'Class C Driver License',
+            status: 'active' as const,
+            issuedAt: new Date('2022-06-10').toISOString(),
+            expirationDate: new Date('2027-06-10').toISOString(),
+          },
+          {
+            id: '3',
+            name: 'Employment Certificate',
+            type: 'Employment',
+            issuer: 'TechCorp Inc.',
+            holder: 'john.doe@example.com',
+            description: 'Senior Software Engineer',
+            status: 'active' as const,
+            issuedAt: new Date('2023-03-01').toISOString(),
+          },
+        ]
+
+        setCredentials(mockCredentials)
+
+        // Add a welcome notification
+        addNotification({
+          type: 'success',
+          title: 'Welcome back!',
+          message: 'Your dashboard has been loaded successfully.',
+        })
+
+      } catch (error) {
+        addNotification({
+          type: 'error',
+          title: 'Loading Error',
+          message: 'Failed to load dashboard data. Please try again.',
+        })
+      } finally {
+        setLoading('global', false)
+        setLoading('credentials', false)
+      }
+    }
+
     loadDashboardData()
-  }, [])
+  }, [setLoading, setCredentials, addNotification])
 
-  const loadDashboardData = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const result = await handleAsyncError(async () => {
-      // Load data from multiple APIs in parallel with retry logic
-      const [
-        identitiesResult,
-        credentialsResult,
-        connectionsResult,
-        auditLogsResult
-      ] = await Promise.allSettled([
-        withRetry(() => loadIdentities(), 2, 500, 'Load Identities'),
-        withRetry(() => loadCredentialsStats(), 2, 500, 'Load Credentials'),
-        withRetry(() => loadConnectionsStats(), 2, 500, 'Load Connections'),
-        withRetry(() => loadRecentActivity(), 2, 500, 'Load Activity')
-      ])
-
-      // Build dashboard data
-      const identities = identitiesResult.status === 'fulfilled' && identitiesResult.value ? identitiesResult.value : []
-      const credentials = credentialsResult.status === 'fulfilled' && credentialsResult.value ? credentialsResult.value : { total: 0, valid: 0 }
-      const connections = connectionsResult.status === 'fulfilled' && connectionsResult.value ? connectionsResult.value : { total: 0, trusted: 0 }
-      const recentActivity = auditLogsResult.status === 'fulfilled' && auditLogsResult.value ? auditLogsResult.value : []
-
-      // Determine primary and anonymous DIDs
-      const primaryDID = identities.find(id => id.isPrimary)?.did || identities[0]?.did || "No DID found"
-      const anonymousDID = identities.find(id => id.method === 'key')?.did || "No anonymous DID"
-
-      setDashboardData({
-        user: {
-          name: "User", // In a real app, this would come from user profile
-          primaryDID,
-          anonymousDID
-        },
-        identities,
-        recentActivity,
-        stats: {
-          credentials: credentials.total || 0,
-          connections: connections.total || 0,
-          validCredentials: credentials.valid || 0,
-          trustedIssuers: connections.trusted || 0
-        }
-      })
-
-      setIsLoading(false)
-      setLastUpdated(new Date())
-
-      return true
-    }, 'Load Dashboard Data')
-
-    if (!result) {
-      setError('Failed to load dashboard data')
-      setIsLoading(false)
-      toastError("Dashboard Error", "Unable to load dashboard data. Please try again.")
-    }
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
   }
 
-  const loadIdentities = async () => {
-    try {
-      // In a real implementation, you would have an endpoint to get user's identities
-      // For now, we'll simulate by checking if some common DIDs are resolvable
-      const commonDIDs = [
-        { did: "did:web:Lerato.com", isPrimary: true, method: "web" },
-        { did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK", isPrimary: false, method: "key" }
-      ]
-
-      const identities = []
-
-      for (const didInfo of commonDIDs) {
-        try {
-          const resolution = await didAPI.resolveDID(didInfo.did)
-          identities.push({
-            did: didInfo.did,
-            method: didInfo.method,
-            status: resolution.didDocument ? "verified" : "error",
-            isPrimary: didInfo.isPrimary,
-            document: resolution.didDocument
-          })
-        } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-          // DID not resolvable, still include it but mark as error
-          identities.push({
-            did: didInfo.did,
-            method: didInfo.method,
-            status: "error",
-            isPrimary: didInfo.isPrimary
-          })
-        }
-      }
-
-      return identities
-    } catch (error) {
-      console.warn('Failed to load identities:', error)
-      return []
-    }
-  }
-
-  const loadCredentialsStats = async () => {
-    try {
-      // Get user's credentials (using a common subject DID)
-      const credentials = await credentialsAPI.queryCredentials({
-        subject: "did:web:Lerato.com",
-        limit: 100
-      })
-
-      const validCredentials = credentials.filter(cred =>
-        cred.status === 'valid'
-      ).length
-
-      return {
-        total: credentials.length,
-        valid: validCredentials
-      }
-    } catch (error) {
-      console.warn('Failed to load credentials stats:', error)
-      return { total: 0, valid: 0 }
-    }
-  }
-
-  const loadConnectionsStats = async () => {
-    try {
-      const connections = await trustAPI.getTrustedIssuers({ limit: 100 })
-      const trustedConnections = connections.filter(conn => conn.status === 'trusted').length
-
-      return {
-        total: connections.length,
-        trusted: trustedConnections
-      }
-    } catch (error) {
-      console.warn('Failed to load connections stats:', error)
-      return { total: 0, trusted: 0 }
-    }
-  }
-
-  const loadRecentActivity = async () => {
-    try {
-      const auditLogs = await auditAPI.getAuditLogs({
-        limit: 10,
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // Last 7 days
-      })
-
-      return auditLogs.map(log => ({
-        action: formatAuditAction(log),
-        time: formatTimeAgo(new Date(log.timestamp)),
-        timestamp: log.timestamp
-      }))
-    } catch (error) {
-      console.warn('Failed to load recent activity:', error)
-      return [
-        { action: "Welcome to your DID Wallet", time: "Just now", timestamp: new Date().toISOString() }
-      ]
-    }
-  }
-
-  const formatAuditAction = (log: AuditLogEntry): string => {
-    const actionMap: Record<string, string> = {
-      'vc.issue': 'Credential issued',
-      'vc.verify': 'Credential verified',
-      'vc.revoke': 'Credential revoked',
-      'did.create': 'DID created',
-      'did.update': 'DID updated',
-      'did.resolve': 'DID resolved',
-      'trust.add': 'Trusted issuer added',
-      'trust.update': 'Trust relationship updated',
-      'oidc.login': 'Logged in via OIDC',
-      'user.login': 'User login'
-    }
-
-    const baseAction = actionMap[log.action] || `${log.action.replace('.', ' ').replace('_', ' ')}`
-
-    // Add context if available
-    if (log.target) {
-      return `${baseAction} (${log.target})`
-    }
-
-    return baseAction
-  }
-
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMinutes = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffMinutes < 1) return "Just now"
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-
-    return date.toLocaleDateString()
-  }
-
-  const getIdentityStatusIcon = (status: string) => {
-    switch (status) {
-      case "verified":
-        return <CheckCircle className="w-4 h-4 text-green-600" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />
-      default:
-        return <Lock className="w-4 h-4 text-blue-600" />
-    }
-  }
-
-  const getIdentityStatusColor = (status: string) => {
-    switch (status) {
-      case "verified":
-        return "text-green-600"
-      case "error":
-        return "text-red-600"
-      default:
-        return "text-blue-600"
-    }
-  }
-
-  const getIdentityIcon = (method: string) => {
-    switch (method) {
-      case "web":
-        return <Globe className="w-5 h-5 text-blue-600" />
-      case "key":
-        return <Key className="w-5 h-5 text-gray-600" />
-      default:
-        return <Key className="w-5 h-5 text-gray-600" />
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <DashboardLayout user={dashboardData.user} notifications={3} title="Dashboard">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-2" />
-            <span>Loading your dashboard...</span>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <DashboardLayout user={dashboardData.user} notifications={3} title="Dashboard">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="text-center py-12">
-            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Dashboard Error</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-            <button
-              onClick={loadDashboardData}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center mx-auto"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
-            </button>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
+  const handleSettings = () => {
+    navigate('/consumer/settings')
   }
 
   return (
-    <DashboardLayout
-      user={dashboardData.user}
-      notifications={3}
-      title="Dashboard"
-    >
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold flex items-center">
-              <span className="mr-2">👤</span>
-              Your Identity
-            </h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-            <Bell className="w-6 h-6 text-gray-600" />
-              <button
-                onClick={loadDashboardData}
-                disabled={isLoading}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50"
-                title="Refresh dashboard"
-              >
-                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
+              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">IdentityVault</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search credentials..."
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-80"
+                />
+              </div>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {user?.name?.charAt(0).toUpperCase() || user?.did?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email || user?.did || 'user@example.com'}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSettings}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSettings}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
+        </div>
+      </header>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            {dashboardData.identities.length > 0 ? (
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              dashboardData.identities.slice(0, 2).map((identity, _index) => (
-                <div key={identity.did} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center mb-2">
-                    {getIdentityIcon(identity.method)}
-                    <span className="font-medium ml-2 truncate">{identity.did}</span>
-              </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {identity.isPrimary ? 'Primary Identity' : 'Anonymous Identity'}
-                  </p>
-                  <div className={`flex items-center text-sm ${getIdentityStatusColor(identity.status)}`}>
-                    {getIdentityStatusIcon(identity.status)}
-                    <span className="ml-1 capitalize">
-                      {identity.status === 'verified' ? 'Verified' : identity.status}
-                    </span>
-              </div>
-            </div>
-              ))
-            ) : (
-              <>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="text-center text-gray-500">
-                    <Globe className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No identities found</p>
-                    <p className="text-sm">Create your first DID to get started</p>
+      <div className="container mx-auto px-6 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back, {user?.name || 'User'}
+          </h1>
+          <p className="text-gray-600">Manage your digital identity and credentials securely</p>
+        </div>
+
+        {/* Stats Cards */}
+        <LoadingWrapper
+          isLoading={loading.global}
+          skeleton="stats"
+          className="mb-8"
+        >
+          <div className="grid md:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Total Credentials</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">{credentials.length}</div>
+                <p className="text-xs text-green-600 mt-1">Active credentials</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Pending Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">3</div>
+                <p className="text-xs text-orange-600 mt-1">Requires attention</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Active Credentials</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">
+                  {credentials.filter(c => c.status === 'active').length}
+                </div>
+                <p className="text-xs text-blue-600 mt-1">Currently valid</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">DID Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-900">Active</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Verified identity</p>
+              </CardContent>
+            </Card>
+          </div>
+        </LoadingWrapper>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Recent Credentials */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Recent Credentials</CardTitle>
+                    <CardDescription>Your latest digital credentials</CardDescription>
                   </div>
-              </div>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="text-center text-gray-500">
-                    <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No anonymous identity</p>
-                    <p className="text-sm">Generate a private DID for privacy</p>
-              </div>
-            </div>
-              </>
-            )}
-          </div>
-
-          <div className="mb-6">
-            <h3 className="font-semibold mb-4 flex items-center">
-              <span className="mr-2">📄</span>
-              Recent Activity
-            </h3>
-            <div className="space-y-2 text-sm">
-              {dashboardData.recentActivity.length > 0 ? (
-                dashboardData.recentActivity.map((activity, index) => (
-                <div
-                    key={`${activity.timestamp}-${index}`}
-                  className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0"
-                >
-                  <span>{activity.action}</span>
-                  <span className="text-gray-500">{activity.time}</span>
-                </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-gray-500">
-                  <p>No recent activity</p>
-                  <p className="text-sm">Your actions will appear here</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <Link
-              href="/credentials"
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <Award className="w-6 h-6 text-blue-600 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium">Credentials</p>
-                  <p className="text-sm text-gray-600">
-                    {dashboardData.stats.credentials} total
-                    {dashboardData.stats.validCredentials > 0 && (
-                      <span className="text-green-600 ml-1">
-                        ({dashboardData.stats.validCredentials} valid)
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="/connections"
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <Users className="w-6 h-6 text-blue-600 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium">Connections</p>
-                  <p className="text-sm text-gray-600">
-                    {dashboardData.stats.connections} total
-                    {dashboardData.stats.trustedIssuers > 0 && (
-                      <span className="text-green-600 ml-1">
-                        ({dashboardData.stats.trustedIssuers} trusted)
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Quick Actions Section */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Link
-            href="/identities"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Globe className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Manage Identities</span>
-            </div>
-            <p className="text-sm text-gray-600">Create and manage your DIDs</p>
-          </Link>
-
-          <Link
-            href="/credentials"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Award className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Request Credentials</span>
-            </div>
-            <p className="text-sm text-gray-600">Get new verifiable credentials</p>
-          </Link>
-
-          <Link
-            href="/connections"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Users className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Trust Registry</span>
-            </div>
-            <p className="text-sm text-gray-600">Manage trusted issuers</p>
-          </Link>
-        </div>
-    </DashboardLayout>
-  )
-}
- } from 'react'
-import { didAPI, auditAPI, credentialsAPI, trustAPI } from "@/services"
-import { useToast } from "@/hooks/use-toast"
-import { useAPIErrorHandler } from "@/hooks/use-error-handler"
-import { DashboardLayout } from "@/components/layout/page-layout"
-import type { DIDDocument, AuditLogEntry } from "@/services"
-
-interface DashboardData {
-  user: {
-    name: string
-    primaryDID: string
-    anonymousDID?: string
-  }
-  identities: Array<{
-    did: string
-    method: string 
-    status: string
-    isPrimary: boolean
-    document?: DIDDocument
-  }>
-  recentActivity: Array<{
-    action: string
-    time: string
-    timestamp: string
-  }>
-  stats: {
-    credentials: number
-    connections: number
-    validCredentials: number
-    trustedIssuers: number
-  }
-}
-
-export default function Dashboard() {
-  const { toastError } = useToast()
-  const { handleAsyncError, withRetry } = useAPIErrorHandler()
-  const [dashboardData, setDashboardData] = React.useState<DashboardData>({
-    user: {
-      name: "Loading...",
-      primaryDID: "Loading...",
-      anonymousDID: "Loading..."
-    },
-    identities: [],
-    recentActivity: [],
-    stats: {
-      credentials: 0,
-      connections: 0,
-      validCredentials: 0,
-      trustedIssuers: 0
-    }
-  })
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
-
-  // Load dashboard data on component mount
-  React.useEffect(() => {
-    loadDashboardData()
-  }, [])
-
-  const loadDashboardData = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const result = await handleAsyncError(async () => {
-      // Load data from multiple APIs in parallel with retry logic
-      const [
-        identitiesResult,
-        credentialsResult,
-        connectionsResult,
-        auditLogsResult
-      ] = await Promise.allSettled([
-        withRetry(() => loadIdentities(), 2, 500, 'Load Identities'),
-        withRetry(() => loadCredentialsStats(), 2, 500, 'Load Credentials'),
-        withRetry(() => loadConnectionsStats(), 2, 500, 'Load Connections'),
-        withRetry(() => loadRecentActivity(), 2, 500, 'Load Activity')
-      ])
-
-      // Build dashboard data
-      const identities = identitiesResult.status === 'fulfilled' && identitiesResult.value ? identitiesResult.value : []
-      const credentials = credentialsResult.status === 'fulfilled' && credentialsResult.value ? credentialsResult.value : { total: 0, valid: 0 }
-      const connections = connectionsResult.status === 'fulfilled' && connectionsResult.value ? connectionsResult.value : { total: 0, trusted: 0 }
-      const recentActivity = auditLogsResult.status === 'fulfilled' && auditLogsResult.value ? auditLogsResult.value : []
-
-      // Determine primary and anonymous DIDs
-      const primaryDID = identities.find(id => id.isPrimary)?.did || identities[0]?.did || "No DID found"
-      const anonymousDID = identities.find(id => id.method === 'key')?.did || "No anonymous DID"
-
-      setDashboardData({
-        user: {
-          name: "User", // In a real app, this would come from user profile
-          primaryDID,
-          anonymousDID
-        },
-        identities,
-        recentActivity,
-        stats: {
-          credentials: credentials.total || 0,
-          connections: connections.total || 0,
-          validCredentials: credentials.valid || 0,
-          trustedIssuers: connections.trusted || 0
-        }
-      })
-
-      setIsLoading(false)
-      setLastUpdated(new Date())
-
-      return true
-    }, 'Load Dashboard Data')
-
-    if (!result) {
-      setError('Failed to load dashboard data')
-      setIsLoading(false)
-      toastError("Dashboard Error", "Unable to load dashboard data. Please try again.")
-    }
-  }
-
-  const loadIdentities = async () => {
-    try {
-      // In a real implementation, you would have an endpoint to get user's identities
-      // For now, we'll simulate by checking if some common DIDs are resolvable
-      const commonDIDs = [
-        { did: "did:web:Lerato.com", isPrimary: true, method: "web" },
-        { did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK", isPrimary: false, method: "key" }
-      ]
-
-      const identities = []
-
-      for (const didInfo of commonDIDs) {
-        try {
-          const resolution = await didAPI.resolveDID(didInfo.did)
-          identities.push({
-            did: didInfo.did,
-            method: didInfo.method,
-            status: resolution.didDocument ? "verified" : "error",
-            isPrimary: didInfo.isPrimary,
-            document: resolution.didDocument
-          })
-        } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
-          // DID not resolvable, still include it but mark as error
-          identities.push({
-            did: didInfo.did,
-            method: didInfo.method,
-            status: "error",
-            isPrimary: didInfo.isPrimary
-          })
-        }
-      }
-
-      return identities
-    } catch (error) {
-      console.warn('Failed to load identities:', error)
-      return []
-    }
-  }
-
-  const loadCredentialsStats = async () => {
-    try {
-      // Get user's credentials (using a common subject DID)
-      const credentials = await credentialsAPI.queryCredentials({
-        subject: "did:web:Lerato.com",
-        limit: 100
-      })
-
-      const validCredentials = credentials.filter(cred =>
-        cred.status === 'valid'
-      ).length
-
-      return {
-        total: credentials.length,
-        valid: validCredentials
-      }
-    } catch (error) {
-      console.warn('Failed to load credentials stats:', error)
-      return { total: 0, valid: 0 }
-    }
-  }
-
-  const loadConnectionsStats = async () => {
-    try {
-      const connections = await trustAPI.getTrustedIssuers({ limit: 100 })
-      const trustedConnections = connections.filter(conn => conn.status === 'trusted').length
-
-      return {
-        total: connections.length,
-        trusted: trustedConnections
-      }
-    } catch (error) {
-      console.warn('Failed to load connections stats:', error)
-      return { total: 0, trusted: 0 }
-    }
-  }
-
-  const loadRecentActivity = async () => {
-    try {
-      const auditLogs = await auditAPI.getAuditLogs({
-        limit: 10,
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // Last 7 days
-      })
-
-      return auditLogs.map(log => ({
-        action: formatAuditAction(log),
-        time: formatTimeAgo(new Date(log.timestamp)),
-        timestamp: log.timestamp
-      }))
-    } catch (error) {
-      console.warn('Failed to load recent activity:', error)
-      return [
-        { action: "Welcome to your DID Wallet", time: "Just now", timestamp: new Date().toISOString() }
-      ]
-    }
-  }
-
-  const formatAuditAction = (log: AuditLogEntry): string => {
-    const actionMap: Record<string, string> = {
-      'vc.issue': 'Credential issued',
-      'vc.verify': 'Credential verified',
-      'vc.revoke': 'Credential revoked',
-      'did.create': 'DID created',
-      'did.update': 'DID updated',
-      'did.resolve': 'DID resolved',
-      'trust.add': 'Trusted issuer added',
-      'trust.update': 'Trust relationship updated',
-      'oidc.login': 'Logged in via OIDC',
-      'user.login': 'User login'
-    }
-
-    const baseAction = actionMap[log.action] || `${log.action.replace('.', ' ').replace('_', ' ')}`
-
-    // Add context if available
-    if (log.target) {
-      return `${baseAction} (${log.target})`
-    }
-
-    return baseAction
-  }
-
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMinutes = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffMinutes < 1) return "Just now"
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-
-    return date.toLocaleDateString()
-  }
-
-  const getIdentityStatusIcon = (status: string) => {
-    switch (status) {
-      case "verified":
-        return <CheckCircle className="w-4 h-4 text-green-600" />
-      case "error":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />
-      default:
-        return <Lock className="w-4 h-4 text-blue-600" />
-    }
-  }
-
-  const getIdentityStatusColor = (status: string) => {
-    switch (status) {
-      case "verified":
-        return "text-green-600"
-      case "error":
-        return "text-red-600"
-      default:
-        return "text-blue-600"
-    }
-  }
-
-  const getIdentityIcon = (method: string) => {
-    switch (method) {
-      case "web":
-        return <Globe className="w-5 h-5 text-blue-600" />
-      case "key":
-        return <Key className="w-5 h-5 text-gray-600" />
-      default:
-        return <Key className="w-5 h-5 text-gray-600" />
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <DashboardLayout user={dashboardData.user} notifications={3} title="Dashboard">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-2" />
-            <span>Loading your dashboard...</span>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <DashboardLayout user={dashboardData.user} notifications={3} title="Dashboard">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="text-center py-12">
-            <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Dashboard Error</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-            <button
-              onClick={loadDashboardData}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center mx-auto"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
-            </button>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  return (
-    <DashboardLayout
-      user={dashboardData.user}
-      notifications={3}
-      title="Dashboard"
-    >
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold flex items-center">
-              <span className="mr-2">👤</span>
-              Your Identity
-            </h2>
-            <div className="flex items-center space-x-3">
-            <Bell className="w-6 h-6 text-gray-600" />
-              <button
-                onClick={loadDashboardData}
-                disabled={isLoading}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded disabled:opacity-50"
-                title="Refresh dashboard"
-              >
-                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            {dashboardData.identities.length > 0 ? (
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              dashboardData.identities.slice(0, 2).map((identity, _index) => (
-                <div key={identity.did} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center mb-2">
-                    {getIdentityIcon(identity.method)}
-                    <span className="font-medium ml-2 truncate">{identity.did}</span>
-              </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {identity.isPrimary ? 'Primary Identity' : 'Anonymous Identity'}
-                  </p>
-                  <div className={`flex items-center text-sm ${getIdentityStatusColor(identity.status)}`}>
-                    {getIdentityStatusIcon(identity.status)}
-                    <span className="ml-1 capitalize">
-                      {identity.status === 'verified' ? 'Verified' : identity.status}
-                    </span>
-              </div>
-            </div>
-              ))
-            ) : (
-              <>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="text-center text-gray-500">
-                    <Globe className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No identities found</p>
-                    <p className="text-sm">Create your first DID to get started</p>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="w-4 h-4 mr-2" />
+                      Filter
+                    </Button>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Credential
+                    </Button>
                   </div>
-              </div>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="text-center text-gray-500">
-                    <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No anonymous identity</p>
-                    <p className="text-sm">Generate a private DID for privacy</p>
-              </div>
-            </div>
-              </>
-            )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Credential Item */}
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                        <Shield className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">University Degree</h3>
+                        <p className="text-sm text-gray-600">Issued by Stanford University</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                            Verified
+                          </span>
+                          <span className="text-xs text-gray-500">2 days ago</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <Shield className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Professional License</h3>
+                        <p className="text-sm text-gray-600">Issued by State Board</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                            Verified
+                          </span>
+                          <span className="text-xs text-gray-500">1 week ago</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                        <Shield className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Identity Document</h3>
+                        <p className="text-sm text-gray-600">Issued by Government</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                            Pending
+                          </span>
+                          <span className="text-xs text-gray-500">3 hours ago</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Share2 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="mb-6">
-            <h3 className="font-semibold mb-4 flex items-center">
-              <span className="mr-2">📄</span>
-              Recent Activity
-            </h3>
-            <div className="space-y-2 text-sm">
-              {dashboardData.recentActivity.length > 0 ? (
-                dashboardData.recentActivity.map((activity, index) => (
-                <div
-                    key={`${activity.timestamp}-${index}`}
-                  className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0"
-                >
-                  <span>{activity.action}</span>
-                  <span className="text-gray-500">{activity.time}</span>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Pending Requests */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Requests</CardTitle>
+                <CardDescription>Organizations requesting verification</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm">Acme Corp</h4>
+                    <span className="text-xs text-gray-500">2h ago</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">Requesting employment verification</p>
+                  <div className="flex space-x-2">
+                    <Button size="sm" className="text-xs h-7">Approve</Button>
+                    <Button variant="outline" size="sm" className="text-xs h-7">Decline</Button>
+                  </div>
                 </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-gray-500">
-                  <p>No recent activity</p>
-                  <p className="text-sm">Your actions will appear here</p>
+                
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm">TechStart Inc</h4>
+                    <span className="text-xs text-gray-500">5h ago</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">Requesting education credentials</p>
+                  <div className="flex space-x-2">
+                    <Button size="sm" className="text-xs h-7">Approve</Button>
+                    <Button variant="outline" size="sm" className="text-xs h-7">Decline</Button>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <Link
-              href="/credentials"
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <Award className="w-6 h-6 text-blue-600 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium">Credentials</p>
-                  <p className="text-sm text-gray-600">
-                    {dashboardData.stats.credentials} total
-                    {dashboardData.stats.validCredentials > 0 && (
-                      <span className="text-green-600 ml-1">
-                        ({dashboardData.stats.validCredentials} valid)
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href="/connections"
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center">
-                <Users className="w-6 h-6 text-blue-600 mr-3" />
-                <div className="text-left">
-                  <p className="font-medium">Connections</p>
-                  <p className="text-sm text-gray-600">
-                    {dashboardData.stats.connections} total
-                    {dashboardData.stats.trustedIssuers > 0 && (
-                      <span className="text-green-600 ml-1">
-                        ({dashboardData.stats.trustedIssuers} trusted)
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </Link>
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-start">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Credential
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Credentials
+                </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Verify Identity
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Quick Actions Section */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Link
-            href="/identities"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Globe className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Manage Identities</span>
-            </div>
-            <p className="text-sm text-gray-600">Create and manage your DIDs</p>
-          </Link>
-
-          <Link
-            href="/credentials"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Award className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Request Credentials</span>
-            </div>
-            <p className="text-sm text-gray-600">Get new verifiable credentials</p>
-          </Link>
-
-          <Link
-            href="/connections"
-            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-colors"
-          >
-            <div className="flex items-center mb-2">
-              <Users className="w-5 h-5 text-blue-600 mr-2" />
-              <span className="font-medium">Trust Registry</span>
-            </div>
-            <p className="text-sm text-gray-600">Manage trusted issuers</p>
-          </Link>
-        </div>
-    </DashboardLayout>
+      </div>
+    </div>
   )
 }

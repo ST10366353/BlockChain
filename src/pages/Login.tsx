@@ -1,0 +1,266 @@
+import { useState, useEffect } from "react"
+import { useNavigate, useLocation } from "react-router"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Shield, Key, Fingerprint, ArrowLeft, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react"
+import { Link } from "react-router"
+import { useAuth } from "@/contexts/AuthContext"
+import { passphraseLoginSchema, didLoginSchema, PassphraseLoginForm, DIDLoginForm } from "@/shared/types"
+import { FormField, SubmitButton } from "@/components/forms/form-utils"
+
+export default function Login() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login, loginBiometric, isLoading, error, clearError, isAuthenticated } = useAuth()
+
+  const [showPassphrase, setShowPassphrase] = useState(false)
+  const [activeTab, setActiveTab] = useState("passphrase")
+
+  // Form hooks for different authentication methods
+  const passphraseForm = useForm<PassphraseLoginForm>({
+    resolver: zodResolver(passphraseLoginSchema),
+    defaultValues: { passphrase: "" },
+  })
+
+  const didForm = useForm<DIDLoginForm>({
+    resolver: zodResolver(didLoginSchema),
+    defaultValues: { did: "" },
+  })
+
+  const {
+    register: registerPassphrase,
+    handleSubmit: handlePassphraseSubmit,
+    formState: { errors: passphraseErrors },
+  } = passphraseForm
+
+  const {
+    register: registerDID,
+    handleSubmit: handleDIDSubmit,
+    formState: { errors: didErrors },
+  } = didForm
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || "/dashboard"
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, location])
+
+  // Clear error when component mounts or tab changes
+  useEffect(() => {
+    if (error) {
+      clearError()
+    }
+  }, [activeTab, error, clearError])
+
+  // Handle passphrase login
+  const handlePassphraseLogin = async (data: PassphraseLoginForm) => {
+    try {
+      const credentials = {
+        did: "did:example:passphrase-auth", // Mock DID for passphrase auth
+        passphrase: data.passphrase,
+      }
+      await login(credentials)
+      // Navigation will happen via useEffect when isAuthenticated becomes true
+    } catch (error) {
+      // Error is handled by the auth context
+      console.error("Passphrase login failed:", error)
+    }
+  }
+
+  // Handle DID login
+  const handleDIDLogin = async (data: DIDLoginForm) => {
+    try {
+      const credentials = {
+        did: data.did,
+        passphrase: "", // Not needed for DID auth
+      }
+      await login(credentials)
+      // Navigation will happen via useEffect when isAuthenticated becomes true
+    } catch (error) {
+      // Error is handled by the auth context
+      console.error("DID login failed:", error)
+    }
+  }
+
+  // Handle biometric login
+  const handleBiometricLogin = async () => {
+    try {
+      await loginBiometric()
+    } catch (error) {
+      // Error is handled by the auth context
+      console.error("Biometric login failed:", error)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="w-full max-w-md relative z-10">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Link>
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white">IdentityVault</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-gray-300">Access your decentralized identity wallet</p>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive" className="mb-6 border-red-500/50 bg-red-500/10">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-red-400">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Login Card */}
+        <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Sign In</CardTitle>
+            <CardDescription className="text-gray-300">
+              Choose your preferred authentication method
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-white/10">
+                <TabsTrigger value="passphrase" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300">
+                  <Key className="w-4 h-4 mr-2" />
+                  Passphrase
+                </TabsTrigger>
+                <TabsTrigger value="did" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300">
+                  <Shield className="w-4 h-4 mr-2" />
+                  DID
+                </TabsTrigger>
+                <TabsTrigger value="biometric" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300">
+                  <Fingerprint className="w-4 h-4 mr-2" />
+                  Biometric
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="passphrase" className="space-y-4">
+                <form onSubmit={handlePassphraseSubmit(handlePassphraseLogin)}>
+                  <FormField
+                    label="Recovery Passphrase"
+                    error={passphraseErrors.passphrase?.message}
+                    required
+                  >
+                    <div className="relative">
+                      <Input
+                        type={showPassphrase ? "text" : "password"}
+                        placeholder="Enter your 12-word recovery phrase"
+                        {...registerPassphrase("passphrase")}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassphrase(!showPassphrase)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                      >
+                        {showPassphrase ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Enter the 12-word phrase you saved when creating your wallet
+                    </p>
+                  </FormField>
+                  <SubmitButton
+                    className="w-full"
+                    isLoading={isLoading}
+                    loadingText="Accessing Wallet..."
+                  >
+                    Access Wallet
+                  </SubmitButton>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="did" className="space-y-4">
+                <form onSubmit={handleDIDSubmit(handleDIDLogin)}>
+                  <FormField
+                    label="Decentralized Identifier (DID)"
+                    error={didErrors.did?.message}
+                    required
+                  >
+                    <Input
+                      type="text"
+                      placeholder="did:example:123abc..."
+                      {...registerDID("did")}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Enter your DID to authenticate via OIDC flow
+                    </p>
+                  </FormField>
+                  <SubmitButton
+                    className="w-full"
+                    isLoading={isLoading}
+                    loadingText="Authenticating..."
+                  >
+                    Authenticate with DID
+                  </SubmitButton>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="biometric" className="space-y-4">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Fingerprint className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Biometric Authentication</h3>
+                  <p className="text-gray-300 text-sm mb-6">
+                    Use your fingerprint, Face ID, or security key to access your wallet
+                  </p>
+                  <Button
+                    className="w-full"
+                    disabled={isLoading}
+                    onClick={handleBiometricLogin}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Authenticating...
+                      </>
+                    ) : (
+                      "Authenticate"
+                    )}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-gray-400 text-sm">
+            Don't have a wallet?{" "}
+            <Link to="/onboarding" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+              Create one now
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

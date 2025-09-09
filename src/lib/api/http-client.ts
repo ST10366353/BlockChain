@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
+const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance
@@ -39,7 +39,7 @@ httpClient.interceptors.request.use(
 httpClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Log successful responses in development
-    if (import.meta.env.DEV) {
+    if ((import.meta as any)?.env?.DEV || process.env.NODE_ENV === 'development') {
       console.log(`API Response [${response.status}]:`, response.config.url);
     }
     return response;
@@ -106,7 +106,7 @@ httpClient.interceptors.response.use(
     }
 
     // Log error details in development
-    if (import.meta.env.DEV) {
+    if ((import.meta as any)?.env?.DEV || process.env.NODE_ENV === 'development') {
       console.error('API Error:', {
         url: originalRequest.url,
         method: originalRequest.method,

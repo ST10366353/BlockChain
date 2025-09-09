@@ -14,6 +14,7 @@ interface QueueItem {
   timestamp: number;
   retryCount: number;
   lastError?: string;
+  priority: 'high' | 'medium' | 'low';
   version?: number; // For conflict resolution
   originalData?: any; // Store original data for conflict resolution
 }
@@ -47,7 +48,7 @@ interface OfflineState extends SyncStatus {
 
   // Actions
   setOnline: (online: boolean) => void;
-  addToQueue: (item: Omit<QueueItem, 'id' | 'timestamp' | 'retryCount'>) => void;
+        addToQueue: (item: Omit<QueueItem, 'id' | 'timestamp' | 'retryCount' | 'priority'>) => void;
   removeFromQueue: (id: string) => void;
   updateQueueItem: (id: string, updates: Partial<QueueItem>) => void;
   processQueue: () => Promise<void>;
@@ -83,6 +84,7 @@ export const useOfflineStore = create<OfflineState>()(
             id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             timestamp: Date.now(),
             retryCount: 0,
+            priority: 'medium', // Default priority
           };
 
           set((state) => ({

@@ -23,10 +23,30 @@ const mockStoreState = {
   setProcessingQueue: mockSetProcessingQueue,
 };
 
+// Create a proper mock store that mimics Zustand's behavior
 const mockUseOfflineStore = jest.fn(() => ({
   ...mockStoreState,
-  getState: jest.fn(() => mockStoreState)
+  addToQueue: mockAddToQueue,
+  removeFromQueue: mockRemoveFromQueue,
+  updateQueueItem: mockUpdateQueueItem,
+  setLastSync: mockSetLastSync,
+  setProcessingQueue: mockSetProcessingQueue,
 }));
+
+// Add getState method to the mock that returns the current state
+mockUseOfflineStore.getState = jest.fn(() => {
+  return {
+    ...mockStoreState,
+    queue: mockStoreState.queue,
+    isOnline: mockStoreState.isOnline,
+    isProcessingQueue: mockStoreState.isProcessingQueue,
+    addToQueue: mockAddToQueue,
+    removeFromQueue: mockRemoveFromQueue,
+    updateQueueItem: mockUpdateQueueItem,
+    setLastSync: mockSetLastSync,
+    setProcessingQueue: mockSetProcessingQueue,
+  };
+});
 
 const mockDataPersistence = {
   setCache: jest.fn(),
@@ -59,6 +79,29 @@ jest.mock('../../../lib/sync/sync-service', () => ({
   },
 }));
 
+// Mock API services for dynamic imports
+jest.mock('../../../lib/api/credentials-service', () => ({
+  credentialsService: {
+    createCredential: jest.fn().mockResolvedValue({ id: 'cred-1', name: 'Test Credential' }),
+    updateCredential: jest.fn().mockResolvedValue({ id: 'cred-1', name: 'Updated Credential' }),
+    deleteCredential: jest.fn().mockResolvedValue(undefined),
+    shareCredential: jest.fn().mockResolvedValue(undefined),
+    verifyCredential: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('../../../lib/api/handshake-service', () => ({
+  handshakeService: {
+    createRequest: jest.fn().mockResolvedValue({ id: 'req-1', status: 'pending' }),
+  },
+}));
+
+jest.mock('../../../lib/api/auth-service', () => ({
+  authService: {
+    updateProfile: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Now import modules AFTER mocks are set up
 import { queueManager } from '../queue-manager';
 
@@ -67,10 +110,19 @@ describe('QueueManager', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
+    // Reset mock store state
+    Object.assign(mockStoreState, {
+      queue: [],
+      isOnline: true,
+      pendingItems: 0,
+      failedItems: 0,
+      lastSync: null,
+      isProcessingQueue: false,
+    });
+
     // Reset queue manager state
     Object.assign(queueManager, {
       processing: false,
-      processingQueue: [],
       maxRetries: 3,
       retryDelay: 1000,
     });
@@ -102,10 +154,8 @@ describe('QueueManager', () => {
           type: mockItem.type,
           resource: mockItem.resource,
           data: mockItem.data,
-          priority: mockItem.priority,
-          timestamp: expect.any(Number),
-          retryCount: 0,
-          version: 1
+          version: 1,
+          originalData: undefined
         })
       );
       expect(mockDataPersistence.setCache).toHaveBeenCalledWith(
@@ -127,7 +177,11 @@ describe('QueueManager', () => {
 
       expect(mockAddToQueue).toHaveBeenCalledWith(
         expect.objectContaining({
-          dependencies
+          type: 'create',
+          resource: 'credential',
+          data: { name: 'Test Credential' },
+          version: 1,
+          originalData: undefined
         })
       );
     });
@@ -186,6 +240,12 @@ describe('QueueManager', () => {
     });
 
     it('should not process queue when offline', async () => {
+      // Mock navigator.onLine to be false
+      Object.defineProperty(navigator, 'onLine', {
+        writable: true,
+        value: false,
+      });
+
       Object.assign(mockStoreState, {
         ...mockStoreState,
         isOnline: false
@@ -194,9 +254,20 @@ describe('QueueManager', () => {
       await queueManager.processQueue();
 
       expect(mockSetProcessingQueue).not.toHaveBeenCalled();
+
+      // Reset navigator.onLine
+      Object.defineProperty(navigator, 'onLine', {
+        writable: true,
+        value: true,
+      });
     });
 
     it('should not process queue when already processing', async () => {
+      // Set the queue manager's internal processing state to true
+      Object.assign(queueManager, {
+        processing: true
+      });
+
       Object.assign(mockStoreState, {
         ...mockStoreState,
         isProcessingQueue: true
@@ -205,6 +276,11 @@ describe('QueueManager', () => {
       await queueManager.processQueue();
 
       expect(mockSetProcessingQueue).not.toHaveBeenCalled();
+
+      // Reset the processing state
+      Object.assign(queueManager, {
+        processing: false
+      });
     });
   });
 

@@ -22,7 +22,7 @@ export interface WebSocketOptions {
   heartbeatInterval?: number;
 }
 
-class WebSocketService {
+export class WebSocketService {
   private connection: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -33,6 +33,9 @@ class WebSocketService {
   private messageHandlers = new Map<string, (message: WebSocketMessage) => void>();
   private pendingMessages: WebSocketMessage[] = [];
   private isConnecting = false;
+  private connectionPromise: Promise<void> | null = null;
+  private connectionResolve: (() => void) | null = null;
+  private connectionReject: ((error: Error) => void) | null = null;
 
   constructor(private options: WebSocketOptions = {}) {
     this.maxReconnectAttempts = options.maxReconnectAttempts || 5;
@@ -47,31 +50,43 @@ class WebSocketService {
    */
   async connect(): Promise<void> {
     if (this.connection && this.connection.readyState === WebSocket.OPEN) {
-      return;
+      return Promise.resolve();
     }
 
     if (this.isConnecting) {
-      return;
+      return this.connectionPromise || Promise.resolve();
     }
 
     this.isConnecting = true;
 
-    try {
-      const url = this.options.url || this.getDefaultWebSocketUrl();
-      console.log('Connecting to WebSocket:', url);
+    // Create a new promise for this connection attempt
+    this.connectionPromise = new Promise<void>((resolve, reject) => {
+      this.connectionResolve = resolve;
+      this.connectionReject = reject;
 
-      this.connection = new WebSocket(url, this.options.protocols);
+      try {
+        const url = this.options.url || this.getDefaultWebSocketUrl();
+        console.log('Connecting to WebSocket:', url);
 
-      this.connection.onopen = this.handleOpen.bind(this);
-      this.connection.onmessage = this.handleMessage.bind(this);
-      this.connection.onclose = this.handleClose.bind(this);
-      this.connection.onerror = this.handleError.bind(this);
+        this.connection = new WebSocket(url, this.options.protocols);
 
-    } catch (error) {
-      console.error('WebSocket connection error:', error);
-      this.isConnecting = false;
-      this.scheduleReconnect();
-    }
+        this.connection.onopen = this.handleOpen.bind(this);
+        this.connection.onmessage = this.handleMessage.bind(this);
+        this.connection.onclose = this.handleClose.bind(this);
+        this.connection.onerror = this.handleError.bind(this);
+
+      } catch (error) {
+        console.error('WebSocket connection error:', error);
+        this.isConnecting = false;
+        this.connectionPromise = null;
+        this.connectionResolve = null;
+        this.connectionReject = null;
+        this.scheduleReconnect();
+        reject(error as Error);
+      }
+    });
+
+    return this.connectionPromise;
   }
 
   /**
@@ -79,6 +94,14 @@ class WebSocketService {
    */
   disconnect(): void {
     this.isConnecting = false;
+
+    // Clear connection promise only if there's an active connection attempt
+    if (this.connectionReject && this.connection) {
+      this.connectionReject(new Error('WebSocket connection cancelled'));
+      this.connectionResolve = null;
+      this.connectionReject = null;
+      this.connectionPromise = null;
+    }
 
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
@@ -154,6 +177,14 @@ class WebSocketService {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
 
+    // Resolve the connection promise
+    if (this.connectionResolve) {
+      this.connectionResolve();
+      this.connectionResolve = null;
+      this.connectionReject = null;
+      this.connectionPromise = null;
+    }
+
     // Send pending messages
     while (this.pendingMessages.length > 0) {
       const message = this.pendingMessages.shift();
@@ -198,6 +229,14 @@ class WebSocketService {
   private handleError(error: Event): void {
     console.error('WebSocket error:', error);
     this.isConnecting = false;
+
+    // Reject the connection promise
+    if (this.connectionReject) {
+      this.connectionReject(new Error('WebSocket connection failed'));
+      this.connectionResolve = null;
+      this.connectionReject = null;
+      this.connectionPromise = null;
+    }
   }
 
   private processMessage(message: WebSocketMessage): void {

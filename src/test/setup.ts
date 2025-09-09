@@ -33,19 +33,7 @@ Object.defineProperty(navigator, 'onLine', {
   value: true,
 });
 
-// Mock WebSocket
-(global as any).WebSocket = jest.fn().mockImplementation(() => ({
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  dispatchEvent: jest.fn(),
-  send: jest.fn(),
-  close: jest.fn(),
-  readyState: 1, // OPEN
-  CONNECTING: 0,
-  OPEN: 1,
-  CLOSING: 2,
-  CLOSED: 3,
-}));
+// WebSocket will be mocked in individual test files as needed
 
 // Mock localStorage
 const localStorageMock = {

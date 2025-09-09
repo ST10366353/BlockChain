@@ -93,9 +93,14 @@ class QueueManager {
     }
 
     this.processing = true;
+    let processingStarted = false;
 
     try {
-      const { queue, removeFromQueue } = useOfflineStore.getState();
+      const { queue, removeFromQueue, setProcessingQueue } = useOfflineStore.getState();
+
+      // Update store state
+      setProcessingQueue(true);
+      processingStarted = true;
 
       // Sort by priority and timestamp
       const sortedQueue = this.sortQueue(queue);
@@ -113,6 +118,11 @@ class QueueManager {
       }
     } finally {
       this.processing = false;
+      // Only update store state if processing actually started
+      if (processingStarted) {
+        const { setProcessingQueue } = useOfflineStore.getState();
+        setProcessingQueue(false);
+      }
     }
   }
 

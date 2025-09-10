@@ -4,6 +4,8 @@ import { credentialsService } from '@/lib/api/credentials-service';
 import { handshakeService } from '@/lib/api/handshake-service';
 import { authService } from '@/lib/api/auth-service';
 import { useAppStore } from './app-store';
+import { isOnline } from '../lib/utils/network';
+import { logger } from '../lib/logger';
 
 // Offline Queue Item
 interface QueueItem {
@@ -63,8 +65,8 @@ export const useOfflineStore = create<OfflineState>()(
   devtools(
     persist(
       (set, get) => ({
-        // Initial state
-        isOnline: navigator.onLine,
+        // Initial state - use navigator.onLine as fallback for SSR safety
+        isOnline: typeof window !== 'undefined' ? navigator.onLine : true,
         lastSync: null,
         pendingItems: 0,
         failedItems: 0,
@@ -257,7 +259,7 @@ async function processHandshakeOperation(item: QueueItem): Promise<void> {
       break;
     case 'update':
       // Update not supported by handshake API - could use respondToRequest for status updates
-      console.warn('Handshake update not implemented in offline sync');
+      logger.warn('Handshake update not implemented in offline sync');
       break;
     default:
       throw new Error(`Unknown handshake operation: ${item.type}`);
@@ -360,26 +362,67 @@ async function applyConflictResolution(item: QueueItem, resolution: ConflictReso
   }
 }
 
-// Selectors
-export const useOfflineStatus = () => useOfflineStore((state) => ({
-  isOnline: state.isOnline,
-  lastSync: state.lastSync,
-  pendingItems: state.pendingItems,
-  failedItems: state.failedItems,
-  isProcessingQueue: state.isProcessingQueue,
-}));
+// Selectors with proper typing
+interface OfflineStatus {
+  isOnline: boolean;
+  lastSync: number | null;
+  pendingItems: number;
+  failedItems: number;
+  isProcessingQueue: boolean;
+}
 
-export const useOfflineQueue = () => useOfflineStore((state) => state.queue);
+// Stable selector that prevents infinite re-renders
+export const useOfflineStatus = (): OfflineStatus => {
+  const state = useOfflineStore();
 
-// Network status listener
+  return {
+    isOnline: state.isOnline,
+    lastSync: state.lastSync,
+    pendingItems: state.pendingItems,
+    failedItems: state.failedItems,
+    isProcessingQueue: state.isProcessingQueue,
+  };
+};
+
+export const useOfflineQueue = (): QueueItem[] => useOfflineStore((state) => state.queue);
+
+// Stable function selectors to prevent unnecessary re-renders
+export const useProcessQueue = () => useOfflineStore((state) => state.processQueue);
+export const useRetryFailedItems = () => useOfflineStore((state) => state.retryFailedItems);
+
+// Network status listener with debouncing to prevent infinite loops
 if (typeof window !== 'undefined') {
+  let onlineTimeout: NodeJS.Timeout | null = null;
+
   window.addEventListener('online', () => {
-    useOfflineStore.getState().setOnline(true);
-    // Automatically process queue when coming online
-    useOfflineStore.getState().processQueue();
+    // Debounce the online event to prevent rapid firing
+    if (onlineTimeout) clearTimeout(onlineTimeout);
+
+    onlineTimeout = setTimeout(() => {
+      const store = useOfflineStore.getState();
+      if (!store.isOnline) {
+        store.setOnline(true);
+        // Automatically process queue when coming online (debounced)
+        setTimeout(() => {
+          if (isOnline()) { // Double check we're still online
+            store.processQueue();
+          }
+        }, 100);
+      }
+      onlineTimeout = null;
+    }, 100);
   });
 
   window.addEventListener('offline', () => {
-    useOfflineStore.getState().setOnline(false);
+    // Clear any pending online timeout
+    if (onlineTimeout) {
+      clearTimeout(onlineTimeout);
+      onlineTimeout = null;
+    }
+
+    const store = useOfflineStore.getState();
+    if (store.isOnline) {
+      store.setOnline(false);
+    }
   });
 }

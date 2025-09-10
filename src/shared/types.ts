@@ -127,11 +127,15 @@ export type CredentialForm = z.infer<typeof credentialSchema>
 // Manual Credential Entry Schema
 export const manualCredentialSchema = z.object({
   title: z.string()
-    .min(1, "Title is required")
-    .max(100, "Title must be less than 100 characters"),
+    .min(1, "Credential title is required")
+    .max(100, "Title must be less than 100 characters")
+    .trim()
+    .regex(/^[a-zA-Z0-9\s\-_.,()]+$/, "Title contains invalid characters"),
   issuer: z.string()
-    .min(1, "Issuer is required")
-    .max(100, "Issuer must be less than 100 characters"),
+    .min(1, "Issuer name is required")
+    .max(100, "Issuer name must be less than 100 characters")
+    .trim()
+    .regex(/^[a-zA-Z0-9\s\-_.,()&]+$/, "Issuer name contains invalid characters"),
   type: z.enum(['education', 'employment', 'license', 'certification', 'achievement'], {
     errorMap: () => ({ message: "Please select a valid credential type" })
   }),
@@ -144,16 +148,31 @@ export const manualCredentialSchema = z.object({
       if (!date) return true;
       const issueDate = new Date(date);
       const now = new Date();
-      return issueDate <= now;
-    }, "Issue date cannot be in the future"),
+      const tenYearsAgo = new Date();
+      tenYearsAgo.setFullYear(now.getFullYear() - 10);
+      return issueDate >= tenYearsAgo && issueDate <= now;
+    }, "Issue date must be within the last 10 years and not in the future"),
   expiryDate: z.string()
     .optional()
     .refine((date) => {
       if (!date) return true;
       const expiryDate = new Date(date);
       const now = new Date();
-      return expiryDate > now;
-    }, "Expiry date must be in the future"),
+      const tenYearsFromNow = new Date();
+      tenYearsFromNow.setFullYear(now.getFullYear() + 10);
+      return expiryDate > now && expiryDate <= tenYearsFromNow;
+    }, "Expiry date must be in the future and within 10 years"),
+}).refine((data) => {
+  // Cross-field validation: expiry date must be after issue date
+  if (data.issueDate && data.expiryDate) {
+    const issueDate = new Date(data.issueDate);
+    const expiryDate = new Date(data.expiryDate);
+    return expiryDate > issueDate;
+  }
+  return true;
+}, {
+  message: "Expiry date must be after the issue date",
+  path: ["expiryDate"]
 })
 
 // Add Manual Credential Form Type

@@ -34,7 +34,7 @@ const mockUseOfflineStore = jest.fn(() => ({
 }));
 
 // Add getState method to the mock that returns the current state
-mockUseOfflineStore.getState = jest.fn(() => {
+(mockUseOfflineStore as any).getState = jest.fn(() => {
   return {
     ...mockStoreState,
     queue: mockStoreState.queue,

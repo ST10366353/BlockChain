@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +9,14 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import { useOfflineStatus, useOfflineQueue, useOfflineStore } from "@/stores/offline-store";
+import { useOfflineStatus, useOfflineQueue, useProcessQueue, useRetryFailedItems } from "@/stores/offline-store";
 import { useToast } from "@/components/ui/toast";
 
 export function OfflineIndicator() {
   const { isOnline, lastSync, pendingItems, failedItems, isProcessingQueue } = useOfflineStatus();
   const queue = useOfflineQueue();
-  const { processQueue, retryFailedItems } = useOfflineStore();
+  const processQueue = useProcessQueue();
+  const retryFailedItems = useRetryFailedItems();
   const { success, error: showError } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -24,25 +25,30 @@ export function OfflineIndicator() {
     return null;
   }
 
-  const handleSyncNow = async () => {
+  // Memoize event handlers to prevent unnecessary re-renders
+  const handleSyncNow = useCallback(async () => {
     try {
       await processQueue();
       success('Sync completed successfully!');
     } catch (err) {
       showError('Sync failed. Please try again.');
     }
-  };
+  }, [processQueue, success, showError]);
 
-  const handleRetryFailed = async () => {
+  const handleRetryFailed = useCallback(async () => {
     try {
       await retryFailedItems();
       success('Failed items queued for retry.');
     } catch (err) {
       showError('Failed to retry items.');
     }
-  };
+  }, [retryFailedItems, success, showError]);
 
-  const failedQueueItems = queue.filter(item => item.retryCount >= 3);
+  // Memoize failed queue items computation
+  const failedQueueItems = useMemo(() =>
+    queue.filter(item => item.retryCount >= 3),
+    [queue]
+  );
 
   return (
     <Card className={`fixed bottom-4 right-4 z-50 max-w-sm shadow-lg border-2 ${
@@ -171,7 +177,13 @@ export function OfflineIndicator() {
 export function OfflineBanner() {
   const { isOnline, pendingItems, failedItems } = useOfflineStatus();
 
-  if (isOnline && pendingItems === 0 && failedItems === 0) {
+  // Memoize the visibility condition
+  const shouldShow = useMemo(() =>
+    !(isOnline && pendingItems === 0 && failedItems === 0),
+    [isOnline, pendingItems, failedItems]
+  );
+
+  if (!shouldShow) {
     return null;
   }
 

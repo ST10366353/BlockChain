@@ -38,7 +38,8 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transformIgnorePatterns: [
-    'node_modules/(?!(@testing-library|@jest|jest-|@types|react|@radix-ui|@hookform)/)'
+    'node_modules/(?!(@testing-library|@jest|jest-|@types|react|@radix-ui|@hookform)/)',
+    'src/lib/logger.ts'
   ],
   moduleDirectories: ['node_modules', 'src'],
   testTimeout: 10000,

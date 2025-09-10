@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { QrCode, Download, Copy, Share2, Eye, EyeOff, Loader2 } from "lucide-react";
 import QRCode from "qrcode";
 import { useToast } from "@/components/ui/toast";
+import { getCurrentUrl } from "@/lib/utils/navigation";
+import { logger } from "@/lib/logger";
 
 interface QRCodeGeneratorProps {
   data?: string;
@@ -56,7 +58,7 @@ export function QRCodeGenerator({
 
       setQrCodeUrl(url);
     } catch (err) {
-      console.error('QR Code generation failed:', err);
+      logger.error('QR Code generation failed', { error: err instanceof Error ? err.message : err });
       setError('Failed to generate QR code');
       showError('Failed to generate QR code. Please try again.');
     } finally {
@@ -69,7 +71,7 @@ export function QRCodeGenerator({
       await navigator.clipboard.writeText(qrData);
       success('QR code data copied to clipboard!');
     } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
+      logger.error('Failed to copy to clipboard', { error: err instanceof Error ? err.message : err });
       showError('Failed to copy to clipboard');
     }
   };
@@ -91,7 +93,7 @@ export function QRCodeGenerator({
 
       success('QR code downloaded successfully!');
     } catch (err) {
-      console.error('Failed to download QR code:', err);
+      logger.error('Failed to download QR code', { error: err instanceof Error ? err.message : err });
       showError('Failed to download QR code');
     }
   };
@@ -102,7 +104,7 @@ export function QRCodeGenerator({
         const shareData = {
           title: title,
           text: qrData,
-          url: window.location.href
+          url: getCurrentUrl()
         };
 
         if (navigator.canShare(shareData)) {
@@ -117,7 +119,7 @@ export function QRCodeGenerator({
       success('QR code data copied to clipboard!');
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Failed to share QR code:', err);
+        logger.error('Failed to share QR code', { error: err instanceof Error ? err.message : err });
         showError('Failed to share QR code');
       }
     }

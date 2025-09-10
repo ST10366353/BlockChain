@@ -6,6 +6,7 @@
 
 import { indexedDBStorage } from './indexeddb-storage';
 import { useAppStore } from '@/stores';
+import { logger } from '../logger';
 import { Credential } from '@/lib/api/credentials-service';
 import { HandshakeRequest } from '@/lib/api/handshake-service';
 
@@ -29,9 +30,9 @@ class DataPersistenceService {
     try {
       await indexedDBStorage.init();
       this.initialized = true;
-      console.log('Data persistence service initialized');
+      logger.info('Data persistence service initialized');
     } catch (error) {
-      console.error('Failed to initialize data persistence:', error);
+      logger.error('Failed to initialize data persistence', error);
     }
   }
 
@@ -47,11 +48,16 @@ class DataPersistenceService {
 
       // Update the app store if sync is enabled
       if (options.sync !== false) {
-        const { addCredential } = useAppStore.getState();
-        addCredential(credential);
+        try {
+          const { addCredential } = useAppStore.getState();
+          addCredential(credential);
+        } catch (storeError) {
+          logger.warn('Failed to sync credential to app store', undefined, storeError);
+          // Don't throw - persistence succeeded even if store sync failed
+        }
       }
     } catch (error) {
-      console.error('Failed to save credential:', error);
+      logger.error('Failed to save credential', error);
       throw error;
     }
   }
@@ -62,7 +68,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.get<Credential>('credentials', id);
     } catch (error) {
-      console.error('Failed to get credential:', error);
+      logger.error('Failed to get credential', error);
       return null;
     }
   }
@@ -74,12 +80,17 @@ class DataPersistenceService {
       const credentials = await indexedDBStorage.getAll<Credential>('credentials');
 
       // Update app store with latest data
-      const { setCredentials } = useAppStore.getState();
-      setCredentials(credentials);
+      try {
+        const { setCredentials } = useAppStore.getState();
+        setCredentials(credentials);
+      } catch (storeError) {
+        logger.warn('Failed to sync credentials to app store', undefined, storeError);
+        // Don't throw - data retrieval succeeded even if store sync failed
+      }
 
       return credentials;
     } catch (error) {
-      console.error('Failed to get all credentials:', error);
+      logger.error('Failed to get all credentials', error);
       return [];
     }
   }
@@ -106,7 +117,7 @@ class DataPersistenceService {
         updateCredential(id, updatedCredential);
       }
     } catch (error) {
-      console.error('Failed to update credential:', error);
+      logger.error('Failed to update credential', error);
       throw error;
     }
   }
@@ -123,7 +134,7 @@ class DataPersistenceService {
         removeCredential(id);
       }
     } catch (error) {
-      console.error('Failed to delete credential:', error);
+      logger.error('Failed to delete credential', error);
       throw error;
     }
   }
@@ -144,7 +155,7 @@ class DataPersistenceService {
         addHandshakeRequest(request);
       }
     } catch (error) {
-      console.error('Failed to save handshake request:', error);
+      logger.error('Failed to save handshake request:', error);
       throw error;
     }
   }
@@ -155,7 +166,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.get<HandshakeRequest>('handshake', id);
     } catch (error) {
-      console.error('Failed to get handshake request:', error);
+      logger.error('Failed to get handshake request:', error);
       return null;
     }
   }
@@ -172,7 +183,7 @@ class DataPersistenceService {
 
       return requests;
     } catch (error) {
-      console.error('Failed to get all handshake requests:', error);
+      logger.error('Failed to get all handshake requests:', error);
       return [];
     }
   }
@@ -199,7 +210,7 @@ class DataPersistenceService {
         updateHandshakeRequest(id, updatedRequest);
       }
     } catch (error) {
-      console.error('Failed to update handshake request:', error);
+      logger.error('Failed to update handshake request:', error);
       throw error;
     }
   }
@@ -216,7 +227,7 @@ class DataPersistenceService {
         removeHandshakeRequest(id);
       }
     } catch (error) {
-      console.error('Failed to delete handshake request:', error);
+      logger.error('Failed to delete handshake request:', error);
       throw error;
     }
   }
@@ -231,7 +242,7 @@ class DataPersistenceService {
         version: options.version || 1
       });
     } catch (error) {
-      console.error('Failed to save profile data:', error);
+      logger.error('Failed to save profile data:', error);
       throw error;
     }
   }
@@ -242,7 +253,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.get('profile', key);
     } catch (error) {
-      console.error('Failed to get profile data:', error);
+      logger.error('Failed to get profile data:', error);
       return null;
     }
   }
@@ -263,7 +274,7 @@ class DataPersistenceService {
         ttl: options.ttl
       });
     } catch (error) {
-      console.error('Failed to set cache:', error);
+      logger.error('Failed to set cache:', error);
     }
   }
 
@@ -274,7 +285,7 @@ class DataPersistenceService {
       const cacheData = await indexedDBStorage.get('cache', key);
       return cacheData ? (cacheData as any).data : null;
     } catch (error) {
-      console.error('Failed to get cache:', error);
+      logger.error('Failed to get cache:', error);
       return null;
     }
   }
@@ -285,7 +296,7 @@ class DataPersistenceService {
     try {
       await indexedDBStorage.clear('cache');
     } catch (error) {
-      console.error('Failed to clear cache:', error);
+      logger.error('Failed to clear cache:', error);
     }
   }
 
@@ -296,7 +307,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.query<Credential>('credentials', 'type', type);
     } catch (error) {
-      console.error('Failed to query credentials by type:', error);
+      logger.error('Failed to query credentials by type:', error);
       return [];
     }
   }
@@ -307,7 +318,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.query<Credential>('credentials', 'status', status);
     } catch (error) {
-      console.error('Failed to query credentials by status:', error);
+      logger.error('Failed to query credentials by status:', error);
       return [];
     }
   }
@@ -318,7 +329,7 @@ class DataPersistenceService {
     try {
       return await indexedDBStorage.query<HandshakeRequest>('handshake', 'status', status);
     } catch (error) {
-      console.error('Failed to query handshake requests by status:', error);
+      logger.error('Failed to query handshake requests by status:', error);
       return [];
     }
   }
@@ -337,7 +348,7 @@ class DataPersistenceService {
         setCredentials(credentials);
       }
     } catch (error) {
-      console.error('Failed to save credentials batch:', error);
+      logger.error('Failed to save credentials batch:', error);
       throw error;
     }
   }
@@ -355,7 +366,7 @@ class DataPersistenceService {
         setHandshakeRequests(requests);
       }
     } catch (error) {
-      console.error('Failed to save handshake requests batch:', error);
+      logger.error('Failed to save handshake requests batch:', error);
       throw error;
     }
   }
@@ -381,7 +392,7 @@ class DataPersistenceService {
 
       return JSON.stringify(exportData, null, 2);
     } catch (error) {
-      console.error('Failed to export data:', error);
+      logger.error('Failed to export data:', error);
       throw error;
     }
   }
@@ -406,9 +417,9 @@ class DataPersistenceService {
         }
       }
 
-      console.log('Data import completed successfully');
+      logger.info('Data import completed successfully');
     } catch (error) {
-      console.error('Failed to import data:', error);
+      logger.error('Failed to import data:', error);
       throw error;
     }
   }
@@ -434,7 +445,7 @@ class DataPersistenceService {
         handshakeRequests: handshakeRequests.length
       };
     } catch (error) {
-      console.error('Failed to get storage stats:', error);
+      logger.error('Failed to get storage stats:', error);
       return {
         totalItems: 0,
         storageSize: 0,
@@ -454,9 +465,9 @@ class DataPersistenceService {
       await this.clearCache();
 
       // Additional cleanup logic can be added here
-      console.log('Expired data cleanup completed');
+      logger.info('Expired data cleanup completed');
     } catch (error) {
-      console.error('Failed to cleanup expired data:', error);
+      logger.error('Failed to cleanup expired data:', error);
     }
   }
 }
@@ -466,5 +477,5 @@ export const dataPersistence = new DataPersistenceService();
 
 // Initialize on module load
 if (typeof window !== 'undefined') {
-  dataPersistence.init().catch(console.error);
+  dataPersistence.init().catch(logger.error);
 }

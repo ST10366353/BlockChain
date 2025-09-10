@@ -38,6 +38,7 @@ export default function AddCredential() {
   const [activeMethod, setActiveMethod] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
 
   // Enhanced form with real-time validation
   const form = useZodForm<ManualCredentialForm>(manualCredentialSchema, {
@@ -165,6 +166,190 @@ export default function AddCredential() {
     handleFileUpload(files);
   };
 
+  const handleEnableCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      setCameraEnabled(true);
+      addNotification({
+        type: 'success',
+        title: 'Camera Enabled',
+        message: 'Camera access granted. You can now scan QR codes.'
+      });
+
+      // Stop the stream immediately as we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+    } catch (error) {
+      console.error('Camera access failed:', error);
+      setCameraEnabled(false);
+      addNotification({
+        type: 'error',
+        title: 'Camera Access Denied',
+        message: 'Unable to access camera. Please check your browser permissions.'
+      });
+    }
+  };
+
+  const handleProcessFile = async () => {
+    if (!uploadedFile) return;
+
+    try {
+      setLoading('credentials', true);
+      addNotification({
+        type: 'info',
+        title: 'Processing File',
+        message: 'Analyzing credential file...'
+      });
+
+      const fileContent = await readFileContent(uploadedFile);
+      const processedCredential = await processCredentialFile(fileContent, uploadedFile.type, uploadedFile);
+
+      if (processedCredential) {
+        // Auto-fill form with extracted data
+        form.setValue('title', processedCredential.name || '');
+        form.setValue('issuer', processedCredential.issuer || '');
+        form.setValue('type', (processedCredential.type as any) || 'education');
+        form.setValue('description', processedCredential.description || '');
+
+        // Extract issue date if available
+        if (processedCredential.issuedAt) {
+          const issueDate = new Date(processedCredential.issuedAt).toISOString().split('T')[0];
+          form.setValue('issueDate', issueDate);
+        }
+
+        // Extract expiration date if available
+        if (processedCredential.expirationDate) {
+          const expiryDate = new Date(processedCredential.expirationDate).toISOString().split('T')[0];
+          form.setValue('expiryDate', expiryDate);
+        }
+
+        addNotification({
+          type: 'success',
+          title: 'File Processed',
+          message: `Successfully extracted credential data for "${processedCredential.name || 'Unknown'}"`
+        });
+
+        // Switch to manual entry tab to show the filled form
+        setActiveMethod('manual');
+      } else {
+        throw new Error('Unable to extract credential data from file');
+      }
+    } catch (error) {
+      console.error('File processing failed:', error);
+      addNotification({
+        type: 'error',
+        title: 'File Processing Failed',
+        message: 'Unable to process the uploaded file. Please ensure it contains valid credential data.'
+      });
+    } finally {
+      setLoading('credentials', false);
+    }
+  };
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const content = e.target?.result;
+        if (typeof content === 'string') {
+          resolve(content);
+        } else if (content instanceof ArrayBuffer) {
+          // Convert ArrayBuffer to string for binary files
+          const uint8Array = new Uint8Array(content);
+          const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+          resolve(binaryString);
+        } else {
+          reject(new Error('Unsupported file content type'));
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onabort = () => reject(new Error('File reading was aborted'));
+
+      if (file.type === 'application/pdf' || file.type.startsWith('application/')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
+    });
+  };
+
+  const processCredentialFile = async (content: string, mimeType: string, file: File): Promise<any> => {
+    try {
+      // Handle different file types
+      if (mimeType === 'application/json' || file.name.endsWith('.json')) {
+        // Parse JSON credential
+        const credentialData = JSON.parse(content);
+
+        // Handle different JSON credential formats
+        if (credentialData.verifiableCredential) {
+          // W3C Verifiable Credential format
+          return {
+            name: credentialData.verifiableCredential.credentialSubject?.name ||
+                  credentialData.verifiableCredential.credentialSubject?.title ||
+                  'Verifiable Credential',
+            type: credentialData.verifiableCredential.type?.[1] || 'education',
+            issuer: credentialData.verifiableCredential.issuer,
+            description: credentialData.verifiableCredential.credentialSubject?.description || '',
+            issuedAt: credentialData.verifiableCredential.issuanceDate,
+            expirationDate: credentialData.verifiableCredential.expirationDate,
+            metadata: credentialData.verifiableCredential.credentialSubject
+          };
+        } else if (credentialData.name && credentialData.issuer) {
+          // Simple credential format
+          return credentialData;
+        }
+      } else if (mimeType === 'application/pdf' || file.name.endsWith('.pdf')) {
+        // For PDF files, we'll create a basic structure
+        // In a real implementation, you'd use a PDF parsing library
+        return {
+          name: file.name.replace('.pdf', ''),
+          type: 'document',
+          issuer: 'Unknown',
+          description: 'PDF document uploaded',
+          metadata: { originalFileName: file.name, fileType: 'pdf' }
+        };
+      } else if (file.name.endsWith('.vc')) {
+        // Verifiable Credential file
+        try {
+          const vcData = JSON.parse(content);
+          return {
+            name: vcData.credentialSubject?.name || 'Verifiable Credential',
+            type: vcData.type?.[1] || 'education',
+            issuer: vcData.issuer,
+            description: vcData.credentialSubject?.description || '',
+            issuedAt: vcData.issuanceDate,
+            expirationDate: vcData.expirationDate,
+            metadata: vcData.credentialSubject
+          };
+        } catch {
+          // If JSON parsing fails, treat as plain text
+          return {
+            name: file.name.replace('.vc', ''),
+            type: 'credential',
+            issuer: 'Unknown',
+            description: content.substring(0, 200) + '...',
+            metadata: { fileType: 'vc', contentPreview: content.substring(0, 100) }
+          };
+        }
+      }
+
+      // Fallback for unknown formats
+      return {
+        name: file.name,
+        type: 'document',
+        issuer: 'Unknown',
+        description: 'File uploaded via file import',
+        metadata: { fileType: mimeType, originalFileName: file.name }
+      };
+    } catch (error) {
+      console.error('Error processing credential file:', error);
+      throw new Error('Invalid file format or corrupted file');
+    }
+  };
+
   const renderImportMethod = () => {
     switch (activeMethod) {
       case "file":
@@ -198,7 +383,11 @@ export default function AddCredential() {
                       <X className="w-4 h-4 mr-2" />
                       Remove
                     </Button>
-                    <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                    <Button
+                      onClick={handleProcessFile}
+                      disabled={!uploadedFile}
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       Process File
                     </Button>
                   </div>
@@ -275,13 +464,17 @@ export default function AddCredential() {
             </div>
 
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <Camera className={`w-16 h-16 mx-auto mb-4 ${cameraEnabled ? 'text-green-500' : 'text-gray-400'}`} />
               <p className="text-gray-600 mb-4">
-                Camera access is required to scan QR codes
+                {cameraEnabled ? 'Camera is ready for scanning' : 'Camera access is required to scan QR codes'}
               </p>
-              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+              <Button
+                onClick={handleEnableCamera}
+                disabled={cameraEnabled}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Camera className="w-4 h-4 mr-2" />
-                Enable Camera
+                {cameraEnabled ? 'Camera Enabled' : 'Enable Camera'}
               </Button>
             </div>
 

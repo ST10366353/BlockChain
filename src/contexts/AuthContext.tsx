@@ -85,9 +85,62 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Input validation for login credentials
+const validateLoginCredentials = (credentials: LoginCredentials): string | null => {
+  if (!credentials) {
+    return 'Login credentials are required';
+  }
+
+  // DID-based login validation
+  if (credentials.did) {
+    if (!credentials.did.startsWith('did:')) {
+      return 'DID must start with "did:"';
+    }
+    if (credentials.did.length < 10) {
+      return 'DID appears to be too short';
+    }
+    if (!/^did:[a-z0-9]+:.+/i.test(credentials.did)) {
+      return 'Invalid DID format';
+    }
+  }
+
+  // Passphrase validation
+  if (credentials.passphrase) {
+    if (credentials.passphrase.length < 8) {
+      return 'Passphrase must be at least 8 characters long';
+    }
+    if (!/[a-z]/.test(credentials.passphrase)) {
+      return 'Passphrase must contain at least one lowercase letter';
+    }
+    if (!/[A-Z]/.test(credentials.passphrase)) {
+      return 'Passphrase must contain at least one uppercase letter';
+    }
+    if (!/\d/.test(credentials.passphrase)) {
+      return 'Passphrase must contain at least one number';
+    }
+  }
+
+  // Ensure we have either DID+passphrase or just passphrase
+  if (credentials.did && !credentials.passphrase) {
+    return 'Passphrase is required when using DID';
+  }
+
+  if (!credentials.did && !credentials.passphrase) {
+    return 'Either DID with passphrase or passphrase alone is required';
+  }
+
+  return null; // Validation passed
+};
+
 // Real API login functions
 const loginWithCredentials = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   try {
+    // Validate credentials before making API call
+    const validationError = validateLoginCredentials(credentials);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
     // Determine login method based on credentials
     if (credentials.passphrase && credentials.did && credentials.did.startsWith('did:')) {
       // DID-based login

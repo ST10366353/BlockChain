@@ -32,8 +32,7 @@ jest.mock('@/lib/offline/queue-manager', () => ({
 
 // Now import all modules AFTER mocks are set up
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Dashboard from '@/pages/Dashboard';
@@ -124,9 +123,6 @@ describe('User Workflows', () => {
     });
   });
 
-  // Helper to get typed mock functions
-  const getMockDataPersistence = () => mockDataPersistence;
-  const getMockQueueManager = () => mockQueueManager;
 
   describe('Dashboard Workflow', () => {
     it('should load and display user dashboard correctly', async () => {

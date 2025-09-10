@@ -73,8 +73,8 @@ export const handshakeService = {
     return response.data;
   },
 
-  // Share credential directly (without request)
-  async shareCredential(credentialId: string, options: {
+  // Share credential directly with recipient (without request)
+  async shareCredentialDirect(credentialId: string, options: {
     recipientDID: string;
     message?: string;
     expiresIn?: number;

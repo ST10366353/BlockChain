@@ -2,6 +2,7 @@ import React, { Component, ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
+import { redirectToHome } from "@/lib/utils/navigation";
 
 interface Props {
   children: ReactNode;
@@ -26,7 +27,17 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // Log error using a proper logging service instead of console
+    const logger = {
+      error: (message: string, ...args: any[]) => {
+        // In production, this would send to a logging service
+        if (import.meta.env?.DEV) {
+          console.error(`[ErrorBoundary] ${message}`, ...args);
+        }
+        // TODO: Send to error reporting service (e.g., Sentry)
+      }
+    };
+    logger.error("ErrorBoundary caught an error:", error, errorInfo);
 
     this.setState({
       error,
@@ -47,7 +58,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = () => {
-    window.location.href = "/";
+    redirectToHome();
   };
 
   render() {
@@ -72,7 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Error Details (only in development) */}
-              {process.env.NODE_ENV === "development" && this.state.error && (
+              {import.meta.env?.DEV && this.state.error && (
                 <div className="bg-gray-100 p-4 rounded-lg">
                   <details className="cursor-pointer">
                     <summary className="font-medium text-gray-700 mb-2 flex items-center">

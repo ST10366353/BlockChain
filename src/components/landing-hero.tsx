@@ -26,9 +26,19 @@ export function LandingHero() {
             <span className="text-xl font-bold text-white">IdentityVault</span>
           </div>
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-            <a href="#security" className="text-gray-300 hover:text-white transition-colors">Security</a>
-            <a href="#docs" className="text-gray-300 hover:text-white transition-colors">Docs</a>
+            <a href="#features" className="text-gray-300 hover:text-white transition-colors cursor-pointer" onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            }}>Features</a>
+            <a href="#security" className="text-gray-300 hover:text-white transition-colors cursor-pointer" onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('security')?.scrollIntoView({ behavior: 'smooth' });
+            }}>Security</a>
+            <a href="#docs" className="text-gray-300 hover:text-white transition-colors cursor-pointer" onClick={(e) => {
+              e.preventDefault();
+              // For now, we'll just show an alert since docs aren't implemented yet
+              alert('Documentation is coming soon!');
+            }}>Docs</a>
             <Button
               variant="outline"
               className="border-white/20 text-white hover:bg-white/10"

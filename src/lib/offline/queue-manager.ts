@@ -5,6 +5,8 @@
 
 import { useOfflineStore } from '@/stores/offline-store';
 import { dataPersistence } from '../persistence/data-persistence';
+import { isOnline } from '../utils/network';
+import { logger } from '../logger';
 // import { syncService } from '../sync/sync-service'; // Commented out - not currently used
 
 export interface QueueItem {
@@ -30,6 +32,7 @@ export interface QueueOptions {
 
 class QueueManager {
   private processing = false;
+  private processingTimeout: NodeJS.Timeout | null = null;
   // private processingQueue: QueueItem[] = []; // Not currently used
   private maxRetries = 3;
   private retryDelay = 1000; // Base delay in milliseconds
@@ -69,16 +72,23 @@ class QueueManager {
     // Also persist locally for backup
     await dataPersistence.setCache(`queue_${item.id}`, item, { ttl: 24 * 60 * 60 * 1000 }); // 24 hours
 
-    console.log(`Added ${type} ${resource} to offline queue:`, item.id);
+    logger.info('Added item to offline queue', { type, resource, id: item.id });
 
     // Process immediately if requested and online
-    if (options.immediate && navigator.onLine) {
+    if (options.immediate && isOnline()) {
       this.processQueueItem(item);
     }
 
     // Process in background if requested
     if (options.background) {
-      setTimeout(() => this.processQueue(), 100);
+      // Clear any existing background processing timeout
+      if (this.processingTimeout) {
+        clearTimeout(this.processingTimeout);
+      }
+      this.processingTimeout = setTimeout(() => {
+        this.processingTimeout = null;
+        this.processQueue();
+      }, 100);
     }
 
     return item.id;
@@ -88,12 +98,18 @@ class QueueManager {
    * Process offline queue
    */
   async processQueue(): Promise<void> {
-    if (this.processing || !navigator.onLine) {
+    if (this.processing || !isOnline()) {
       return;
     }
 
     this.processing = true;
     let processingStarted = false;
+
+    // Clear any existing processing timeout
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+      this.processingTimeout = null;
+    }
 
     try {
       const { queue, removeFromQueue, setProcessingQueue } = useOfflineStore.getState();
@@ -106,7 +122,7 @@ class QueueManager {
       const sortedQueue = this.sortQueue(queue);
 
       for (const item of sortedQueue) {
-        if (!navigator.onLine) break;
+        if (!isOnline()) break;
 
         try {
           await this.processQueueItem(item);
@@ -118,6 +134,8 @@ class QueueManager {
       }
     } finally {
       this.processing = false;
+      this.processingTimeout = null; // Clear timeout reference
+
       // Only update store state if processing actually started
       if (processingStarted) {
         const { setProcessingQueue } = useOfflineStore.getState();

@@ -5,6 +5,24 @@
 
 import '@testing-library/jest-dom';
 
+// Mock the logger before any imports
+jest.mock('../lib/logger', () => ({
+  LogLevel: {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3,
+  },
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    setLevel: jest.fn(),
+    getRecentLogs: jest.fn(() => []),
+  },
+}));
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

@@ -1,7 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+import { logger } from '../logger';
+import { redirectToLogin } from '../utils/navigation';
 
 // API Configuration
-const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8787/api';
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 // Create axios instance
@@ -13,11 +16,15 @@ const httpClient: AxiosInstance = axios.create({
   },
 });
 
+// Token refresh state to prevent race conditions
+let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
+
 // Request interceptor for authentication
 httpClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     // Add authentication token if available
-    const token = localStorage.getItem('auth_token');
+    const token = safeGetItem('auth_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +37,7 @@ httpClient.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
-    console.error('Request interceptor error:', error);
+    logger.error('Request interceptor error', error);
     return Promise.reject(error);
   }
 );
@@ -39,8 +46,8 @@ httpClient.interceptors.request.use(
 httpClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Log successful responses in development
-    if ((import.meta as any)?.env?.DEV || process.env.NODE_ENV === 'development') {
-      console.log(`API Response [${response.status}]:`, response.config.url);
+    if (import.meta.env?.DEV) {
+      logger.debug('API Response', { status: response.status, url: response.config.url });
     }
     return response;
   },
@@ -51,63 +58,92 @@ httpClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        // Attempt to refresh token
-        const refreshToken = localStorage.getItem('auth_refresh_token');
-        if (refreshToken) {
+      // If we're already refreshing, wait for the existing refresh
+      if (isRefreshing && refreshPromise) {
+        return refreshPromise.then(() => {
+          const token = localStorage.getItem('auth_token');
+          if (originalRequest.headers && token) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return httpClient(originalRequest);
+        });
+      }
+
+      // Start token refresh
+      isRefreshing = true;
+      refreshPromise = (async () => {
+        try {
+          // Attempt to refresh token
+          const refreshToken = localStorage.getItem('auth_refresh_token');
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
           const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
 
           const { token, refreshToken: newRefreshToken } = refreshResponse.data;
 
-          // Update stored tokens
-          localStorage.setItem('auth_token', token);
-          if (newRefreshToken) {
-            localStorage.setItem('auth_refresh_token', newRefreshToken);
+          // Update stored tokens safely
+          const tokenUpdated = safeSetItem('auth_token', token);
+          const refreshTokenUpdated = newRefreshToken ? safeSetItem('auth_refresh_token', newRefreshToken) : true;
+
+          if (!tokenUpdated || !refreshTokenUpdated) {
+            console.warn('Failed to update stored tokens');
           }
 
-          // Retry original request with new token
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+          return token;
+        } catch (refreshError) {
+          logger.error('Token refresh failed', refreshError);
+          // Clear auth data and redirect to login
+          const tokenCleared = safeRemoveItem('auth_token');
+          const refreshTokenCleared = safeRemoveItem('auth_refresh_token');
+          const userCleared = safeRemoveItem('auth_user');
+
+          if (!tokenCleared || !refreshTokenCleared || !userCleared) {
+            logger.warn('Failed to clear some stored authentication data');
           }
 
-          return httpClient(originalRequest);
+          // Use safe navigation utility
+          redirectToLogin();
+
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+          refreshPromise = null;
         }
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
-        // Clear auth data and redirect to login
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_refresh_token');
-        localStorage.removeItem('auth_user');
+      })();
 
-        // Dispatch logout event (if we had a global store)
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
+      return refreshPromise.then((token) => {
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
+        return httpClient(originalRequest);
+      });
     }
 
     // Handle 403 Forbidden - Insufficient permissions
     if (error.response?.status === 403) {
-      console.error('Access forbidden:', error.response.data);
+      logger.error('Access forbidden', { status: 403, data: error.response.data });
       // Could show a permission error toast here
     }
 
     // Handle 500+ Server errors
     if (error.response?.status && error.response.status >= 500) {
-      console.error('Server error:', error.response.data);
+      logger.error('Server error', { status: error.response.status, data: error.response.data });
       // Could show a server error toast here
     }
 
     // Handle network errors
     if (!error.response) {
-      console.error('Network error:', error.message);
+      logger.error('Network error', { message: error.message });
       // Could show a network error toast here
     }
 
     // Log error details in development
-    if ((import.meta as any)?.env?.DEV || process.env.NODE_ENV === 'development') {
-      console.error('API Error:', {
+    if (import.meta.env?.DEV) {
+      logger.error('API Error', {
         url: originalRequest.url,
         method: originalRequest.method,
         status: error.response?.status,

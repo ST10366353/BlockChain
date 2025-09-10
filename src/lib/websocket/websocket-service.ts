@@ -6,6 +6,7 @@
 import { useAppStore } from '@/stores';
 import { dataPersistence } from '../persistence/data-persistence';
 import { syncService } from '../sync/sync-service';
+import { logger } from '../logger';
 
 export interface WebSocketMessage {
   type: string;
@@ -66,7 +67,7 @@ export class WebSocketService {
 
       try {
         const url = this.options.url || this.getDefaultWebSocketUrl();
-        console.log('Connecting to WebSocket:', url);
+        logger.info('Connecting to WebSocket', { url });
 
         this.connection = new WebSocket(url, this.options.protocols);
 
@@ -76,7 +77,7 @@ export class WebSocketService {
         this.connection.onerror = this.handleError.bind(this);
 
       } catch (error) {
-        console.error('WebSocket connection error:', error);
+        logger.error('WebSocket connection error', error);
         this.isConnecting = false;
         this.connectionPromise = null;
         this.connectionResolve = null;
@@ -103,6 +104,22 @@ export class WebSocketService {
       this.connectionPromise = null;
     }
 
+    // Clear all timers to prevent memory leaks
+    this.clearAllTimers();
+
+    if (this.connection) {
+      try {
+        this.connection.close();
+      } catch (error) {
+        logger.warn('Error closing WebSocket connection', undefined, error);
+      }
+      this.connection = null;
+    }
+
+    logger.info('WebSocket disconnected');
+  }
+
+  private clearAllTimers(): void {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
@@ -112,13 +129,6 @@ export class WebSocketService {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-
-    if (this.connection) {
-      this.connection.close();
-      this.connection = null;
-    }
-
-    console.log('WebSocket disconnected');
   }
 
   /**
@@ -137,7 +147,7 @@ export class WebSocketService {
     } else {
       // Queue message for later sending
       this.pendingMessages.push(message);
-      console.log('WebSocket not connected, message queued:', type);
+      logger.info('WebSocket not connected, message queued', { type, queueLength: this.pendingMessages.length });
     }
   }
 
@@ -173,9 +183,15 @@ export class WebSocketService {
   }
 
   private handleOpen(): void {
-    console.log('WebSocket connection established');
+    logger.info('WebSocket connection established');
     this.isConnecting = false;
     this.reconnectAttempts = 0;
+
+    // Check if connection is still valid before proceeding
+    if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
+      logger.warn('WebSocket connection became invalid during handleOpen');
+      return;
+    }
 
     // Resolve the connection promise
     if (this.connectionResolve) {
@@ -185,13 +201,8 @@ export class WebSocketService {
       this.connectionPromise = null;
     }
 
-    // Send pending messages
-    while (this.pendingMessages.length > 0) {
-      const message = this.pendingMessages.shift();
-      if (message) {
-        this.connection?.send(JSON.stringify(message));
-      }
-    }
+    // Send pending messages safely
+    this.sendPendingMessages();
 
     // Start heartbeat
     this.startHeartbeat();
@@ -200,23 +211,43 @@ export class WebSocketService {
     this.notifyConnectionStatus(true);
   }
 
+  private sendPendingMessages(): void {
+    if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
+      logger.warn('Cannot send pending messages: connection not ready');
+      return;
+    }
+
+    while (this.pendingMessages.length > 0) {
+      const message = this.pendingMessages.shift();
+      if (message) {
+        try {
+          this.connection.send(JSON.stringify(message));
+        } catch (error) {
+          logger.error('Failed to send pending message', error);
+          // Put the message back at the front of the queue
+          this.pendingMessages.unshift(message);
+          break; // Stop sending remaining messages
+        }
+      }
+    }
+  }
+
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
       this.processMessage(message);
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      logger.error('Failed to parse WebSocket message', error);
     }
   }
 
+
   private handleClose(event: CloseEvent): void {
-    console.log('WebSocket connection closed:', event.code, event.reason);
+    logger.info('WebSocket connection closed', { code: event.code, reason: event.reason });
     this.isConnecting = false;
 
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
+    // Clear all timers to prevent memory leaks
+    this.clearAllTimers();
 
     this.notifyConnectionStatus(false);
 
@@ -227,7 +258,7 @@ export class WebSocketService {
   }
 
   private handleError(error: Event): void {
-    console.error('WebSocket error:', error);
+    logger.error('WebSocket error occurred', error);
     this.isConnecting = false;
 
     // Reject the connection promise
@@ -268,7 +299,7 @@ export class WebSocketService {
         if (handler) {
           handler(message);
         } else {
-          console.log('Unhandled WebSocket message:', message.type);
+          logger.info('Unhandled WebSocket message', { type: message.type });
         }
     }
   }
@@ -325,7 +356,7 @@ export class WebSocketService {
   }
 
   private handleSyncRequired(_message: WebSocketMessage): void {
-    console.log('Server requested sync');
+    logger.info('Server requested sync');
     syncService.sync({ background: true });
   }
 
@@ -366,7 +397,7 @@ export class WebSocketService {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnect attempts reached');
+      logger.warn('Max reconnect attempts reached');
       return;
     }
 
@@ -374,7 +405,11 @@ export class WebSocketService {
 
     const delay = Math.min(this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1), 30000);
 
-    console.log(`Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    logger.info('Scheduling reconnect attempt', {
+      attempt: this.reconnectAttempts,
+      maxAttempts: this.maxReconnectAttempts,
+      delay
+    });
 
     this.reconnectTimer = setTimeout(() => {
       if (navigator.onLine) {
@@ -418,7 +453,9 @@ export const websocketService = new WebSocketService({
 // Initialize WebSocket connection when online
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    websocketService.connect().catch(console.error);
+    websocketService.connect().catch((error) => {
+      logger.error('Failed to connect WebSocket service', error);
+    });
   });
 
   window.addEventListener('offline', () => {
@@ -427,6 +464,8 @@ if (typeof window !== 'undefined') {
 
   // Initialize if already online
   if (navigator.onLine) {
-    websocketService.connect().catch(console.error);
+    websocketService.connect().catch((error) => {
+      logger.error('Failed to connect WebSocket service', error);
+    });
   }
 }

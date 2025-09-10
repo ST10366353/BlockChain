@@ -5,6 +5,7 @@ import { QrCode, Camera, CameraOff, Flashlight, FlashlightOff, RotateCcw, Loader
 import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from "@zxing/library";
 import { useToast } from "@/components/ui/toast";
 import { parseQRCode, validateQRCodeFormat, getQRCodeTypeDescription, generateQRPreview } from "@/lib/qr-parser";
+import { logger } from "@/lib/logger";
 
 export function QRCodeScanner() {
   const [isScanning, setIsScanning] = useState(false);
@@ -45,7 +46,7 @@ export function QRCodeScanner() {
         videoRef.current.play();
       }
     } catch (err) {
-      console.error("Error accessing camera:", err);
+      logger.error("Error accessing camera", err);
       setHasPermission(false);
       setError("Camera access denied or unavailable");
     }
@@ -104,7 +105,7 @@ export function QRCodeScanner() {
         } catch (scanError) {
           if (scanError instanceof NotFoundException) {
             // No QR code found, this is normal - continue scanning
-            console.log('No QR code detected, continuing to scan...');
+            logger.debug('No QR code detected, continuing to scan...');
             // Don't set error for NotFoundException - it's expected
           } else if (scanError instanceof ChecksumException) {
             setError('QR code appears to be corrupted or damaged');
@@ -123,13 +124,13 @@ export function QRCodeScanner() {
               setError('Camera not found');
               showError('No camera found. Please connect a camera and try again.');
             } else {
-              console.error('Scan error:', scanError);
+              logger.error('Scan error', scanError);
               setError(`Scan failed: ${scanError.message}`);
               showError('Failed to scan QR code. Please try again.');
             }
             setIsScanning(false);
           } else {
-            console.error('Unknown scan error:', scanError);
+            logger.error('Unknown scan error', scanError);
             setError('An unknown error occurred while scanning');
             showError('An unexpected error occurred. Please try again.');
             setIsScanning(false);
@@ -137,7 +138,7 @@ export function QRCodeScanner() {
         }
       }
     } catch (err) {
-      console.error('Error starting scan:', err);
+      logger.error('Error starting scan', err);
 
       // More specific error handling for camera issues
       if (err instanceof Error) {
@@ -181,9 +182,29 @@ export function QRCodeScanner() {
     setScanResult(null);
   };
 
-  const toggleFlash = () => {
-    // In real implementation, control camera flash/torch
-    setFlashEnabled(!flashEnabled);
+  const toggleFlash = async () => {
+    if (!streamRef.current) return;
+
+    try {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (!track) return;
+
+      const capabilities = track.getCapabilities() as any;
+      if (!capabilities.torch) {
+        showError('Flash/torch not supported on this device');
+        return;
+      }
+
+      await track.applyConstraints({
+        advanced: [{ torch: !flashEnabled } as any]
+      });
+
+      setFlashEnabled(!flashEnabled);
+      success(flashEnabled ? 'Flash turned off' : 'Flash turned on');
+    } catch (error) {
+      logger.error('Failed to toggle flash', { error: error instanceof Error ? error.message : error });
+      showError('Failed to control camera flash');
+    }
   };
 
   const resetScanner = () => {

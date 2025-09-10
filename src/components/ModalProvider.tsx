@@ -7,6 +7,9 @@ import {
 } from "@/components/ui/modal";
 import { QRCodeScanner } from "@/components/QRCodeScanner";
 import { QRCodeGenerator } from "@/components/QRCodeGenerator";
+import { BulkOperationsModal } from "@/components/BulkOperationsModal";
+import { ShareCredentialModal } from "@/components/ShareCredentialModal";
+import { logger } from "@/lib/logger";
 
 // Modal Provider Component
 export function ModalProvider() {
@@ -57,22 +60,15 @@ export function ModalProvider() {
 
     case "bulk-operations":
       return (
-        <Modal isOpen={modal.isOpen} onClose={closeModal} className="w-full max-w-4xl">
-          <div className="text-center py-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Bulk Operations
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Bulk operations modal would be rendered here
-            </p>
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              Close
-            </button>
-          </div>
-        </Modal>
+        <BulkOperationsModal
+          isOpen={modal.isOpen}
+          onClose={closeModal}
+          title={modal.data?.title}
+          operations={modal.data?.operations}
+          onStartOperation={modal.data?.onStartOperation}
+          onPauseOperation={modal.data?.onPauseOperation}
+          onCancelOperation={modal.data?.onCancelOperation}
+        />
       );
 
     case "qr-scanner":
@@ -88,6 +84,20 @@ export function ModalProvider() {
           <QRCodeGenerator
             data={modal.data?.data || ""}
             title={modal.data?.title || "QR Code"}
+          />
+        </Modal>
+      );
+
+    case "share-credential":
+      return (
+        <Modal isOpen={modal.isOpen} onClose={closeModal} className="w-full max-w-lg">
+          <ShareCredentialModal
+            credential={modal.data?.credential}
+            onShare={(shareOptions) => {
+              // Handle sharing logic here
+              logger.info('Sharing credential with options', { shareOptions });
+              closeModal();
+            }}
           />
         </Modal>
       );
